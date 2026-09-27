@@ -2,7 +2,7 @@
 
 Chrome extension dịch comment từ Backlog sang tiếng Việt và đồng bộ dữ liệu thông minh sang Redmine. Tên mới: **B2R**.
 
-**Latest Update (1.8.12):** Lookup Redmine theo title JP (bỏ qua bản dịch VN), Di chuyển Issue mặc định kèm comment/note, giữ link Backlog `/view/…` khi sync sang Redmine, success modal migrate luôn hiện kèm link issue.
+**Latest Update (1.8.17):** Onboarding lần đầu, lịch sử sync và preview-only dry run; cải thiện retry/fallback AI, xử lý Gemini key rotation và trạng thái retry; hỗ trợ xem trước Log Time theo tháng trước khi ghi; bổ sung bản địa hóa và lưu kết quả sync lỗi hoặc một phần.
 
 ---
 
