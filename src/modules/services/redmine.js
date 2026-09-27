@@ -113,21 +113,42 @@ async function findIssues(redmineDomain, apiKey, params) {
  * @returns {Promise<Array<object>>} A promise that resolves to an array of time entry objects.
  */
 async function findTimeEntries(redmineDomain, apiKey, params) {
-  const query = new URLSearchParams(params).toString();
-  const path = `/time_entries.json?${query}`;
-  const response = await redmineAuthorizedFetch(redmineDomain, apiKey, path, {
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-
-  if (!response.ok) {
-    const errorMsg = await readErrorMessage(response);
-    throw new Error(`Failed to find time entries: ${errorMsg}`);
+  const entries = [];
+  const seenIds = new Set();
+  const limit = Math.min(100, Math.max(1, Number(params.limit) || 100));
+  let offset = Number(params.offset) || 0;
+  for (let page = 0; page < 1000; page++) {
+    const query = new URLSearchParams({ ...params, limit, offset }).toString();
+    const response = await redmineAuthorizedFetch(
+      redmineDomain,
+      apiKey,
+      `/time_entries.json?${query}`,
+      { headers: { "Content-Type": "application/json" } }
+    );
+    if (!response.ok) {
+      throw new Error(`Failed to find time entries: ${await readErrorMessage(response)}`);
+    }
+    const data = await response.json();
+    if (!Array.isArray(data?.time_entries)) {
+      throw new Error("Redmine returned invalid time entries.");
+    }
+    const batch = data.time_entries;
+    for (const entry of batch) {
+      if (!entry?.id || seenIds.has(String(entry.id))) {
+        throw new Error("Redmine time entries changed during pagination. Please retry.");
+      }
+      seenIds.add(String(entry.id));
+    }
+    entries.push(...batch);
+    offset += batch.length;
+    if (Number.isInteger(data.total_count)) {
+      if (offset >= data.total_count) return entries;
+      if (!batch.length) throw new Error("Redmine returned an incomplete time-entry list.");
+    } else if (batch.length < limit) {
+      return entries;
+    }
   }
-
-  const data = await response.json();
-  return data.time_entries || [];
+  throw new Error("Too many Redmine time entries to read safely.");
 }
 
 /**
@@ -196,6 +217,7 @@ async function fetchIssuesBySubjectQuery(redmineDomain, apiKey, subjectQuery) {
     }).toString()}`
   );
   const response = await fetch(url, {
+    redirect: "error",
     headers: { "X-Redmine-API-Key": apiKey, Accept: "application/json" },
   });
 
@@ -214,13 +236,14 @@ async function handleSendToRedmine(
   // Send note to Redmine issue, including image processing
   const settings = await getSettings();
   const backlogDomain = sender?.tab?.url ? new URL(sender.tab.url).hostname : null;
+  const stagedAttachments = processedAttachments ? new Map(processedAttachments) : null;
   // Process attachments: download from Backlog, upload to Redmine
   const { updatedNotes, uploads } = await processNotesAttachments(
     notes,
     backlogDomain,
     settings,
     backlogIssueKey,
-    processedAttachments
+    stagedAttachments
   );
 
   // Modal edits/preview use Markdown; Redmine notes use Textile.
@@ -237,6 +260,7 @@ async function handleSendToRedmine(
 
   const response = await fetch(endpoint, {
     method: "PUT",
+    redirect: "error",
     headers: {
       "Content-Type": "application/json",
       "X-Redmine-API-Key": settings.redmineApiKey,
@@ -259,6 +283,9 @@ async function handleSendToRedmine(
   }
 
   const responseData = await safeReadJson(response);
+  if (processedAttachments) {
+    for (const [id, markup] of stagedAttachments) processedAttachments.set(id, markup);
+  }
   const journalId = responseData?.journal?.id;
   return {
     message: TB.MESSAGES.TOAST.SEND_SUCCESS,
@@ -305,6 +332,7 @@ async function handleCreateRedmineIssue({ issueData, comments }) {
   try {
     const response = await fetch(createUrl, {
       method: "POST",
+      redirect: "error",
       headers: {
         "X-Redmine-API-Key": settings.redmineApiKey,
         "Content-Type": "application/json",
@@ -689,7 +717,7 @@ async function processNotesAttachments(
       const reason = String(e?.message || "unknown error")
         .replace(/https?:\/\/[^\s]+/gi, "[URL]")
         .slice(0, 120);
-      info.markup = `[Attachment Error: ${info.filename} — ${reason}]`;
+      throw new Error(`Attachment "${info.filename}" could not be transferred: ${reason}`);
     }
   }
 
@@ -722,6 +750,7 @@ async function uploadToRedmine(domain, apiKey, blob, filename) {
   const url = buildRedmineUploadUrl(domain, filename);
   const response = await fetch(url, {
     method: "POST",
+    redirect: "error",
     headers: { "X-Redmine-API-Key": apiKey, "Content-Type": "application/octet-stream" },
     body: blob,
   });
@@ -812,8 +841,20 @@ async function updateTimeEntry(
   hours,
   comments = "",
   spentOn = null,
-  activityId = null
+  activityId = null,
+  approval = null
 ) {
+  if (
+    !approval ||
+    String(issueId) !== String(approval.targetIssueId) ||
+    spentOn !== approval.date ||
+    comments !== `[B2R report:${approval.reportId}]` ||
+    !Number.isFinite(Number(hours)) ||
+    Number(hours) < 0
+  ) {
+    throw new Error("Time-entry update does not match the approved plan.");
+  }
+  await verifyTimeEntryMutation(redmineDomain, apiKey, timeEntryId, approval, "update");
   const payload = {
     time_entry: {
       issue_id: issueId,
@@ -830,6 +871,7 @@ async function updateTimeEntry(
     `/time_entries/${timeEntryId}.json`,
     {
       method: "PUT",
+      mutationApproval: approval,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     }
@@ -843,13 +885,15 @@ async function updateTimeEntry(
   return payload.time_entry;
 }
 
-async function deleteTimeEntry(redmineDomain, apiKey, timeEntryId) {
+async function deleteTimeEntry(redmineDomain, apiKey, timeEntryId, approval) {
+  await verifyTimeEntryMutation(redmineDomain, apiKey, timeEntryId, approval, "delete");
   const response = await redmineAuthorizedFetch(
     redmineDomain,
     apiKey,
     `/time_entries/${timeEntryId}.json`,
     {
       method: "DELETE",
+      deletionApproval: approval,
       headers: { "Content-Type": "application/json" },
     }
   );
@@ -858,6 +902,75 @@ async function deleteTimeEntry(redmineDomain, apiKey, timeEntryId) {
     const errorMsg = await readErrorMessage(response);
     throw new Error(`Failed to delete time entry #${timeEntryId}: ${errorMsg}`);
   }
+}
+
+async function verifyTimeEntryMutation(redmineDomain, apiKey, timeEntryId, approval, action) {
+  const original = approval?.entry;
+  const marker = `[B2R report:${approval?.reportId}]`;
+  const fail = () => {
+    throw new Error(
+      "Time-entry change blocked: approval is missing, expired or the entry changed. Preview again."
+    );
+  };
+  if (
+    !original ||
+    !/^\d+$/.test(String(timeEntryId)) ||
+    String(original.id) !== String(timeEntryId) ||
+    !/^\d+$/.test(String(approval.reportId)) ||
+    approval.domain !== redmineDomain ||
+    !Number.isFinite(approval.confirmedAt) ||
+    Date.now() - approval.confirmedAt > 300000 ||
+    approval.confirmedAt > Date.now() ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(approval.date || "") ||
+    !Number.isFinite(Number(original.hours)) ||
+    Number(original.hours) < 0 ||
+    (String(original.comments || "").startsWith("[B2R report:") && original.comments !== marker) ||
+    (original.comments !== marker && approval.allowLegacy !== true) ||
+    (action === "update" && !approval.targetIssueId)
+  ) {
+    fail();
+  }
+  const user = await getCurrentUser(redmineDomain, apiKey);
+  const responseBefore = await redmineAuthorizedFetch(
+    redmineDomain,
+    apiKey,
+    `/time_entries/${timeEntryId}.json`,
+    { method: "GET" }
+  );
+  if (!responseBefore.ok) fail();
+  const current = (await responseBefore.json()).time_entry;
+  const snapshot = (entry) =>
+    JSON.stringify([
+      String(entry?.id),
+      String(entry?.user?.id ?? entry?.user_id),
+      entry?.spent_on,
+      String(entry?.issue?.id ?? entry?.issue_id),
+      Number(entry?.hours),
+      entry?.comments || "",
+      String(entry?.activity?.id ?? entry?.activity_id),
+      entry?.updated_on || "",
+    ]);
+  if (
+    !current ||
+    String(current.user?.id ?? current.user_id) !== String(user.id) ||
+    current.spent_on !== approval.date ||
+    snapshot(current) !== snapshot(original)
+  ) {
+    fail();
+  }
+  if (action === "update" && !/^\d+$/.test(String(approval.targetIssueId))) fail();
+  // Keep a local recovery record before a destructive change. Storage failure blocks it.
+  const backupKey = `b2r_time_backup:${new URL(redmineDomain).origin}:${timeEntryId}`;
+  await chrome.storage.local.set({
+    [backupKey]: {
+      domain: redmineDomain,
+      entry: current,
+      capturedAt: new Date().toISOString(),
+      reason: `report-sync-${action}`,
+      reportId: approval.reportId,
+    },
+  });
+  return current;
 }
 
 /**
@@ -931,12 +1044,11 @@ async function redmineAuthorizedFetch(redmineDomain, apiKey, pathWithQuery, init
   const headers = { ...(init.headers || {}) };
 
   if (apiKey) {
-    const url = /^https?:\/\//i.test(pathWithQuery)
-      ? pathWithQuery
-      : buildRedmineUrl(redmineDomain, pathWithQuery);
+    const url = buildRedmineUrl(redmineDomain, pathWithQuery);
     return fetch(url, {
       ...init,
       method,
+      redirect: "error",
       headers: {
         ...headers,
         "X-Redmine-API-Key": apiKey,
@@ -957,6 +1069,8 @@ async function redmineAuthorizedFetch(redmineDomain, apiKey, pathWithQuery, init
     body: typeof init.body === "string" ? init.body : null,
     accept: headers.Accept || headers.accept || "application/json",
     contentType: headers["Content-Type"] || headers["content-type"] || null,
+    deletionApproval: init.deletionApproval || null,
+    mutationApproval: init.mutationApproval || null,
   });
 
   return {

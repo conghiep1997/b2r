@@ -32,6 +32,103 @@ this.normalizeLoose = normalizeLoose;`,
   return context;
 }
 
+test("time-entry reads consume every page before returning data to report workflows", async () => {
+  const calls = [];
+  const context = vm.createContext({ URLSearchParams });
+  vm.runInContext(source, context);
+  context.redmineAuthorizedFetch = async (_domain, _key, requestPath) => {
+    calls.push(requestPath);
+    const offset = Number(
+      new URL(requestPath, "https://redmine.example.test").searchParams.get("offset")
+    );
+    return {
+      ok: true,
+      json: async () => ({
+        time_entries: offset === 0 ? [{ id: 1 }, { id: 2 }] : [{ id: 3 }],
+        total_count: 3,
+      }),
+    };
+  };
+  const entries = await context.findTimeEntries("https://redmine.example.test", "", {
+    user_id: 7,
+    limit: 2,
+  });
+  assert.deepEqual(
+    Array.from(entries, (entry) => entry.id),
+    [1, 2, 3]
+  );
+  assert.equal(calls.length, 2);
+  assert.match(calls[1], /offset=2/);
+  assert.match(calls[1], /user_id=7/);
+});
+
+test("time-entry reads reject incomplete or repeated pages instead of returning a partial list", async () => {
+  for (const secondPage of [[], [{ id: 1 }]]) {
+    const context = vm.createContext({ URLSearchParams });
+    vm.runInContext(source, context);
+    let requests = 0;
+    context.redmineAuthorizedFetch = async () => ({
+      ok: true,
+      json: async () => ({
+        time_entries: requests++ === 0 ? [{ id: 1 }] : secondPage,
+        total_count: 2,
+      }),
+    });
+    await assert.rejects(
+      context.findTimeEntries("https://redmine.example.test", "", { limit: 1 }),
+      /incomplete|pagination/
+    );
+  }
+});
+
+test("attachment transfer failures prevent sending a note with missing files", async () => {
+  let posted = false;
+  const context = vm.createContext({
+    console: { log() {}, error() {} },
+    getSettings: async () => ({ backlogDomain: "https://demo.backlog.com" }),
+    downloadBacklogFile: async () => {
+      throw new Error("Download failed");
+    },
+    fetch: async () => {
+      posted = true;
+    },
+  });
+  vm.runInContext(source, context);
+  await assert.rejects(
+    context.handleSendToRedmine({
+      redmineIssueId: "1",
+      notes: "[[TB_FILE:5:demo.txt]]",
+      backlogIssueKey: "DEMO-1",
+    }),
+    /could not be transferred/
+  );
+  assert.equal(posted, false);
+});
+
+test("failed note submissions do not commit uploaded attachments to the migration cache", async () => {
+  const context = vm.createContext({
+    getSettings: async () => ({ redmineDomain: "https://redmine.example.test" }),
+    buildRedmineUrl: (domain, target) => new URL(target, domain).href,
+    safeReadJson: async () => null,
+    readErrorMessage: async () => "Request failed",
+    sanitizeErrorMessage: (text) => text,
+    TB: { MESSAGES: { REDMINE: { SEARCH_PAGE_ERROR: "Failed" }, TOAST: { SEND_SUCCESS: "Sent" } } },
+  });
+  vm.runInContext(source, context);
+  context.processNotesAttachments = async (_notes, _domain, _settings, _key, cache) => {
+    cache.set("5", "attachment:demo.txt");
+    return { updatedNotes: "attachment:demo.txt", uploads: [{ token: "demo-token" }] };
+  };
+  const cache = new Map();
+  const message = { redmineIssueId: "1", notes: "demo", processedAttachments: cache };
+  context.fetch = async () => ({ ok: false, status: 500 });
+  await assert.rejects(context.handleSendToRedmine(message), /Failed/);
+  assert.equal(cache.size, 0);
+  context.fetch = async () => ({ ok: true });
+  await context.handleSendToRedmine(message);
+  assert.equal(cache.get("5"), "attachment:demo.txt");
+});
+
 test("pickBestRedmineSearchResult returns a strong match even when tracker differs", () => {
   const { pickBestRedmineSearchResult, normalizeLoose } = createExtractor();
 

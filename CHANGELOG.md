@@ -1,5 +1,28 @@
 # Changelog - Backlog2Redmine
 
+## [1.8.18] - 2026-09-27
+
+### Added
+- Synchronize Report time entries through a required preview: add/update/remove logs marked for that Report, explicitly select legacy logs to include, preserve other logs and subtract their hours from the daily budget.
+- Select source and target translation languages; Japanese to Vietnamese remains the default, with automatic source detection available.
+- Label translated comments with the selected target language.
+
+### Fixed
+- Re-read each time entry and save a recovery copy before PUT as well as DELETE; reject updates when the approved issue, date, hours, or entry snapshot no longer matches.
+- Refresh monthly Report previews before each day's write and ask for deletion confirmation immediately before that write, so a long monthly scan does not consume the five-minute approval window.
+- Export recovery copies only for the Redmine origin currently configured in the monthly dialog.
+- Guard time-entry deletion with an exact preview snapshot, current-user/date/origin checks, a five-minute confirmation lifetime, typed deletion confirmation and a local recovery copy before each DELETE. Revalidate in the service worker; stop if backup storage fails. Monthly deletion now includes only B2R-marked entries, and recovery copies can be exported from the monthly dialog.
+- Serialize report synchronization and monthly deletion across tabs on the same Redmine origin using Web Locks; reject overlapping operations.
+- Preserve manual/unselected time entries during Report synchronization; reject stale previews and incomplete time-entry pages. Stop on the first failed write and require a fresh preview before retrying.
+- Upload Backlog attachments before posting comments and retain attachment caches only after successful Redmine writes.
+- Restrict authenticated requests to configured origins and reject redirects.
+- Reserve concurrent AI key slots, fall back during provider cooldowns, and reject truncated translations.
+- Serialize encryption-key initialization and log writes; handle malformed version responses and synchronous message errors.
+- Refresh reverse-sync users correctly, load Redmine markdown previews, and use configured popup links.
+
+### Documentation
+- Refresh cross-platform API guidance and record the four-repository review.
+
 ## [1.8.17] - 2026-09-24
 
 - **Added**: First-run onboarding, sync activity history, preview-only dry run, and clearer AI retry/provider status. Expanded automated coverage for Popup, Options, Backlog, and Redmine flows.

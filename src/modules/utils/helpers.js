@@ -87,7 +87,17 @@ function stripHtml(value) {
  */
 function buildRedmineUrl(baseUrl, path) {
   const normalizedBase = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
-  return new URL(path.replace(/^\//, ""), normalizedBase).toString();
+  const base = new URL(normalizedBase);
+  const url = new URL(path.replace(/^\//, ""), base);
+  if (
+    !["http:", "https:"].includes(base.protocol) ||
+    url.origin !== base.origin ||
+    url.username ||
+    url.password
+  ) {
+    throw new Error("Redmine URL must use the configured origin.");
+  }
+  return url.toString();
 }
 
 /**

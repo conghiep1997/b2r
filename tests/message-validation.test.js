@@ -72,3 +72,20 @@ test("rejects unknown, oversized, and malformed messages", () => {
     /Unsupported/
   );
 });
+
+test("sync message validation rejects malformed destinations and attachment lists", () => {
+  for (const message of [
+    { type: "SEND_TO_REDMINE", redmineIssueId: "../users", notes: "demo" },
+    { type: "SEND_TO_BACKLOG", backlogIssueKey: "../other", content: "demo" },
+    { type: "GET_BACKLOG_USERS", projectKey: "DEMO/../other" },
+    { type: "SEND_TO_BACKLOG", backlogIssueKey: "DEMO-1", content: "demo", attachments: {} },
+    {
+      type: "SEND_TO_BACKLOG",
+      backlogIssueKey: "DEMO-1",
+      content: "demo",
+      attachments: [{ url: "/attachments/download/5/demo.txt" }],
+    },
+  ]) {
+    assert.throws(() => context.TB_MESSAGE_VALIDATION.assertMessage(message), /Invalid/);
+  }
+});

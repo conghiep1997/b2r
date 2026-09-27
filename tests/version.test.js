@@ -91,3 +91,23 @@ test("uses newest valid backend version when latest route is unavailable", async
 
   assert.equal(latest.version_number, "1.8.10");
 });
+
+test("invalid or malformed successful backend responses do not suppress GitHub fallback", async () => {
+  for (const malformedJson of [false, true]) {
+    const { TB_VERSION: helpers } = createVersionContext(async (url) => {
+      if (url.includes("api.github.com")) {
+        return { ok: true, json: async () => ({ tag_name: "v1.9.0" }) };
+      }
+      return {
+        ok: true,
+        json: async () => {
+          if (malformedJson) throw new SyntaxError("Invalid JSON");
+          return url.endsWith("/latest")
+            ? { version_number: "draft" }
+            : [{ is_latest: true, version_number: "draft" }];
+        },
+      };
+    });
+    assert.equal((await helpers.fetchLatest()).version_number, "1.9.0");
+  }
+});

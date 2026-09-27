@@ -216,6 +216,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const fallbackGeminiApiKeysInput = document.getElementById("fallbackGeminiApiKeys");
   const primaryProviderSelect = document.getElementById("primaryProvider");
   const fallbackProviderSelect = document.getElementById("fallbackProvider");
+  const translationSourceSelect = document.getElementById("translationSourceLanguage");
+  const translationTargetSelect = document.getElementById("translationTargetLanguage");
   const showRedmineSuccessModalInput = document.getElementById("showRedmineSuccessModal");
   const statusEl = document.getElementById("status");
   chrome.storage.local.get(["languagePreference", "themePreference"], (settings) => {
@@ -287,7 +289,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     },
   ];
 
-  if (!form || !primaryProviderSelect || !fallbackProviderSelect || !statusEl) {
+  if (
+    !form ||
+    !primaryProviderSelect ||
+    !fallbackProviderSelect ||
+    !translationSourceSelect ||
+    !translationTargetSelect ||
+    !statusEl
+  ) {
     console.error("[OPTIONS] Thiếu các phần tử DOM cần thiết");
     return;
   }
@@ -394,7 +403,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         viewport: `${window.innerWidth}x${window.innerHeight}`,
         timestamp: new Date().toISOString(),
       },
-      logs: logs.slice(-50),
+      logs: logs.slice(0, 50),
       screenshot: file ? { name: file.name, type: file.type, size: file.size } : null,
     };
   }
@@ -566,6 +575,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function gatherSettings() {
     commitPendingKeyInputs();
 
+    if (translationSourceSelect.value === translationTargetSelect.value) {
+      throw new Error(
+        om("options_translation_same_language", "Choose different source and target languages.")
+      );
+    }
+
     const primaryModels = getSelectedModelsForProvider("primary", primaryProviderSelect.value);
     const fallbackModels = getSelectedModelsForProvider("fallback", fallbackProviderSelect.value);
     const settings = {
@@ -575,6 +590,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       primaryModel: primaryModels[0] || getDefaultModel(primaryProviderSelect.value),
       fallbackProvider: fallbackProviderSelect.value,
       fallbackModel: fallbackModels[0] || getDefaultModel(fallbackProviderSelect.value),
+      translationSourceLanguage: translationSourceSelect.value,
+      translationTargetLanguage: translationTargetSelect.value,
       defaultProjectId: document.getElementById("defaultProjectId").value,
       defaultProjectName: (() => {
         const projectSelect = document.getElementById("defaultProjectId");
@@ -810,6 +827,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       "primaryModel",
       "fallbackProvider",
       "fallbackModel",
+      "translationSourceLanguage",
+      "translationTargetLanguage",
       "defaultProjectId",
       "reportProjectId",
       "manualFields",
@@ -817,6 +836,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     ];
 
     chrome.storage.local.get(keys, async (items) => {
+      const languagePair = TB.PROMPTS.resolveLanguagePair(items);
+      translationSourceSelect.value = languagePair.source;
+      translationTargetSelect.value = languagePair.target;
       document.getElementById("redmineDomain").value = items.redmineDomain || TB.REDMINE_DOMAIN;
       document.getElementById("backlogDomain").value = items.backlogDomain || TB.BACKLOG_DOMAIN;
       document.getElementById("manualFields").value = normalizeManualFields(items.manualFields);

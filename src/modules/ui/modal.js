@@ -1131,14 +1131,11 @@ function openBacklogModal({
         type: "GET_BACKLOG_USERS",
         projectKey,
       });
+      if (issueIdInput.value.trim() !== projectKey) return;
       backlogUsers = res.data || [];
-      console.log(`[TB-MODAL] Loaded ${backlogUsers.length} users for project ${projectKey}`);
-      if (backlogUsers.length > 0) {
-        console.log("[TB-MODAL] First user sample:", backlogUsers[0]);
-      }
     } catch (err) {
       console.warn("[TB-MODAL] Failed to load Backlog users:", err);
-      backlogUsers = [];
+      if (issueIdInput.value.trim() === projectKey) backlogUsers = [];
     }
   }
 
@@ -1219,8 +1216,11 @@ function openBacklogModal({
   // Load users when the Backlog issue ID field changes and looks like a valid key
   const loadUsersForIssueKey = (issueKey) => {
     const key = issueKey.trim();
+    selectedUserIds.length = 0;
+    backlogUsers = [];
+    updateAutoNotify();
     // Only attempt to load users if the key looks like a valid project key (contains a dash)
-    if (!key || !key.includes("-")) {
+    if (!/^[A-Z0-9_]+-\d+$/.test(key)) {
       // Clear user list but don't show hint - let @ typing trigger suggestions
       backlogUsers = [];
       backlogSuggestionsEl.innerHTML = "";
@@ -1234,18 +1234,12 @@ function openBacklogModal({
   };
 
   // Load users when the issue ID field changes
-  issueIdInput.addEventListener("input", () => {
+  issueIdInput.oninput = () => {
     loadUsersForIssueKey(issueIdInput.value);
-  });
+  };
 
-  // Also load on blur to catch final value
-  issueIdInput.addEventListener("blur", () => {
-    loadUsersForIssueKey(issueIdInput.value);
-  });
-
-  // DO NOT auto-load on modal open to avoid calling API with wrong project
-  // Users will be loaded when user types/changes the issue ID field
   backlogSuggestionsEl.innerHTML = "";
+  loadUsersForIssueKey(backlogIssueKey);
 
   updateAutoNotify();
 
@@ -1281,13 +1275,16 @@ function openBacklogModal({
         type: "GET_BACKLOG_ISSUE_INFO",
         issueKey: key,
       });
+      if (issueIdInput.value.trim() !== key) return;
       if (res?.data?.summary) {
         issueTitleInput.value = `${key} ${res.data.summary}`;
       } else {
         issueTitleInput.value = TB.MESSAGES.MODAL.ERROR_NOT_FOUND;
       }
     } catch (err) {
-      issueTitleInput.value = TB.MESSAGES.MODAL.ERROR_NOT_FOUND;
+      if (issueIdInput.value.trim() === key) {
+        issueTitleInput.value = TB.MESSAGES.MODAL.ERROR_NOT_FOUND;
+      }
       console.warn("[TB-MODAL] Failed to load Backlog issue info:", err);
     }
   };
@@ -1297,6 +1294,18 @@ function openBacklogModal({
   }
 
   issueIdInput.onblur = (e) => loadBacklogIssueInfo(e.target.value);
+
+  const safeClose = () => {
+    if (confirmButton.disabled) return;
+    clearTimeout(mentionTimeout);
+    closeModal();
+    onCancel?.();
+  };
+  modalElements.closeButton.onclick = safeClose;
+  modalElements.cancelButton.onclick = safeClose;
+  overlay.onclick = (event) => {
+    if (event.target === overlay) safeClose();
+  };
 
   modalElements.standardFields.hidden = false;
   modalElements.migrationFields.hidden = true;

@@ -27,7 +27,17 @@
  * @returns {Promise<object|void>} A promise that resolves with log details if in batch mode, otherwise void.
  * @throws {Error} Throws an error if any step fails, with a user-friendly message.
  */
-async function logTimeFromReport(
+async function logTimeFromReport(...args) {
+  if (args[3] === true) return executeReportTimeSync(...args);
+  return navigator.locks.request("b2r-report-time-write", { ifAvailable: true }, (lock) => {
+    if (!lock) {
+      throw new Error("Another Log Time operation is running. Try again after it finishes.");
+    }
+    return executeReportTimeSync(...args);
+  });
+}
+
+async function executeReportTimeSync(
   reportIssueId,
   isBatchOperation = false,
   spentOn = null,
@@ -51,6 +61,15 @@ async function logTimeFromReport(
     const description = reportIssue.description;
     const effectiveSpentOn = spentOn || extractReportDate(reportIssue.subject);
 
+    if (
+      !effectiveSpentOn ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(effectiveSpentOn) ||
+      new Date(`${effectiveSpentOn}T00:00:00Z`).toISOString().slice(0, 10) !== effectiveSpentOn ||
+      extractReportDate(reportIssue.subject) !== effectiveSpentOn
+    ) {
+      throw new Error("The report needs a date before time can be logged.");
+    }
+
     if (!description) {
       throw new Error(`Report issue #${reportIssueId} has no description.`);
     }
@@ -66,23 +85,6 @@ async function logTimeFromReport(
       throw new Error(globalThis.TB_GET_MESSAGE("report_preview_stale"));
     }
 
-    if (taskIds.length === 0) {
-      if (previewOnly) {
-        return {
-          date: effectiveSpentOn,
-          reportIssueId: String(reportIssueId),
-          tasks: [],
-          existingDailyHours: 0,
-          willReplaceDailyEntries: false,
-          dayAlreadyFull: false,
-        };
-      }
-      if (!isBatchOperation) {
-        throw new Error(`No task IDs found for user '${userLogin}'.`);
-      }
-      return createLogResult([], [], [], []); // Return empty result in batch mode for days off etc.
-    }
-
     const taskIssueDetails = previewOnly
       ? await Promise.all(
           taskIds.map((taskId) => getIssueDetails(redmineDomain, redmineApiKey, taskId))
@@ -93,155 +95,130 @@ async function logTimeFromReport(
       subject: taskIssueDetails[index]?.subject || "",
     }));
 
-    if (previewOnly) {
-      const existingEntries = effectiveSpentOn
-        ? await findTimeEntries(redmineDomain, redmineApiKey, {
-            spent_on: effectiveSpentOn,
-            user_id: currentUser.id,
-            limit: 100,
-          })
-        : [];
-      const existingDailyHours = sumTimeEntryHours(existingEntries);
-      const sameIssueSet = isSameIssueSet(existingEntries, taskIds);
-      const hoursByTask = distributeHours(8, taskIds.length);
-      return {
-        date: effectiveSpentOn,
-        reportIssueId: String(reportIssueId),
-        tasks: tasks.map((task, index) => ({
-          ...task,
-          hours: hoursByTask[index],
-          alreadyLogged: existingEntries.some(
-            (entry) => String(getTimeEntryIssueId(entry)) === String(task.id)
-          ),
-        })),
-        userId: String(currentUser.id),
-        existingEntriesSnapshot: snapshotTimeEntries(existingEntries),
-        existingDailyHours,
-        willReplaceDailyEntries: existingDailyHours >= 8 && !sameIssueSet,
-        dayAlreadyFull: existingDailyHours >= 8 && sameIssueSet,
-      };
+    const existingDailyEntries = await findTimeEntries(redmineDomain, redmineApiKey, {
+      spent_on: effectiveSpentOn,
+      user_id: currentUser.id,
+      limit: 100,
+    });
+    if (
+      existingDailyEntries.some(
+        (entry) => !isSafeDailyUserTimeEntry(entry, currentUser, effectiveSpentOn)
+      )
+    ) {
+      throw new Error("Redmine returned time entries outside the current user and report date.");
     }
-
-    // 6. Calculate hours and log time for each task
-    const totalHours = 8;
-    const hoursByTask = distributeHours(totalHours, taskIds.length);
-    const timeEntryComment = "";
+    const preview = planReportSync(
+      {
+        date: effectiveSpentOn,
+        redmineDomain,
+        reportIssueId: String(reportIssueId),
+        userId: String(currentUser.id),
+        tasks,
+        entries: existingDailyEntries,
+        existingEntriesSnapshot: snapshotTimeEntries(existingDailyEntries),
+      },
+      expectedPreview?.selectedEntryIds || []
+    );
+    if (previewOnly) return preview;
+    if (
+      !expectedPreview ||
+      !Number.isFinite(expectedPreview.confirmedAt) ||
+      Date.now() - expectedPreview.confirmedAt > 300000 ||
+      expectedPreview.confirmedAt > Date.now() ||
+      expectedPreview.redmineDomain !== redmineDomain ||
+      expectedPreview.reportIssueId !== String(reportIssueId) ||
+      expectedPreview.existingEntriesSnapshot !== preview.existingEntriesSnapshot ||
+      JSON.stringify(expectedPreview.operations) !== JSON.stringify(preview.operations)
+    ) {
+      throw new Error(globalThis.TB_GET_MESSAGE("report_preview_stale"));
+    }
+    if (!taskIds.length) throw new Error(globalThis.TB_GET_MESSAGE("report_no_tasks"));
     const activities = await getTimeEntryActivities(redmineDomain, redmineApiKey);
     const desiredEntries = await buildDesiredTimeEntries(
       redmineDomain,
       redmineApiKey,
       taskIds,
-      hoursByTask,
+      preview.tasks.map((task) => task.hours),
       currentUser,
       activities
     );
     const loggedTaskIds = [];
-    const skippedTaskIds = [];
-    const failedTasks = [];
-
-    if (effectiveSpentOn) {
-      const existingDailyEntries = await findTimeEntries(redmineDomain, redmineApiKey, {
-        spent_on: effectiveSpentOn,
-        user_id: currentUser.id,
-        limit: 100,
-      });
-      const existingDailyHours = sumTimeEntryHours(existingDailyEntries);
-
-      if (
-        expectedPreview &&
-        expectedPreview.existingEntriesSnapshot !== snapshotTimeEntries(existingDailyEntries)
-      ) {
-        throw new Error(globalThis.TB_GET_MESSAGE("report_preview_stale"));
-      }
-
-      // Monthly confirmation must never replace entries that were outside the approved preview.
-      if (
-        expectedPreview &&
-        existingDailyHours >= totalHours &&
-        !isSameIssueSet(existingDailyEntries, taskIds)
-      ) {
-        throw new Error(globalThis.TB_GET_MESSAGE("report_preview_stale"));
-      }
-
-      if (existingDailyHours >= totalHours) {
-        if (isSameIssueSet(existingDailyEntries, taskIds)) {
-          return createLogResult(taskIds, [], taskIds, [], {
-            dayAlreadyFull: true,
-            existingDailyHours,
-          });
-        }
-
-        await upsertDailyTimeEntries(
-          redmineDomain,
-          redmineApiKey,
-          existingDailyEntries,
-          desiredEntries,
-          effectiveSpentOn,
-          timeEntryComment,
-          currentUser
-        );
-
-        return createLogResult(taskIds, taskIds, [], [], {
-          dayUpserted: true,
-          existingDailyHours,
-        });
-      }
-    }
-
-    for (const [index, taskId] of taskIds.entries()) {
+    // Reductions precede increases. Stop on the first failure; a fresh preview
+    // reads actual server state before retrying any partially completed plan.
+    for (const operation of preview.operations) {
       try {
-        let existingEntries = [];
-        if (effectiveSpentOn) {
-          existingEntries = await findTimeEntries(redmineDomain, redmineApiKey, {
-            issue_id: taskId,
-            spent_on: effectiveSpentOn,
-            user_id: currentUser.id,
-            limit: 100,
+        if (operation.type === "delete") {
+          await deleteTimeEntry(redmineDomain, redmineApiKey, operation.entryId, {
+            entry: existingDailyEntries.find((entry) => entry.id === operation.entryId),
+            reportId: String(reportIssueId),
+            date: effectiveSpentOn,
+            domain: redmineDomain,
+            confirmedAt: expectedPreview.confirmedAt,
+            allowLegacy: expectedPreview.selectedEntryIds.includes(String(operation.entryId)),
           });
+        } else {
+          const originalEntry = existingDailyEntries.find(
+            (entry) => entry.id === operation.entryId
+          );
+          const activity =
+            originalEntry?.activity?.id ||
+            originalEntry?.activity_id ||
+            desiredEntries[taskIds.indexOf(operation.taskId)]?.activityId;
+          if (operation.type === "update") {
+            await updateTimeEntry(
+              redmineDomain,
+              redmineApiKey,
+              operation.entryId,
+              operation.taskId,
+              operation.hours,
+              preview.marker,
+              effectiveSpentOn,
+              activity,
+              {
+                entry: originalEntry,
+                reportId: String(reportIssueId),
+                date: effectiveSpentOn,
+                domain: redmineDomain,
+                confirmedAt: expectedPreview.confirmedAt,
+                allowLegacy: expectedPreview.selectedEntryIds.includes(String(operation.entryId)),
+                targetIssueId: operation.taskId,
+              }
+            );
+          } else {
+            await logTimeEntry(
+              redmineDomain,
+              redmineApiKey,
+              operation.taskId,
+              operation.hours,
+              preview.marker,
+              effectiveSpentOn,
+              activity
+            );
+          }
+          loggedTaskIds.push(operation.taskId);
         }
-
-        const alreadyLogged = existingEntries.length > 0;
-
-        if (alreadyLogged) {
-          skippedTaskIds.push(taskId);
-          continue;
-        }
-
-        const desiredEntry = desiredEntries[index];
-
-        await logTimeEntry(
-          redmineDomain,
-          redmineApiKey,
-          taskId,
-          hoursByTask[index],
-          timeEntryComment,
-          effectiveSpentOn,
-          desiredEntry.activityId
-        );
-        loggedTaskIds.push(taskId);
       } catch (error) {
-        failedTasks.push({ taskId, message: error.message });
+        error.logResult = createLogResult(
+          taskIds,
+          loggedTaskIds,
+          [],
+          [{ taskId: operation.taskId, message: error.message }]
+        );
+        throw error;
       }
     }
-
-    if (failedTasks.length > 0) {
-      const error = new Error(
-        `Failed to log ${failedTasks.length}/${taskIds.length} task(s): ${failedTasks
-          .map((task) => `#${task.taskId} (${task.message})`)
-          .join(", ")}`
-      );
-      error.logResult = createLogResult(taskIds, loggedTaskIds, skippedTaskIds, failedTasks);
-      throw error;
-    }
-
-    // 7. Return task IDs for batch mode or show alert for single mode
-    if (isBatchOperation) {
-      return createLogResult(taskIds, loggedTaskIds, skippedTaskIds, failedTasks);
-    } else {
-      const successMessage = `Successfully logged a total of ${totalHours} hours across ${taskIds.length} tasks: #${taskIds.join(", #")}.`;
-      console.log(successMessage);
-      alert(successMessage); // Simple feedback for single mode
-    }
+    return createLogResult(
+      taskIds,
+      [...new Set(loggedTaskIds)],
+      taskIds.filter((id) => !loggedTaskIds.includes(id)),
+      [],
+      {
+        existingDailyHours: preview.preservedHours,
+        synchronized: true,
+        operations: preview.operations,
+        preservedHours: preview.preservedHours,
+      }
+    );
   } catch (error) {
     console.error("Error during 'Log Time From Report' process:", error);
     if (!isBatchOperation) {
@@ -542,16 +519,81 @@ function isSameReportUser(reportUser, currentUserLogin) {
 }
 
 function distributeHours(totalHours, taskCount) {
-  const unit = 0.5;
-  const totalUnits = Math.round(totalHours / unit);
+  if (!taskCount) return [];
+  const unit = Number.isInteger(totalHours * 2) && totalHours * 2 >= taskCount ? 0.5 : 0.01;
+  const totalUnits = Math.floor(totalHours / unit + 1e-8);
   const baseUnits = Math.floor(totalUnits / taskCount);
   let remainingUnits = totalUnits;
 
   return Array.from({ length: taskCount }, (_, index) => {
     const units = index === taskCount - 1 ? remainingUnits : Math.min(baseUnits, remainingUnits);
     remainingUnits -= units;
-    return units * unit;
+    return Math.round(units * unit * 100) / 100;
   });
+}
+
+function planReportSync(preview, selectedEntryIds = []) {
+  const marker = `[B2R report:${preview.reportIssueId}]`;
+  const selected = new Set(selectedEntryIds.map(String));
+  const entries = preview.entries;
+  if (entries.some((entry) => !Number.isFinite(Number(entry.hours)) || Number(entry.hours) < 0)) {
+    throw new Error("Redmine returned invalid logged hours.");
+  }
+  const candidates = entries.filter(
+    (entry) => !String(entry.comments || "").startsWith("[B2R report:")
+  );
+  if ([...selected].some((id) => !candidates.some((entry) => String(entry.id) === id))) {
+    throw new Error(globalThis.TB_GET_MESSAGE("report_preview_stale"));
+  }
+  const managed = entries.filter(
+    (entry) => entry.comments === marker || selected.has(String(entry.id))
+  );
+  const preservedHours = sumTimeEntryHours(entries.filter((entry) => !managed.includes(entry)));
+  const budget = Math.floor(Math.max(0, 8 - preservedHours) * 100 + 1e-8) / 100;
+  const hours = distributeHours(budget, preview.tasks.length);
+  const available = [...managed];
+  const operations = [];
+  const tasks = preview.tasks.map((task, index) => {
+    const match = available.findIndex((entry) => getTimeEntryIssueId(entry) === String(task.id));
+    const entry = match < 0 ? null : available.splice(match, 1)[0];
+    if (hours[index] > 0) {
+      if (!entry || Number(entry.hours) !== hours[index] || entry.comments !== marker) {
+        operations.push({
+          type: entry ? "update" : "create",
+          entryId: entry?.id || null,
+          taskId: String(task.id),
+          hours: hours[index],
+          oldHours: Number(entry?.hours || 0),
+        });
+      }
+    } else if (entry) available.push(entry);
+    return { ...task, hours: hours[index], alreadyLogged: false };
+  });
+  // An empty/unparsed report must never erase a day's entries.
+  if (tasks.length) {
+    for (const entry of available) {
+      operations.push({
+        type: "delete",
+        entryId: entry.id,
+        taskId: getTimeEntryIssueId(entry),
+        hours: 0,
+        oldHours: Number(entry.hours),
+      });
+    }
+  }
+  operations.sort((a, b) => a.hours - a.oldHours - (b.hours - b.oldHours));
+  return {
+    ...preview,
+    tasks,
+    marker,
+    candidates,
+    selectedEntryIds: [...selected],
+    operations,
+    preservedHours,
+    existingDailyHours: sumTimeEntryHours(entries),
+    willReplaceDailyEntries: false,
+    dayAlreadyFull: false,
+  };
 }
 
 async function buildDesiredTimeEntries(
@@ -565,6 +607,10 @@ async function buildDesiredTimeEntries(
   const entries = [];
 
   for (const [index, taskId] of taskIds.entries()) {
+    if (hoursByTask[index] <= 0) {
+      entries.push(null);
+      continue;
+    }
     const taskIssue = await getIssueDetails(redmineDomain, redmineApiKey, taskId);
     entries.push({
       taskId,
@@ -574,74 +620,6 @@ async function buildDesiredTimeEntries(
   }
 
   return entries;
-}
-
-async function upsertDailyTimeEntries(
-  redmineDomain,
-  redmineApiKey,
-  existingEntries,
-  desiredEntries,
-  spentOn,
-  comments,
-  currentUser
-) {
-  const safeExistingEntries = existingEntries.filter((entry) =>
-    isSafeDailyUserTimeEntry(entry, currentUser, spentOn)
-  );
-  const skippedUnsafeEntries = existingEntries.length - safeExistingEntries.length;
-
-  if (skippedUnsafeEntries > 0) {
-    throw new Error(
-      `Refused to upsert daily time entries because ${skippedUnsafeEntries} existing entr${skippedUnsafeEntries === 1 ? "y is" : "ies are"} not confirmed for the current user/date.`
-    );
-  }
-
-  const sortedExistingEntries = [...safeExistingEntries].sort(
-    (a, b) => Number(a.id) - Number(b.id)
-  );
-
-  for (const [index, desiredEntry] of desiredEntries.entries()) {
-    const existingEntry = sortedExistingEntries[index];
-
-    if (existingEntry) {
-      await updateTimeEntry(
-        redmineDomain,
-        redmineApiKey,
-        existingEntry.id,
-        desiredEntry.taskId,
-        desiredEntry.hours,
-        comments,
-        spentOn,
-        desiredEntry.activityId
-      );
-    } else {
-      await logTimeEntry(
-        redmineDomain,
-        redmineApiKey,
-        desiredEntry.taskId,
-        desiredEntry.hours,
-        comments,
-        spentOn,
-        desiredEntry.activityId
-      );
-    }
-  }
-
-  const extraEntries = sortedExistingEntries.slice(desiredEntries.length);
-  for (const extraEntry of extraEntries) {
-    await deleteTimeEntry(redmineDomain, redmineApiKey, extraEntry.id);
-  }
-}
-
-function isSameIssueSet(existingEntries, taskIds) {
-  const existingIssueIds = new Set(existingEntries.map(getTimeEntryIssueId).filter(Boolean));
-  const reportIssueIds = new Set(taskIds.map(String));
-
-  if (existingIssueIds.size !== reportIssueIds.size) {
-    return false;
-  }
-
-  return [...reportIssueIds].every((issueId) => existingIssueIds.has(issueId));
 }
 
 function isSafeDailyUserTimeEntry(entry, currentUser, spentOn) {
@@ -711,6 +689,7 @@ function snapshotTimeEntries(entries) {
         hours: String(entry.hours),
         activityId: String(entry.activity?.id ?? entry.activity_id ?? ""),
         updatedOn: entry.updated_on || "",
+        comments: entry.comments || "",
       }))
       .sort((a, b) => a.id.localeCompare(b.id))
   );

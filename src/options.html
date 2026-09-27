@@ -278,6 +278,18 @@
         max-width: 100%;
       }
 
+      #translationSourceLanguage,
+      #translationTargetLanguage {
+        width: 100%;
+        min-height: 44px;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        color: var(--text);
+        background: var(--panel);
+        font: inherit;
+      }
+
       .field textarea {
         width: 100%;
       }
@@ -845,6 +857,67 @@
               <span data-i18n="options_primary_ai_section">🤖 Cấu hình AI Chính (Primary)</span>
             </summary>
             <div class="grid" style="padding-top: 12px; gap: 12px">
+              <div class="field">
+                <div
+                  class="grid"
+                  style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px"
+                >
+                  <div>
+                    <label for="translationSourceLanguage" data-i18n="options_translation_source"
+                      >Source language</label
+                    >
+                    <select id="translationSourceLanguage">
+                      <option value="auto" data-i18n="options_translation_auto">Auto detect</option>
+                      <option value="ja" data-i18n="options_translation_ja">Japanese</option>
+                      <option value="vi" data-i18n="options_translation_vi">Vietnamese</option>
+                      <option value="en" data-i18n="options_translation_en">English</option>
+                      <option value="ko" data-i18n="options_translation_ko">Korean</option>
+                      <option value="zh-CN" data-i18n="options_translation_zh_cn">
+                        Chinese (Simplified)
+                      </option>
+                      <option value="zh-TW" data-i18n="options_translation_zh_tw">
+                        Chinese (Traditional)
+                      </option>
+                      <option value="th" data-i18n="options_translation_th">Thai</option>
+                      <option value="id" data-i18n="options_translation_id">Indonesian</option>
+                      <option value="fr" data-i18n="options_translation_fr">French</option>
+                      <option value="de" data-i18n="options_translation_de">German</option>
+                      <option value="es" data-i18n="options_translation_es">Spanish</option>
+                      <option value="pt" data-i18n="options_translation_pt">Portuguese</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label for="translationTargetLanguage" data-i18n="options_translation_target"
+                      >Target language</label
+                    >
+                    <select id="translationTargetLanguage">
+                      <option value="vi" data-i18n="options_translation_vi">Vietnamese</option>
+                      <option value="ja" data-i18n="options_translation_ja">Japanese</option>
+                      <option value="en" data-i18n="options_translation_en">English</option>
+                      <option value="ko" data-i18n="options_translation_ko">Korean</option>
+                      <option value="zh-CN" data-i18n="options_translation_zh_cn">
+                        Chinese (Simplified)
+                      </option>
+                      <option value="zh-TW" data-i18n="options_translation_zh_tw">
+                        Chinese (Traditional)
+                      </option>
+                      <option value="th" data-i18n="options_translation_th">Thai</option>
+                      <option value="id" data-i18n="options_translation_id">Indonesian</option>
+                      <option value="fr" data-i18n="options_translation_fr">French</option>
+                      <option value="de" data-i18n="options_translation_de">German</option>
+                      <option value="es" data-i18n="options_translation_es">Spanish</option>
+                      <option value="pt" data-i18n="options_translation_pt">Portuguese</option>
+                    </select>
+                  </div>
+                </div>
+                <p
+                  data-i18n="options_translation_help"
+                  style="margin: 6px 0 0; font-size: 12px; color: var(--muted)"
+                >
+                  Default: Japanese → Vietnamese. Applies to Backlog → Redmine translation and issue
+                  migration.
+                </p>
+              </div>
               <div class="field" style="margin-bottom: 0">
                 <label for="primaryProvider" data-i18n="options_provider">Nhà cung cấp</label>
                 <select
@@ -1321,8 +1394,8 @@
         </div>
 
         <div id="supportNote" class="note">
-          Hỗ trợ đồng bộ 2 chiều: <strong>Backlog → Redmine</strong> (Dịch Nhật/Anh sang Việt) và
-          <strong>Redmine → Backlog</strong> (Lọc lấy nội dung tiếng Nhật).
+          Hỗ trợ đồng bộ 2 chiều: <strong>Backlog → Redmine</strong> (dịch theo cặp ngôn ngữ đã
+          chọn) và <strong>Redmine → Backlog</strong> (Lọc lấy nội dung tiếng Nhật).
         </div>
       </div>
 

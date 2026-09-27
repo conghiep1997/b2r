@@ -3,7 +3,7 @@
  * Loads modules and coordinates message handling between content scripts and external APIs.
  */
 
-/* global TB_LOGGER, TB_SYNC_ACTIVITY, getBacklogIssueInfo, getBacklogUsers, testModelAvailability */
+/* global TB_LOGGER, TB_SYNC_ACTIVITY, getBacklogIssueInfo, getBacklogUsers, testModelAvailability, deleteTimeEntry, updateTimeEntry */
 
 importScripts(
   "modules/utils/version.js",
@@ -283,13 +283,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     },
     GET_BACKLOG_ISSUE_INFO: async (msg) => {
       const settings = await getSettings();
-      assertTrustedBacklogSender(sender, settings.backlogDomain);
+      assertTrustedBacklogOrRedmineSender(sender, settings);
       assertSettings(settings, ["backlogApiKey"]);
       return getBacklogIssueInfo(msg.issueKey);
     },
     GET_BACKLOG_USERS: async (msg) => {
       const settings = await getSettings();
-      assertTrustedBacklogSender(sender, settings.backlogDomain);
+      assertTrustedBacklogOrRedmineSender(sender, settings);
       assertSettings(settings, ["backlogApiKey"]);
       return getBacklogUsers(msg.projectKey);
     },
@@ -360,7 +360,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   const handler = handlers[message.type];
   if (handler) {
-    Promise.resolve(handler(message))
+    Promise.resolve()
+      .then(() => handler(message))
       .then((data) => sendResponse({ ok: true, data }))
       .catch((err) => {
         const errorString = err instanceof Error ? err.message : String(err || "Unknown error");
@@ -425,6 +426,8 @@ async function getSettings() {
     "primaryModel",
     "fallbackProvider",
     "fallbackModel",
+    "translationSourceLanguage",
+    "translationTargetLanguage",
     "defaultProjectId",
     "reportProjectId",
     "manualFields",
@@ -469,6 +472,7 @@ async function getSettings() {
     ? await decryptData(items.fallbackOpenrouterModels)
     : "";
 
+  const translationLanguages = TB.PROMPTS.resolveLanguagePair(items);
   const decryptedSettings = {
     redmineDomain: items.redmineDomain || TB.REDMINE_DOMAIN,
     redmineApiKey: await decryptData(items.redmineApiKey ?? ""),
@@ -478,6 +482,8 @@ async function getSettings() {
     primaryModel: items.primaryModel ?? TB.DEFAULT_PRIMARY_MODEL,
     fallbackProvider: items.fallbackProvider || TB.DEFAULT_FALLBACK_PROVIDER,
     fallbackModel: items.fallbackModel ?? TB.DEFAULT_FALLBACK_MODEL,
+    translationSourceLanguage: translationLanguages.source,
+    translationTargetLanguage: translationLanguages.target,
     geminiApiKey: await decryptData(items.geminiApiKey ?? ""), // Legacy fallback
     geminiApiKeys: geminiApiKeysStr.split("\n").filter(Boolean),
     geminiModels: geminiModelsStr.split("\n").filter(Boolean),
@@ -593,6 +599,7 @@ async function handleFetchMetadata(endpoint) {
   const response = await timeoutFetch(
     url,
     {
+      redirect: "error",
       headers: { "X-Redmine-API-Key": settings.redmineApiKey, Accept: "application/json" },
     },
     10000
@@ -615,6 +622,7 @@ async function handleFetchProjectsWithCredentials(domain, apiKey) {
   const response = await timeoutFetch(
     new URL("/projects.json?limit=100", domain).toString(),
     {
+      redirect: "error",
       headers: { "X-Redmine-API-Key": apiKey, Accept: "application/json" },
     },
     10000
@@ -632,7 +640,7 @@ async function fetchRedmineProjectById(domain, apiKey, projectId) {
   const safeProjectId = encodeURIComponent(String(projectId));
   const response = await timeoutFetch(
     new URL(`/projects/${safeProjectId}.json`, domain).toString(),
-    { headers: { "X-Redmine-API-Key": apiKey, Accept: "application/json" } },
+    { redirect: "error", headers: { "X-Redmine-API-Key": apiKey, Accept: "application/json" } },
     10000
   );
   if (!response.ok) throw new Error(`Redmine project request failed (${response.status}).`);
@@ -703,24 +711,16 @@ function assertTrustedRedmineSender(sender, redmineDomain) {
 }
 
 function assertTrustedBacklogSender(sender, backlogDomain = "") {
-  const senderUrl = sender?.tab?.url || sender?.url || "";
+  const senderUrl = sender?.url || sender?.tab?.url || "";
   try {
-    const host = new URL(senderUrl).hostname.toLowerCase();
-    if (host.endsWith(".backlog.com") || host.endsWith(".backlog.jp")) {
+    const configured = getTrustedBacklogApiOrigin(backlogDomain || TB.BACKLOG_DOMAIN);
+    if (new URL(senderUrl).origin === configured) {
       return;
-    }
-    if (backlogDomain) {
-      const configured = String(backlogDomain).includes("://")
-        ? backlogDomain
-        : `https://${backlogDomain}`;
-      if (new URL(configured).hostname.toLowerCase() === host) {
-        return;
-      }
     }
   } catch (_error) {
     // fall through
   }
-  throw new Error("This operation is only available from Backlog pages.");
+  throw new Error("This operation requires the Backlog workspace configured in settings.");
 }
 
 function assertTrustedBacklogOrRedmineSender(sender, settings) {
@@ -762,6 +762,44 @@ async function handleRedmineAuthorizedFetch(settings, msg) {
   if (!["GET", "POST", "PUT", "DELETE"].includes(method)) {
     throw new Error("Unsupported Redmine method.");
   }
+  if (method === "DELETE") {
+    const match = /^\/time_entries\/(\d+)\.json$/.exec(msg.path);
+    if (!match) throw new Error("Deletion is only allowed for an approved time entry.");
+    await deleteTimeEntry(
+      settings.redmineDomain,
+      settings.redmineApiKey,
+      match[1],
+      msg.deletionApproval
+    );
+    return { status: 204, payload: null, text: "" };
+  }
+  if (method === "PUT" && /^\/time_entries\/\d+\.json$/.test(msg.path)) {
+    const body = JSON.parse(msg.body || "null")?.time_entry;
+    const approval = msg.mutationApproval;
+    if (
+      !body ||
+      !approval ||
+      String(body.issue_id) !== String(approval.targetIssueId) ||
+      body.spent_on !== approval.date ||
+      body.comments !== `[B2R report:${approval.reportId}]` ||
+      !Number.isFinite(Number(body.hours)) ||
+      Number(body.hours) < 0
+    ) {
+      throw new Error("Time-entry update does not match the approved plan.");
+    }
+    await updateTimeEntry(
+      settings.redmineDomain,
+      settings.redmineApiKey,
+      msg.path.match(/\d+/)[0],
+      body.issue_id,
+      body.hours,
+      body.comments,
+      body.spent_on,
+      body.activity_id,
+      approval
+    );
+    return { status: 204, payload: null, text: "" };
+  }
 
   const url = buildRedmineUrl(settings.redmineDomain, msg.path);
   const headers = {
@@ -776,6 +814,7 @@ async function handleRedmineAuthorizedFetch(settings, msg) {
     url,
     {
       method,
+      redirect: "error",
       headers,
       body: msg.body || undefined,
     },

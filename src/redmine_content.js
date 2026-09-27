@@ -1,4 +1,4 @@
-/* globals getTrackers, findIssues, findTimeEntries, deleteTimeEntry, getCurrentUser, logTimeFromReport */
+/* globals getTrackers, findIssues, findTimeEntries, deleteTimeEntry, getCurrentUser, logTimeFromReport, planReportSync */
 
 globalThis.__B2R_REDMINE_LOADED__ = true;
 
@@ -104,6 +104,7 @@ async function logTimeForMonth() {
   const currentMonthLabel = `${new Date().getMonth() + 1}/${new Date().getFullYear()}`;
   openMonthlyLogModal({
     monthLabel: currentMonthLabel,
+    redmineDomain,
     onPreview: async (modalInstance) => {
       const {
         previewButton,
@@ -156,7 +157,9 @@ async function logTimeForMonth() {
           const date = extractJapaneseReportDate(issue.subject);
           if (!date) continue;
           try {
-            const preview = await logTimeFromReport(issue.id, true, date, true);
+            const initialPreview = await logTimeFromReport(issue.id, true, date, true);
+            const preview = await confirmReportSync(initialPreview, [], true);
+            if (!preview) throw new Error(reportMessage("report_sync_cancelled"));
             previews.push({ ...preview, reportSubject: issue.subject });
           } catch (error) {
             previews.push({
@@ -197,7 +200,7 @@ async function logTimeForMonth() {
                 ? reportMessage("report_day_full", { hours: preview.existingDailyHours })
                 : preview.tasks.some((task) => task.alreadyLogged)
                   ? reportMessage("report_preview_duplicate")
-                  : reportMessage("report_preview_ready");
+                  : reportSyncSummary(preview);
           row.append(dateCell, reportCell, taskCell, hoursCell, statusCell);
           resultBody.appendChild(row);
         }
@@ -343,12 +346,34 @@ async function logTimeForMonth() {
           const dateLabel = issue.date || `issue #${issue.reportIssueId}`;
           try {
             updateProgress(dateLabel, "date");
+            const fresh = await logTimeFromReport(issue.reportIssueId, true, dateLabel, true);
+            const currentPlan = planReportSync(fresh, issue.selectedEntryIds);
+            if (
+              fresh.existingEntriesSnapshot !== issue.existingEntriesSnapshot ||
+              JSON.stringify(currentPlan.operations) !== JSON.stringify(issue.operations)
+            ) {
+              throw new Error(reportMessage("report_preview_stale"));
+            }
+            const deletions = currentPlan.operations.filter((op) => op.type === "delete");
+            if (
+              deletions.length &&
+              !confirmTimeEntryDeletion(
+                deletions.length,
+                deletions
+                  .map((op) => `log #${op.entryId} / #${op.taskId} / ${op.oldHours}h`)
+                  .join("\n")
+              )
+            ) {
+              updateProgress(`${dateLabel}: ${reportMessage("report_sync_cancelled")}`, "skip");
+              continue;
+            }
+            const approvedPlan = { ...issue, confirmedAt: Date.now() };
             const logResult = await logTimeFromReport(
               issue.reportIssueId,
               true,
               dateLabel,
               false,
-              issue
+              approvedPlan
             );
 
             if (logResult.taskIds.length > 0) {
@@ -490,6 +515,7 @@ function copyTextWithSelectionFallback(text) {
 }
 
 function getLogResultStatusText(logResult) {
+  if (logResult.synchronized) return reportSyncSummary(logResult);
   if (logResult.dayUpserted) {
     return `Updated: replaced existing ${logResult.existingDailyHours}h`;
   }
@@ -502,6 +528,13 @@ function getLogResultStatusText(logResult) {
 }
 
 async function deleteCurrentMonthSpentTime(redmineDomain, redmineApiKey, updateProgress) {
+  return navigator.locks.request("b2r-report-time-write", { ifAvailable: true }, (lock) => {
+    if (!lock) throw new Error(reportMessage("report_delete_busy"));
+    return executeMonthlyTimeDelete(redmineDomain, redmineApiKey, updateProgress);
+  });
+}
+
+async function executeMonthlyTimeDelete(redmineDomain, redmineApiKey, updateProgress) {
   const currentUser = await getCurrentUser(redmineDomain, redmineApiKey);
   const now = new Date();
   const year = now.getFullYear();
@@ -526,14 +559,37 @@ async function deleteCurrentMonthSpentTime(redmineDomain, redmineApiKey, updateP
           `${reportMessage("report_entry_not_verified")} #${entry?.id || "unknown"} (${spentOn}).`
         );
       }
-      entriesToDelete.push(entry);
+      if (/^\[B2R report:\d+\]$/.test(entry.comments || "")) entriesToDelete.push(entry);
     }
   }
 
   updateProgress(`${reportMessage("report_entries_to_delete")} ${entriesToDelete.length}.`);
+  if (!entriesToDelete.length) return 0;
+  const detail = entriesToDelete
+    .map(
+      (entry) =>
+        `${entry.spent_on}: log #${entry.id} / #${entry.issue?.id ?? entry.issue_id} / ${entry.hours}h`
+    )
+    .join("\n");
+  if (!confirmTimeEntryDeletion(entriesToDelete.length, detail)) {
+    throw new Error(reportMessage("report_sync_cancelled"));
+  }
+  const confirmedAt = Date.now();
+  let deleted = 0;
 
   for (const entry of entriesToDelete) {
-    await deleteTimeEntry(redmineDomain, redmineApiKey, entry.id);
+    await deleteTimeEntry(redmineDomain, redmineApiKey, entry.id, {
+      entry,
+      domain: redmineDomain,
+      date: entry.spent_on,
+      reportId: entry.comments.match(/^\[B2R report:(\d+)\]$/)[1],
+      confirmedAt,
+      allowLegacy: false,
+    });
+    deleted += 1;
+    updateProgress(
+      `${reportMessage("report_deleted_count", { count: deleted })} / ${entriesToDelete.length}`
+    );
   }
 
   return entriesToDelete.length;
@@ -550,7 +606,7 @@ function isSafeMonthlyDeleteEntry(entry, currentUser, spentOn) {
   );
 }
 
-function openMonthlyLogModal({ monthLabel, onPreview, onStart, onDelete }) {
+function openMonthlyLogModal({ monthLabel, redmineDomain, onPreview, onStart, onDelete }) {
   const overlay = document.createElement("div");
   overlay.className = "tb-monthly-log-overlay";
   overlay.innerHTML = `
@@ -583,6 +639,7 @@ function openMonthlyLogModal({ monthLabel, onPreview, onStart, onDelete }) {
         </div>
       </div>
       <footer class="tb-monthly-log-footer">
+        <button type="button" id="tb-time-backups" class="tb-btn tb-btn-secondary">${reportMessage("report_export_backups")}</button>
         <button type="button" id="tb-monthly-log-delete" class="tb-btn tb-btn-danger">${reportMessage("report_delete_spent_time")}</button>
         <button type="button" id="tb-monthly-log-copy" class="tb-btn tb-btn-secondary" disabled>${reportMessage("report_copy_table")}</button>
         <button type="button" id="tb-monthly-log-preview" class="tb-btn tb-btn-secondary">${reportMessage("report_check_tasks")}</button>
@@ -592,6 +649,29 @@ function openMonthlyLogModal({ monthLabel, onPreview, onStart, onDelete }) {
   `;
 
   document.body.appendChild(overlay);
+  overlay.querySelector("#tb-time-backups").onclick = async () => {
+    try {
+      const stored = await chrome.storage.local.get(null);
+      const backups = Object.entries(stored)
+        .filter(
+          ([key, value]) =>
+            key.startsWith("b2r_time_backup:") &&
+            value?.domain &&
+            new URL(value.domain).origin === new URL(redmineDomain).origin
+        )
+        .map(([, value]) => value);
+      const url = URL.createObjectURL(
+        new Blob([JSON.stringify(backups, null, 2)], { type: "application/json" })
+      );
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "b2r-time-entry-backups.json";
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (error) {
+      alert(error.message);
+    }
+  };
   document.body.classList.add("tb-modal-open");
 
   const closeButton = overlay.querySelector(".tb-monthly-log-close");
@@ -702,20 +782,148 @@ async function injectLogTimeButton() {
 
     button.onclick = async (e) => {
       e.preventDefault();
+      if (button.classList.contains("disabled")) return;
       button.innerText = reportMessage("report_processing");
       button.classList.add("disabled");
       try {
-        await logTimeFromReport(issueId, false); // false for single, interactive mode
+        const initialPreview = await logTimeFromReport(issueId, true, null, true);
+        const preview = await confirmReportSync(initialPreview);
+        if (!preview) {
+          button.innerText = reportMessage("report_log_8h");
+          return;
+        }
+        await logTimeFromReport(issueId, false, preview.date, false, preview);
         button.innerText = reportMessage("report_success");
       } catch (error) {
         button.innerText = reportMessage("report_error_check_console");
         console.error("Failed to log time from report:", error);
+      } finally {
+        button.classList.remove("disabled");
       }
     };
 
     Object.assign(button.style, { marginRight: "8px", fontWeight: "bold" });
     container.prepend(button);
   }
+}
+
+function reportSyncSummary(preview) {
+  return reportMessage("report_sync_summary", {
+    preserved: preview.preservedHours,
+    create: preview.operations.filter((op) => op.type === "create").length,
+    update: preview.operations.filter((op) => op.type === "update").length,
+    delete: preview.operations.filter((op) => op.type === "delete").length,
+  });
+}
+
+function confirmReportSync(
+  initialPreview,
+  initialSelectedIds = [],
+  deferDeletionConfirmation = false
+) {
+  if (!initialPreview.tasks.length) return Promise.resolve(initialPreview);
+  return new Promise((resolve) => {
+    const previousFocus = document.activeElement;
+    const dialog = document.createElement("dialog");
+    Object.assign(dialog.style, {
+      maxWidth: "680px",
+      width: "85vw",
+      maxHeight: "85vh",
+      overflow: "auto",
+      padding: "24px",
+    });
+    const heading = document.createElement("h2");
+    heading.id = "tb-report-sync-title";
+    heading.textContent = `${reportMessage("report_sync_title")} #${initialPreview.reportIssueId} — ${initialPreview.date}`;
+    dialog.setAttribute("aria-labelledby", heading.id);
+    const hint = document.createElement("p");
+    hint.textContent = reportMessage("report_sync_hint");
+    const choices = document.createElement("fieldset");
+    const legend = document.createElement("legend");
+    legend.textContent = reportMessage("report_sync_legacy");
+    choices.append(legend);
+    const selected = new Set(initialSelectedIds.map(String));
+    let preview = initialPreview;
+    const summary = document.createElement("p");
+    summary.setAttribute("aria-live", "polite");
+    const operations = document.createElement("pre");
+    operations.style.whiteSpace = "pre-wrap";
+    const render = () => {
+      preview = planReportSync(initialPreview, [...selected]);
+      summary.textContent = reportSyncSummary(preview);
+      operations.textContent =
+        preview.operations
+          .map(
+            (op) =>
+              `${reportMessage(`report_sync_${op.type}`)} ${op.entryId ? `log #${op.entryId} / ` : ""}#${op.taskId}: ${op.oldHours}h → ${op.hours}h`
+          )
+          .join("\n") || reportMessage("report_sync_no_changes");
+    };
+    for (const entry of initialPreview.candidates) {
+      const label = document.createElement("label");
+      label.style.display = "block";
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.checked = selected.has(String(entry.id));
+      checkbox.onchange = () => {
+        if (checkbox.checked) selected.add(String(entry.id));
+        else selected.delete(String(entry.id));
+        render();
+      };
+      label.append(
+        checkbox,
+        document.createTextNode(
+          ` log #${entry.id} / #${entry.issue?.id ?? entry.issue_id ?? "—"}: ${entry.hours}h — ${entry.comments || ""}`
+        )
+      );
+      choices.append(label);
+    }
+    choices.hidden = !initialPreview.candidates.length;
+    const accept = document.createElement("button");
+    accept.type = "button";
+    accept.textContent = reportMessage("report_sync_accept");
+    accept.disabled = !initialPreview.tasks.length;
+    const cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.textContent = reportMessage("report_sync_cancel");
+    const finish = (value) => {
+      dialog.close();
+      dialog.remove();
+      previousFocus?.focus();
+      resolve(value);
+    };
+    accept.onclick = () => {
+      const deletions = preview.operations.filter((op) => op.type === "delete");
+      if (
+        !deferDeletionConfirmation &&
+        deletions.length &&
+        !confirmTimeEntryDeletion(
+          deletions.length,
+          deletions.map((op) => `log #${op.entryId} / #${op.taskId} / ${op.oldHours}h`).join("\n")
+        )
+      ) {
+        return;
+      }
+      finish({ ...preview, confirmedAt: Date.now() });
+    };
+    cancel.onclick = () => finish(null);
+    dialog.oncancel = (event) => {
+      event.preventDefault();
+      finish(null);
+    };
+    dialog.append(heading, hint, choices, summary, operations, cancel, accept);
+    document.body.append(dialog);
+    render();
+    dialog.showModal();
+    cancel.focus();
+  });
+}
+
+function confirmTimeEntryDeletion(count, details) {
+  const phrase = `DELETE ${count}`;
+  return (
+    prompt(reportMessage("report_delete_typed", { count, phrase }) + "\n\n" + details) === phrase
+  );
 }
 
 // ====================

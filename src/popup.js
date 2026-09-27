@@ -151,9 +151,10 @@ function setupActions() {
   document
     .getElementById("openSettings")
     .addEventListener("click", () => chrome.runtime.openOptionsPage());
-  document
-    .getElementById("openRedmine")
-    .addEventListener("click", () => openTab("https://redmine.splus-software.com"));
+  document.getElementById("openRedmine").addEventListener("click", async () => {
+    const { redmineDomain } = await chrome.storage.local.get("redmineDomain");
+    openTab(redmineDomain || "https://redmine.splus-software.com");
+  });
   document.getElementById("openMonthlyLog").addEventListener("click", async () => {
     const settings = await chrome.storage.local.get(["redmineDomain", "reportProjectId"]);
     if (!settings.reportProjectId) {
@@ -164,7 +165,8 @@ function setupActions() {
   });
   document.getElementById("openBacklog").addEventListener("click", async () => {
     const { backlogDomain } = await chrome.storage.local.get("backlogDomain");
-    openTab(backlogDomain || "https://backlog.com");
+    const domain = backlogDomain || "https://backlog.com";
+    openTab(domain.includes("://") ? domain : `https://${domain}`);
   });
 }
 

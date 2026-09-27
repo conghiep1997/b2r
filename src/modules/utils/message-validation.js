@@ -5,6 +5,9 @@
   const MAX_PAYLOAD_LENGTH = 1000000;
   const FIELD_LIMITS = Object.freeze({
     apiKey: 10000,
+    backlogIssueKey: 100,
+    content: 100000,
+    notes: 200000,
     commentText: 100000,
     commentUrl: 2000,
     domain: 2000,
@@ -48,6 +51,10 @@
     REDMINE_AUTHORIZED_FETCH: ["path"],
     TEST_MODEL_WITH_KEY: ["provider", "modelId", "apiKey"],
     TEST_BACKLOG_CONNECTION: ["domain", "apiKey"],
+    GET_BACKLOG_ISSUE_INFO: ["issueKey"],
+    GET_BACKLOG_USERS: ["projectKey"],
+    SEND_TO_BACKLOG: ["backlogIssueKey", "content"],
+    SEND_TO_REDMINE: ["notes"],
   });
 
   function assertMessage(message) {
@@ -80,6 +87,38 @@
     for (const field of REQUIRED_FIELDS[message.type] || []) {
       if (!message[field]) {
         throw new TypeError(`Message field '${field}' is required.`);
+      }
+    }
+    if (
+      message.type === "SEND_TO_REDMINE" &&
+      !/^[1-9]\d*$/.test(String(message.redmineIssueId ?? ""))
+    ) {
+      throw new TypeError("Invalid Redmine issue ID.");
+    }
+    if (
+      (message.type === "SEND_TO_BACKLOG" && !/^[A-Z0-9_]+-\d+$/.test(message.backlogIssueKey)) ||
+      (message.type === "GET_BACKLOG_ISSUE_INFO" && !/^[A-Z0-9_]+-\d+$/.test(message.issueKey)) ||
+      (message.type === "GET_BACKLOG_USERS" && !/^[A-Z0-9_]+(?:-\d+)?$/.test(message.projectKey))
+    ) {
+      throw new TypeError("Invalid Backlog issue or project key.");
+    }
+    if (message.type === "SEND_TO_BACKLOG") {
+      const attachments = message.attachments ?? [];
+      if (
+        !Array.isArray(attachments) ||
+        attachments.length > 100 ||
+        attachments.some(
+          (attachment) =>
+            !attachment ||
+            typeof attachment.url !== "string" ||
+            !attachment.url ||
+            attachment.url.length > 2000 ||
+            typeof attachment.filename !== "string" ||
+            !attachment.filename ||
+            attachment.filename.length > 255
+        )
+      ) {
+        throw new TypeError("Invalid Backlog attachments.");
       }
     }
     if (message.type === "RECORD_SYNC_ACTIVITY") {

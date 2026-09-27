@@ -1,3 +1,8 @@
+---
+name: cross-platform-sync
+description: Maintain Backlog and Redmine issue, comment, attachment and report-time synchronization.
+---
+
 # name
 cross-platform-sync
 
@@ -29,3 +34,11 @@ Guidance for Backlog and Redmine API flows used to sync comments, issues, attach
 - Success/error toasts or modal states still fire for user actions.
 - Network failures produce clear errors without exposing credentials.
 - Backlog and Redmine credentials are sent only to their matching APIs.
+
+## Review invariants
+
+- Upload Backlog files through `/api/v2/space/attachment`, then pass returned IDs as `attachmentId[]` when creating the comment. Finish uploads before posting.
+- Commit an attachment cache only after the destination write succeeds; failed transfers must remain retryable.
+- Authenticated Redmine requests and attachment downloads must stay on the configured origin and reject redirects.
+- Fetch every time-entry page before planning writes. Reject incomplete pages and entries outside the requested user/date.
+- Report synchronization manages only entries with the exact report marker or legacy entries explicitly selected in the preview. Preserve all other entries and deduct their hours from the 8-hour budget. Require an approved operation plan and fresh user/date/origin/entry snapshot before writing. Apply reductions before increases, stop at the first failure, and never delete entries for an empty report. Client-side checks cannot make concurrent clients atomic.

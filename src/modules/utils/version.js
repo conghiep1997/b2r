@@ -40,7 +40,8 @@
     try {
       const latestResponse = await fetch(`${API_URL}/versions/latest`);
       if (latestResponse.ok) {
-        return latestResponse.json();
+        const latest = await latestResponse.json();
+        if (isValid(latest?.version_number)) return latest;
       }
 
       const listResponse = await fetch(`${API_URL}/versions`);
@@ -53,7 +54,7 @@
       if (!versions.length) return null;
 
       return (
-        versions.find((version) => version?.is_latest) ||
+        versions.find((version) => version?.is_latest && isValid(version.version_number)) ||
         versions
           .filter((version) => isValid(version?.version_number))
           .sort((a, b) => compare(b.version_number, a.version_number))[0] ||

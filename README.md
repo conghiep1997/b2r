@@ -1,8 +1,8 @@
 # B2R - Backlog to Redmine
 
-Chrome extension dịch comment từ Backlog sang tiếng Việt và đồng bộ dữ liệu thông minh sang Redmine. Tên mới: **B2R**.
+Chrome extension dịch comment từ Backlog theo cặp ngôn ngữ bạn chọn và đồng bộ dữ liệu sang Redmine. Mặc định dịch Nhật → Việt. Tên mới: **B2R**.
 
-**Latest Update (1.8.17):** Onboarding lần đầu, lịch sử sync và preview-only dry run; cải thiện retry/fallback AI, xử lý Gemini key rotation và trạng thái retry; hỗ trợ xem trước Log Time theo tháng trước khi ghi; bổ sung bản địa hóa và lưu kết quả sync lỗi hoặc một phần.
+**Latest Update (1.8.18):** Dịch đa ngôn ngữ (mặc định Nhật → Việt), cải thiện AI fallback và đồng bộ attachment; Log Time đồng bộ theo Report qua preview, cho phép chọn log cũ để quản lý, giữ log thủ công và chia phần giờ còn lại trong giới hạn 8 giờ/ngày.
 
 ---
 
@@ -73,7 +73,7 @@ Phiên bản hiện tại hỗ trợ nhiều nhà cung cấp AI free-tier và ch
 
 ### Core Features
 
-- ✅ **Dịch Backlog → Redmine**: Tự động dịch Nhật/Anh → Việt bằng AI
+- ✅ **Dịch Backlog → Redmine**: Mặc định Nhật → Việt; có thể chọn ngôn ngữ nguồn và đích trong Options, kể cả tự nhận diện nguồn
 - ✅ **Sync Redmine → Backlog**: Lọc nội dung tiếng Nhật, gửi ngược lại
 - ✅ **Migrate Issue**: Tạo issue mới trên Redmine từ Backlog (1-click)
 - ✅ **Batch Translate**: Dịch và gửi hàng loạt comments liên tiếp
@@ -133,13 +133,14 @@ npm run build
 ### 0. Cấu hình AI
 
 1. Mở trang Options của extension
-2. Chọn `Primary Provider` và `Fallback Provider`
-3. Nếu dùng Gemini:
+2. Chọn ngôn ngữ nguồn và đích nếu muốn thay đổi mặc định Nhật → Việt
+3. Chọn `Primary Provider` và `Fallback Provider`
+4. Nếu dùng Gemini:
    - Có thể nhập 1 key ở ô thông thường, hoặc
    - Mở phần **Multiple Gemini Keys** để nhập nhiều key, mỗi dòng một key
-4. Nếu dùng Groq hoặc Cerebras: nhập API key tương ứng
-5. (Tuỳ chọn) **Hiển thị modal thành công khi dịch/gửi comment sang Redmine** — chỉ áp dụng chức năng dịch comment; Di chuyển Issue luôn hiện modal + link
-6. Click **Lưu cấu hình**
+5. Nếu dùng Groq hoặc Cerebras: nhập API key tương ứng
+6. (Tuỳ chọn) **Hiển thị modal thành công khi dịch/gửi comment sang Redmine** — chỉ áp dụng chức năng dịch comment; Di chuyển Issue luôn hiện modal + link
+7. Click **Lưu cấu hình**
 
 ### 2. Dịch và Gửi Comment
 

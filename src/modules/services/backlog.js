@@ -14,7 +14,7 @@ async function getBacklogUsers(projectKeyOrIssueKey = null) {
   // Extract project key from issue key if provided (e.g., CTRIAL-123 → CTRIAL)
   let projectKey = null;
   if (projectKeyOrIssueKey) {
-    const match = projectKeyOrIssueKey.match(/^([A-Z0-9_]+)-/);
+    const match = projectKeyOrIssueKey.match(/^([A-Z0-9_]+)(?:-\d+)?$/);
     if (match) {
       projectKey = match[1];
     }
@@ -40,7 +40,9 @@ async function getBacklogUsers(projectKeyOrIssueKey = null) {
 
     if (!response.ok) {
       const errorMsg = await readErrorMessage(response);
-      console.warn(`[BacklogService] Failed to load users from project ${projectKey}: ${errorMsg}`);
+      console.warn(
+        `[BacklogService] Failed to load users: ${sanitizeErrorMessage(errorMsg, response.status)}`
+      );
       return [];
     }
 
@@ -98,8 +100,11 @@ async function handleSendToBacklog({ backlogIssueKey, content, notifiedUserId, a
   const url = new URL(`api/v2/issues/${backlogIssueKey}/comments`, domain);
   url.searchParams.set("apiKey", settings.backlogApiKey);
 
+  // Upload first so a failed attachment does not leave a posted comment that a retry duplicates.
+  const attachmentIds = await uploadAttachmentsToBacklog(domain, settings, attachments);
   const body = new URLSearchParams();
   body.append("content", content);
+  attachmentIds.forEach((id) => body.append("attachmentId[]", id));
   if (Array.isArray(notifiedUserId)) {
     notifiedUserId.forEach((id) => body.append("notifiedUserId[]", id));
   } else if (notifiedUserId) {
@@ -125,56 +130,64 @@ async function handleSendToBacklog({ backlogIssueKey, content, notifiedUserId, a
   const result = await response.json();
   const backlogUrl = `${domain.endsWith("/") ? domain : domain + "/"}view/${backlogIssueKey}#comment-${result.id}`;
 
-  if (attachments.length > 0) {
-    await uploadAttachmentsToBacklog(
-      domain,
-      settings.backlogApiKey,
-      backlogIssueKey,
-      result.id,
-      attachments
-    );
-  }
-
   return {
     message: TB.MESSAGES.TOAST.SEND_BACKLOG_SUCCESS,
     backlogUrl,
   };
 }
 
-async function uploadAttachmentsToBacklog(domain, apiKey, issueKey, commentId, attachments) {
+async function uploadAttachmentsToBacklog(domain, settings, attachments) {
+  const attachmentIds = [];
   for (const attachment of attachments) {
-    try {
-      const blob = await downloadRedmineAttachment(attachment.url);
-      const uploadUrl = new URL(
-        `api/v2/issues/${issueKey}/comments/${commentId}/attachments`,
-        domain
+    const blob = await downloadRedmineAttachment(attachment.url, settings);
+    const uploadUrl = new URL("api/v2/space/attachment", domain);
+    uploadUrl.searchParams.set("apiKey", settings.backlogApiKey);
+
+    const formData = new FormData();
+    formData.append("file", blob, attachment.filename);
+
+    const uploadResponse = await fetch(uploadUrl.toString(), {
+      method: "POST",
+      redirect: "error",
+      body: formData,
+    });
+
+    if (!uploadResponse.ok) {
+      throw new Error(
+        `Backlog attachment upload failed: ${sanitizeErrorMessage(await readErrorMessage(uploadResponse), uploadResponse.status)}`
       );
-      uploadUrl.searchParams.set("apiKey", apiKey);
-
-      const formData = new FormData();
-      formData.append("file", blob, attachment.filename);
-
-      const uploadResponse = await fetch(uploadUrl.toString(), {
-        method: "POST",
-        redirect: "error",
-        body: formData,
-      });
-
-      if (!uploadResponse.ok) {
-        console.warn(`[BacklogService] Failed to upload attachment ${attachment.filename}`);
-      }
-    } catch (error) {
-      console.warn(`[BacklogService] Attachment upload error for ${attachment.filename}:`, error);
     }
+    const uploaded = await safeReadJson(uploadResponse);
+    if (!Number.isSafeInteger(uploaded?.id) || uploaded.id <= 0) {
+      throw new Error("Backlog attachment upload did not return a valid file ID.");
+    }
+    attachmentIds.push(uploaded.id);
   }
+  return attachmentIds;
 }
 
-async function downloadRedmineAttachment(url) {
-  const response = await fetch(url, { credentials: "include" });
+async function downloadRedmineAttachment(url, settings) {
+  const downloadUrl = buildRedmineUrl(settings.redmineDomain, url);
+  if (!/^\/attachments\/download\/\d+(?:\/|$)/.test(new URL(downloadUrl).pathname)) {
+    throw new Error("Unsupported Redmine attachment URL.");
+  }
+  const response = await fetch(downloadUrl, {
+    credentials: "include",
+    redirect: "error",
+    headers: settings.redmineApiKey ? { "X-Redmine-API-Key": settings.redmineApiKey } : {},
+  });
   if (!response.ok) {
     throw new Error(`Redmine attachment download failed: ${response.status}`);
   }
-  return await response.blob();
+  const blob = await response.blob();
+  if (!blob.size) throw new Error("Redmine attachment is empty.");
+  if (
+    response.headers.get("content-type")?.includes("text/html") &&
+    !/attachment/i.test(response.headers.get("content-disposition") || "")
+  ) {
+    throw new Error("Redmine returned a login page instead of an attachment.");
+  }
+  return blob;
 }
 
 function redactBacklogApiKey(url) {

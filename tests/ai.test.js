@@ -8,6 +8,78 @@ const source = fs.readFileSync(
   path.join(__dirname, "..", "src", "modules", "services", "ai.js"),
   "utf8"
 );
+const promptsSource = fs.readFileSync(
+  path.join(__dirname, "..", "src", "modules", "constants", "prompts.js"),
+  "utf8"
+);
+
+test("translation defaults to Japanese to Vietnamese and accepts a selected language pair", () => {
+  const context = vm.createContext({});
+  vm.runInContext(promptsSource, context);
+  const prompts = context.TB_PROMPTS;
+  assert.deepEqual(JSON.parse(JSON.stringify(prompts.resolveLanguagePair())), {
+    source: "ja",
+    target: "vi",
+  });
+  assert.match(prompts.USER("原文"), /sang tiếng Việt/);
+  assert.match(
+    prompts.USER("Bonjour", {
+      translationSourceLanguage: "fr",
+      translationTargetLanguage: "en",
+    }),
+    /Ngôn ngữ nguồn chính: tiếng Pháp/
+  );
+  assert.match(
+    prompts.SIMPLE_TRANSLATE("Bonjour", {
+      translationSourceLanguage: "auto",
+      translationTargetLanguage: "en",
+    }),
+    /Tự nhận diện ngôn ngữ nguồn/
+  );
+  assert.notEqual(prompts.SIMPLE_TRANSLATE, prompts.USER);
+  assert.equal(prompts.resolveLanguagePair({ translationTargetLanguage: "unknown" }).target, "vi");
+});
+
+test("translation service passes the selected pair and labels the translated section", async () => {
+  const context = vm.createContext({ console: { log() {}, warn() {}, error() {} } });
+  vm.runInContext(promptsSource, context);
+  context.TB = {
+    PROMPTS: context.TB_PROMPTS,
+    DEFAULT_PRIMARY_PROVIDER: "gemini",
+    DEFAULT_PRIMARY_MODEL: "demo-model",
+    DEFAULT_FALLBACK_PROVIDER: "none",
+    DEFAULT_FALLBACK_MODEL: "",
+    PROVIDERS: { NONE: "none" },
+  };
+  vm.runInContext(source, context);
+  vm.runInContext(
+    `callAIsByProvider = async (_provider, _model, _settings, input, _url, promptFn) => {
+      globalThis.capturedPrompt = promptFn(input);
+      globalThis.capturedTarget = promptFn.targetLanguage;
+      globalThis.capturedFullTranslation = promptFn.includeOriginal;
+      return "translated";
+    };
+    this.formatResult = formatTranslation;`,
+    context
+  );
+  await context.translateText("Bonjour", {
+    translationSourceLanguage: "fr",
+    translationTargetLanguage: "en",
+    fallbackProvider: "none",
+  });
+  assert.match(context.capturedPrompt, /sang tiếng Anh/);
+  assert.equal(context.capturedTarget, "en");
+  assert.equal(context.capturedFullTranslation, true);
+  await context.translateText(
+    "Bonjour",
+    { translationSourceLanguage: "fr", translationTargetLanguage: "en" },
+    null,
+    context.TB_PROMPTS.SIMPLE_TRANSLATE
+  );
+  assert.equal(context.capturedFullTranslation, false);
+  assert.match(context.formatResult("Bonjour", "Hello", null, "en"), /\{\{collapse\(EN\)/);
+  assert.match(context.formatResult("原文", "Bản dịch"), /\{\{collapse\(VN\)/);
+});
 
 function createNormalizer() {
   const helpersSource = fs.readFileSync(
@@ -29,6 +101,96 @@ function createNormalizer() {
   );
   return context.normalizeTranslationOutput;
 }
+
+test("fallback still runs when every primary combination is already cooling down", async () => {
+  const context = vm.createContext({ console: { log() {}, warn() {}, error() {} } });
+  vm.runInContext(promptsSource, context);
+  context.TB = {
+    PROMPTS: context.TB_PROMPTS,
+    PROVIDERS: { GEMINI: "gemini", GROQ: "groq", NONE: "none" },
+    MESSAGES: { TOAST: { RATE_LIMIT_FAILED: "Unavailable" } },
+  };
+  vm.runInContext(source, context);
+  let primaryCalls = 0;
+  let fallbackCalls = 0;
+  context.callGeminiAPI = async () => {
+    primaryCalls++;
+    throw new Error("429 rate limit");
+  };
+  context.callGroqAPI = async () => {
+    fallbackCalls++;
+    return "translated";
+  };
+  const settings = {
+    primaryProvider: "gemini",
+    primaryModel: "demo",
+    fallbackProvider: "groq",
+    fallbackModel: "demo",
+    geminiApiKeys: ["demo-primary"],
+    fallbackGroqApiKeys: ["demo-fallback"],
+  };
+  assert.equal(await context.translateText("source", settings), "translated");
+  assert.equal(await context.translateText("source", settings), "translated");
+  assert.equal(primaryCalls, 1);
+  assert.equal(fallbackCalls, 2);
+});
+
+test("parallel non-Gemini translations reserve separate model-key slots", async () => {
+  const context = vm.createContext({
+    console,
+    TB: { PROVIDERS: { GEMINI: "gemini", GROQ: "groq" } },
+  });
+  vm.runInContext(source, context);
+  const keys = [];
+  const releases = [];
+  context.callGroqAPI = (key) => {
+    keys.push(key);
+    return new Promise((resolve) => releases.push(resolve));
+  };
+  const settings = { groqModels: ["demo"], groqApiKeys: ["first", "second"] };
+  const first = context.callAIsByProvider("groq", "demo", settings, "source", null, () => "prompt");
+  const second = context.callAIsByProvider(
+    "groq",
+    "demo",
+    settings,
+    "source",
+    null,
+    () => "prompt"
+  );
+  assert.deepEqual(keys, ["first", "second"]);
+  releases.forEach((resolve) => resolve("translated"));
+  await Promise.all([first, second]);
+});
+
+test("structured provider errors stay readable and redact credential values", () => {
+  const context = vm.createContext({});
+  vm.runInContext(source, context);
+  const message = context.sanitizeErrorMessage(
+    JSON.stringify({ error: { code: "invalid", token: "demo-secret" } }),
+    400
+  );
+  assert.match(message, /Error 400/);
+  assert.doesNotMatch(message, /demo-secret/);
+});
+
+test("providers reject truncated translations instead of returning partial notes", async () => {
+  for (const provider of ["Gemini", "Cerebras", "Groq", "OpenRouter"]) {
+    const context = vm.createContext({
+      console,
+      TB: { PROMPTS: { SYSTEM: "Translate", USER: () => "Translate" } },
+      timeoutFetch: async () => ({ ok: true }),
+      safeReadJson: async () => ({
+        candidates: [{ finishReason: "MAX_TOKENS", content: { parts: [{ text: "partial" }] } }],
+        choices: [{ finish_reason: "length", message: { content: "partial" } }],
+      }),
+    });
+    vm.runInContext(source, context);
+    await assert.rejects(
+      context[`call${provider}API`]("demo-key", "long source", "demo-model"),
+      /cut off/
+    );
+  }
+});
 
 test("normalizeTranslationOutput removes prompt boundary markers from AI output", () => {
   const normalizeTranslationOutput = createNormalizer();

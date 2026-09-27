@@ -172,6 +172,10 @@ async function translateText(
   promptFn = TB.PROMPTS.USER,
   onStatus
 ) {
+  const languagePair = TB.PROMPTS.resolveLanguagePair(settings);
+  const configuredPrompt = (text) => promptFn(text, settings);
+  configuredPrompt.includeOriginal = promptFn === TB.PROMPTS.USER;
+  configuredPrompt.targetLanguage = languagePair.target;
   const primaryProvider = settings.primaryProvider || TB.DEFAULT_PRIMARY_PROVIDER;
   const primaryModel = settings.primaryModel || TB.DEFAULT_PRIMARY_MODEL;
   const fallbackProvider = settings.fallbackProvider || TB.DEFAULT_FALLBACK_PROVIDER;
@@ -185,7 +189,7 @@ async function translateText(
       settings,
       commentText,
       commentUrl,
-      promptFn,
+      configuredPrompt,
       onStatus
     );
     emitAIStatus({ phase: "success", provider: primaryProvider, model: primaryModel }, onStatus);
@@ -210,7 +214,7 @@ async function translateText(
           settings,
           commentText,
           commentUrl,
-          promptFn,
+          configuredPrompt,
           onStatus
         );
         emitAIStatus(
@@ -412,6 +416,7 @@ async function callProviderWithFailover(provider, model, settings, text, url, pr
   let skippedCooldowns = 0;
   let nextCooldownReadyAt = Infinity;
   const startIndex = (lastUsedProviderIndexByProvider[provider] || 0) % combinations.length;
+  lastUsedProviderIndexByProvider[provider] = (startIndex + 1) % combinations.length;
 
   for (let i = 0; i < combinations.length; i++) {
     const currentIndex = (startIndex + i) % combinations.length;
@@ -428,7 +433,6 @@ async function callProviderWithFailover(provider, model, settings, text, url, pr
 
     try {
       const result = await callProviderAPI(provider, currentKey, text, currentModel, promptFn, url);
-      lastUsedProviderIndexByProvider[provider] = (currentIndex + 1) % combinations.length;
       return result;
     } catch (error) {
       if (!isRetryableProviderError(error)) {
@@ -519,6 +523,7 @@ function isRetryableProviderError(error) {
     message.includes("503") ||
     message.includes("timeout") ||
     message.includes("timed out") ||
+    message.includes("cooling down") ||
     message.includes("high demand") ||
     message.includes("try again later") ||
     message.includes("only safety metadata")
@@ -675,13 +680,15 @@ async function callGeminiAPI(
     .join("")
     .trim();
 
+  assertCompleteTranslation(data?.candidates?.[0]?.finishReason);
+
   if (!rawText) {
     throw new Error(TB.MESSAGES.GEMINI.EMPTY_TRANSLATION);
   }
 
   const cleaned = extractCleanedTranslation(rawText);
-  if (promptFn === TB.PROMPTS.USER) {
-    return formatTranslation(commentText, cleaned, commentUrl);
+  if (promptFn.includeOriginal) {
+    return formatTranslation(commentText, cleaned, commentUrl, promptFn.targetLanguage);
   }
   return cleaned;
 }
@@ -732,13 +739,14 @@ async function callCerebrasAPI(
 
   const data = await safeReadJson(response);
   const rawText = data?.choices?.[0]?.message?.content?.trim();
+  assertCompleteTranslation(data?.choices?.[0]?.finish_reason);
   if (!rawText) {
     throw new Error("AI returned no content.");
   }
 
   const cleaned = extractCleanedTranslation(rawText);
-  if (promptFn === TB.PROMPTS.USER) {
-    return formatTranslation(commentText, cleaned, commentUrl);
+  if (promptFn.includeOriginal) {
+    return formatTranslation(commentText, cleaned, commentUrl, promptFn.targetLanguage);
   }
   return cleaned;
 }
@@ -779,13 +787,14 @@ async function callGroqAPI(
 
   const data = await safeReadJson(response);
   const rawText = data?.choices?.[0]?.message?.content?.trim();
+  assertCompleteTranslation(data?.choices?.[0]?.finish_reason);
   if (!rawText) {
     throw new Error("AI returned no content.");
   }
 
   const cleaned = extractCleanedTranslation(rawText);
-  if (promptFn === TB.PROMPTS.USER) {
-    return formatTranslation(commentText, cleaned, commentUrl);
+  if (promptFn.includeOriginal) {
+    return formatTranslation(commentText, cleaned, commentUrl, promptFn.targetLanguage);
   }
   return cleaned;
 }
@@ -825,15 +834,24 @@ async function callOpenRouterAPI(
 
   const data = await safeReadJson(response);
   const rawText = data?.choices?.[0]?.message?.content?.trim();
+  assertCompleteTranslation(data?.choices?.[0]?.finish_reason);
   if (!rawText) {
     throw new Error("AI returned no content.");
   }
 
   const cleaned = extractCleanedTranslation(rawText);
-  if (promptFn === TB.PROMPTS.USER) {
-    return formatTranslation(commentText, cleaned, commentUrl);
+  if (promptFn.includeOriginal) {
+    return formatTranslation(commentText, cleaned, commentUrl, promptFn.targetLanguage);
   }
   return cleaned;
+}
+
+function assertCompleteTranslation(finishReason) {
+  if (finishReason === "MAX_TOKENS" || finishReason === "length") {
+    throw new Error(
+      "AI translation was cut off by the output limit. Split the text into smaller parts before retrying."
+    );
+  }
 }
 
 function extractCleanedTranslation(rawText) {
@@ -1002,19 +1020,25 @@ function fixMangledMarkers(text) {
   return result;
 }
 
-function formatTranslation(originalText, cleanedText, commentUrl = null) {
+function formatTranslation(originalText, cleanedText, commentUrl = null, targetLanguage = "vi") {
   // Format output: add comment URL (if exists) and translation
   const prefix = commentUrl ? `${commentUrl}\n\n` : "";
-  return `${prefix}${originalText.trim()}\n\n---\n\n{{collapse(VN)\n\n${cleanedText}\n}}`;
+  const label = targetLanguage === "vi" ? "VN" : targetLanguage.toUpperCase();
+  return `${prefix}${originalText.trim()}\n\n---\n\n{{collapse(${label})\n\n${cleanedText}\n}}`;
 }
 
 function sanitizeErrorMessage(message, status) {
-  let displayMessage = message;
+  let displayMessage = String(message ?? "Unknown error");
   try {
     const errorJson = JSON.parse(message);
     displayMessage = errorJson.error?.message || errorJson.error || errorJson.message || message;
   } catch (e) {
     // Ignore parsing error if message is not JSON
   }
-  return `Error ${status}: ${displayMessage.replace(/https?:\/\/[^\s]+/g, "[URL]").slice(0, 200)}`;
+  if (typeof displayMessage !== "string") displayMessage = JSON.stringify(displayMessage);
+  return `Error ${status}: ${displayMessage
+    .replace(/https?:\/\/[^\s]+/g, "[URL]")
+    .replace(/\bBearer\s+[^\s]+/gi, "Bearer [REDACTED]")
+    .replace(/((?:api.?key|access_token|token)["']?\s*[:=]\s*["']?)[^\s,}"']+/gi, "$1[REDACTED]")
+    .slice(0, 200)}`;
 }
