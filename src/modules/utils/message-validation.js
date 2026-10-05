@@ -4,6 +4,14 @@
 (function (global) {
   const MAX_PAYLOAD_LENGTH = 1000000;
   const FIELD_LIMITS = Object.freeze({
+    recordId: 64,
+    sourceCommentUrl: 2000,
+    sourceCommentText: 100000,
+    notes: 100000,
+    content: 100000,
+    backlogIssueKey: 100,
+    action: 30,
+    redmineIssueId: 30,
     apiKey: 10000,
     commentText: 100000,
     commentUrl: 2000,
@@ -15,17 +23,29 @@
     modelId: 300,
     path: 2000,
     method: 10,
-    projectKey: 100,
+    projectKey: 108,
     provider: 50,
     text: 100000,
     userInfo: 1000,
   });
   const ALLOWED_TYPES = new Set([
+    "GET_BACKLOG_ISSUE_KEY",
+    "GET_PROJECT_GLOSSARY",
+    "SAVE_PROJECT_GLOSSARY",
+    "RESUME_COMMENT_SYNC",
+    "RESOLVE_COMMENT_SYNC",
+    "LIST_SYNC_RECOVERY",
+    "RESUME_MIGRATION",
+    "RESOLVE_MIGRATION",
+    "SAVE_ISSUE_MAPPING",
+    "REMOVE_ISSUE_MAPPING",
+    "GET_CRYPTO_STORAGE_ID",
     "CLEAR_SYNC_ACTIVITY",
     "CREATE_REDMINE_ISSUE",
     "EXTRACT_JAPANESE_CONTENT",
     "FETCH_REDMINE_METADATA",
     "FETCH_REDMINE_PROJECTS_WITH_KEY",
+    "FETCH_REDMINE_ACTIVITIES_WITH_KEY",
     "GET_BACKLOG_ISSUE_INFO",
     "GET_BACKLOG_USERS",
     "GET_DEFAULT_PROJECT_SUMMARY",
@@ -44,7 +64,19 @@
     "TRANSLATE_TEXT_SIMPLE",
   ]);
   const REQUIRED_FIELDS = Object.freeze({
+    GET_BACKLOG_ISSUE_KEY: ["redmineIssueId"],
+    GET_PROJECT_GLOSSARY: ["projectKey"],
+    SAVE_PROJECT_GLOSSARY: ["projectKey"],
+    RESUME_COMMENT_SYNC: ["recordId"],
+    RESOLVE_COMMENT_SYNC: ["recordId"],
+    SEND_TO_REDMINE: ["redmineIssueId", "notes", "backlogIssueKey"],
+    SEND_TO_BACKLOG: ["content", "backlogIssueKey"],
+    RESUME_MIGRATION: ["issueKey"],
+    RESOLVE_MIGRATION: ["issueKey", "action"],
+    SAVE_ISSUE_MAPPING: ["issueKey", "redmineIssueId"],
+    REMOVE_ISSUE_MAPPING: ["issueKey"],
     FETCH_REDMINE_PROJECTS_WITH_KEY: ["domain", "apiKey"],
+    FETCH_REDMINE_ACTIVITIES_WITH_KEY: ["domain", "apiKey"],
     REDMINE_AUTHORIZED_FETCH: ["path"],
     TEST_MODEL_WITH_KEY: ["provider", "modelId", "apiKey"],
     TEST_BACKLOG_CONNECTION: ["domain", "apiKey"],
@@ -80,6 +112,55 @@
     for (const field of REQUIRED_FIELDS[message.type] || []) {
       if (!message[field]) {
         throw new TypeError(`Message field '${field}' is required.`);
+      }
+    }
+    if (
+      ["RESUME_COMMENT_SYNC", "RESOLVE_COMMENT_SYNC"].includes(message.type) &&
+      !/^[a-f0-9]{64}$/.test(message.recordId)
+    ) {
+      throw new TypeError("Invalid comment recovery ID.");
+    }
+    if (["SEND_TO_REDMINE", "SEND_TO_BACKLOG"].includes(message.type)) {
+      if (
+        !/^[A-Z0-9_]+-\d+$/.test(message.backlogIssueKey || "") ||
+        (message.type === "SEND_TO_REDMINE" && !/^\d+$/.test(message.redmineIssueId || ""))
+      ) {
+        throw new TypeError("Invalid comment destination.");
+      }
+      if (
+        message.attachments !== undefined &&
+        (!Array.isArray(message.attachments) ||
+          message.attachments.length > 100 ||
+          message.attachments.some(
+            (file) =>
+              !file ||
+              typeof file.url !== "string" ||
+              file.url.length > 2000 ||
+              typeof file.filename !== "string" ||
+              file.filename.length > 300
+          ))
+      ) {
+        throw new TypeError("Invalid comment attachments.");
+      }
+    }
+    if (message.type === "CREATE_REDMINE_ISSUE") {
+      const issue = message.issueData;
+      if (
+        !issue ||
+        typeof issue !== "object" ||
+        Array.isArray(issue) ||
+        !/^[A-Z0-9_]+-\d+$/.test(issue.backlogIssueKey || "") ||
+        typeof issue.subject !== "string" ||
+        !issue.subject.trim() ||
+        issue.subject.length > 1000 ||
+        typeof issue.description !== "string" ||
+        issue.description.length > 500000 ||
+        !/^\d+$/.test(String(issue.project_id || "")) ||
+        (message.comments !== undefined &&
+          (!Array.isArray(message.comments) ||
+            message.comments.some((note) => typeof note !== "string" || note.length > 100000)))
+      ) {
+        throw new TypeError("Invalid migration request.");
       }
     }
     if (message.type === "RECORD_SYNC_ACTIVITY") {

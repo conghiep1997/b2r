@@ -248,6 +248,7 @@ async function handleTranslateAndOpenModal(actionsEl, button) {
 
     const progressByIssue = new Map();
     openConfirmModal({
+      sourceIssueKey: issueKey,
       redmineIssueId: result.data.redmineIssueId,
       issueTitle: result.data.issueTitle,
       previewText: result.data.previewText || "",
@@ -255,7 +256,11 @@ async function handleTranslateAndOpenModal(actionsEl, button) {
       hasBatchOption: remainingItems.length > 0,
       backlogIssueType,
       onCancel: () => setButtonLoading(button, false),
-      onConfirm: async ({ redmineIssueId, notesList }) => {
+      onConfirm: async ({
+        redmineIssueId,
+        notesList,
+        noteIndexes = notesList.map((_, index) => index),
+      }) => {
         const targetId = String(redmineIssueId).trim();
         if (!progressByIssue.has(targetId)) {
           progressByIssue.set(targetId, { completedNotes: [], lastSendResult: null });
@@ -270,6 +275,14 @@ async function handleTranslateAndOpenModal(actionsEl, button) {
               redmineIssueId,
               notes,
               backlogIssueKey: issueKey,
+              sourceCommentUrl:
+                noteIndexes[index] === 0
+                  ? getCommentUrl(commentItem) || ""
+                  : remainingItems[noteIndexes[index] - 1]?.url || "",
+              sourceCommentText:
+                noteIndexes[index] === 0
+                  ? clickedCommentText
+                  : remainingItems[noteIndexes[index] - 1]?.text || "",
             });
             completedNotes[index] = notes;
             progress.lastSendResult = sendRes.data;
@@ -340,6 +353,7 @@ async function translateCommentBatch(commentsList) {
             type: "TRANSLATE_COMMENT_FULL",
             commentText: c.text,
             commentUrl: c.url,
+            issueKey: getBacklogHeaderInfo().issueKey,
           });
           return c.userInfo ? `${c.userInfo}\n${r.data.translatedText}` : r.data.translatedText;
         } catch (err) {
@@ -435,13 +449,19 @@ async function handleIssueMigration(button) {
       sendRuntimeMessageWithResponse({
         type: "TRANSLATE_TEXT_SIMPLE",
         text: issueSummary,
+        issueKey,
       }),
       comments.length > 0 ? translateCommentBatch(comments) : Promise.resolve([]),
     ]);
 
+    const uiSettings = await sendRuntimeMessageWithResponse({ type: "GET_UI_SETTINGS", issueKey });
     openConfirmModal({
+      sourceIssueKey: issueKey,
       isMigration: true,
-      issueTitle: `${issueKey} ${issueSummary} (${subRes.data.translatedText})`,
+      issueTitle: globalThis.TB_SYNC_RULES.subject(
+        { issueKey, summary: issueSummary, translatedSummary: subRes.data.translatedText },
+        globalThis.TB_SYNC_RULES.normalize(uiSettings.data.syncRules)
+      ),
       previewText: descRes.data.previewText,
       remainingComments: comments,
       commentsCount: comments.length,
@@ -450,7 +470,7 @@ async function handleIssueMigration(button) {
       backlogIssueType,
       backlogMilestone,
       onCancel: () => setButtonLoading(button, false),
-      onConfirm: async ({ issueData, comments: translatedComments }) => {
+      onConfirm: async ({ issueData, comments: translatedComments, selection }) => {
         const issueDataToSend = {
           ...issueData,
           backlogIssueKey: issueKey,
@@ -461,6 +481,7 @@ async function handleIssueMigration(button) {
             type: "CREATE_REDMINE_ISSUE",
             issueData: issueDataToSend,
             comments: translatedComments, // Translated comments/notes migrated with the issue
+            selection,
           });
         } catch (error) {
           await recordSyncActivity({

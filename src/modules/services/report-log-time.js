@@ -5,7 +5,7 @@
  *
  * This module contains the core logic for parsing a Redmine "Report" issue,
  * identifying tasks assigned to the current user, and automatically logging
- * a total of 8 hours spread across those tasks.
+ * the configured daily hours spread across those tasks.
  */
 
 /**
@@ -16,7 +16,7 @@
  * 3. Parses the description to find the "Today's Tasks" section.
  * 4. Finds the row corresponding to the user's login name.
  * 5. Extracts all task IDs (#12345) from that user's row.
- * 6. Calculates the time to log per task (dividing 8 hours equally).
+ * 6. Allocates configured hours by equal shares or task estimates.
  * 7. Calls the Redmine API to create a time entry for each task.
  *
  * @param {string} reportIssueId The ID of the issue with the "Report" tracker.
@@ -35,7 +35,9 @@ async function logTimeFromReport(
   expectedPreview = null
 ) {
   try {
-    const settings = await getSettings();
+    const settings = await getSettings(reportIssueId);
+    const rules = globalThis.TB_LOG_TIME_RULES.normalize(settings.logTimeRules);
+    const totalHours = rules.dailyHours;
     const { redmineDomain, hasRedmineApiKey } = settings;
     if (!redmineDomain || !hasRedmineApiKey) {
       throw new Error("Redmine domain or API key is not configured.");
@@ -83,11 +85,25 @@ async function logTimeFromReport(
       return createLogResult([], [], [], []); // Return empty result in batch mode for days off etc.
     }
 
-    const taskIssueDetails = previewOnly
-      ? await Promise.all(
-          taskIds.map((taskId) => getIssueDetails(redmineDomain, redmineApiKey, taskId))
-        )
-      : [];
+    const taskIssueDetails = await Promise.all(
+      taskIds.map((taskId) => getIssueDetails(redmineDomain, redmineApiKey, taskId))
+    );
+    const activities = await getTimeEntryActivities(redmineDomain, redmineApiKey);
+    const hoursByTask = globalThis.TB_LOG_TIME_RULES.allocate(
+      totalHours,
+      taskIssueDetails.map((issue) =>
+        rules.allocation === "estimate" ? Number(issue.estimated_hours) : 1
+      )
+    );
+    const desiredEntries = taskIssueDetails.map((issue, index) => ({
+      taskId: taskIds[index],
+      hours: hoursByTask[index],
+      activityId: resolveTimeEntryActivityId(issue, currentUser, activities, rules),
+    }));
+    const planSnapshot = JSON.stringify([rules, desiredEntries]);
+    if (expectedPreview && expectedPreview.planSnapshot !== planSnapshot) {
+      throw new Error(globalThis.TB_GET_MESSAGE("report_preview_stale"));
+    }
     const tasks = taskIds.map((taskId, index) => ({
       id: taskId,
       subject: taskIssueDetails[index]?.subject || "",
@@ -103,13 +119,15 @@ async function logTimeFromReport(
         : [];
       const existingDailyHours = sumTimeEntryHours(existingEntries);
       const sameIssueSet = isSameIssueSet(existingEntries, taskIds);
-      const hoursByTask = distributeHours(8, taskIds.length);
       return {
+        planSnapshot,
+        totalHours,
         date: effectiveSpentOn,
         reportIssueId: String(reportIssueId),
         tasks: tasks.map((task, index) => ({
           ...task,
           hours: hoursByTask[index],
+          activityId: desiredEntries[index].activityId,
           alreadyLogged: existingEntries.some(
             (entry) => String(getTimeEntryIssueId(entry)) === String(task.id)
           ),
@@ -117,24 +135,13 @@ async function logTimeFromReport(
         userId: String(currentUser.id),
         existingEntriesSnapshot: snapshotTimeEntries(existingEntries),
         existingDailyHours,
-        willReplaceDailyEntries: existingDailyHours >= 8 && !sameIssueSet,
-        dayAlreadyFull: existingDailyHours >= 8 && sameIssueSet,
+        willReplaceDailyEntries: existingDailyHours >= totalHours && !sameIssueSet,
+        dayAlreadyFull: existingDailyHours >= totalHours && sameIssueSet,
       };
     }
 
     // 6. Calculate hours and log time for each task
-    const totalHours = 8;
-    const hoursByTask = distributeHours(totalHours, taskIds.length);
     const timeEntryComment = "";
-    const activities = await getTimeEntryActivities(redmineDomain, redmineApiKey);
-    const desiredEntries = await buildDesiredTimeEntries(
-      redmineDomain,
-      redmineApiKey,
-      taskIds,
-      hoursByTask,
-      currentUser,
-      activities
-    );
     const loggedTaskIds = [];
     const skippedTaskIds = [];
     const failedTasks = [];
@@ -541,41 +548,6 @@ function isSameReportUser(reportUser, currentUserLogin) {
   );
 }
 
-function distributeHours(totalHours, taskCount) {
-  const unit = 0.5;
-  const totalUnits = Math.round(totalHours / unit);
-  const baseUnits = Math.floor(totalUnits / taskCount);
-  let remainingUnits = totalUnits;
-
-  return Array.from({ length: taskCount }, (_, index) => {
-    const units = index === taskCount - 1 ? remainingUnits : Math.min(baseUnits, remainingUnits);
-    remainingUnits -= units;
-    return units * unit;
-  });
-}
-
-async function buildDesiredTimeEntries(
-  redmineDomain,
-  redmineApiKey,
-  taskIds,
-  hoursByTask,
-  currentUser,
-  activities
-) {
-  const entries = [];
-
-  for (const [index, taskId] of taskIds.entries()) {
-    const taskIssue = await getIssueDetails(redmineDomain, redmineApiKey, taskId);
-    entries.push({
-      taskId,
-      hours: hoursByTask[index],
-      activityId: resolveTimeEntryActivityId(taskIssue, currentUser, activities),
-    });
-  }
-
-  return entries;
-}
-
 async function upsertDailyTimeEntries(
   redmineDomain,
   redmineApiKey,
@@ -659,7 +631,12 @@ function getTimeEntryIssueId(entry) {
   return String(entry?.issue?.id || entry?.issue_id || "");
 }
 
-function resolveTimeEntryActivityId(taskIssue, currentUser, activities) {
+function resolveTimeEntryActivityId(
+  taskIssue,
+  currentUser,
+  activities,
+  rules = globalThis.TB_LOG_TIME_RULES.normalize()
+) {
   const subject = taskIssue?.subject || "";
   const trackerName = taskIssue?.tracker?.name || "";
   let activityName = "03_Coding";
@@ -672,18 +649,37 @@ function resolveTimeEntryActivityId(taskIssue, currentUser, activities) {
     activityName = "04_Unit Test";
   }
 
+  const testing = activityName === "04_Unit Test";
+  const selectedId =
+    rules.activityMode === "default"
+      ? rules.defaultActivityId
+      : testing
+        ? rules.testingActivityId
+        : rules.defaultActivityId;
+  if (selectedId) {
+    const activity = activities.find(
+      (item) => String(item.id) === selectedId && item.active !== false
+    );
+    if (!activity) {
+      throw new Error(
+        "Configured time-entry activity is unavailable. Reload activities in Options."
+      );
+    }
+    return activity.id;
+  }
+  if (rules.activityMode === "default") {
+    throw new Error("Select a default time-entry activity in Options.");
+  }
   return getActivityIdByName(activities, activityName);
 }
 
 function getActivityIdByName(activities, activityName) {
-  const activity = activities.find((item) => item.name === activityName);
+  const activity = activities.find((item) => item.name === activityName && item.active !== false);
 
   if (!activity?.id) {
-    const fallbackIds = {
-      "03_Coding": 10,
-      "04_Unit Test": 9,
-    };
-    return fallbackIds[activityName];
+    throw new Error(
+      "Report activity names do not match this Redmine. Configure activities in Options."
+    );
   }
 
   return activity.id;

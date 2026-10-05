@@ -53,8 +53,11 @@ window.addEventListener("beforeunload", () => {
 /**
  * Retrieves the settings required by Redmine reporting through the background service worker.
  */
-async function getSettings() {
-  const response = await sendRuntimeMessage({ type: "GET_REPORT_SETTINGS" });
+async function getSettings(reportIssueId = "") {
+  const response = await sendRuntimeMessage({
+    type: "GET_REPORT_SETTINGS",
+    ...(reportIssueId ? { redmineIssueId: String(reportIssueId) } : {}),
+  });
   return response.data || {};
 }
 
@@ -92,8 +95,11 @@ function injectMonthlyLogButton() {
 async function logTimeForMonth() {
   const settings = await getSettings();
   const { redmineDomain, reportProjectId, hasRedmineApiKey } = settings;
+  const reportProjects =
+    settings.reportProjects ||
+    (reportProjectId ? [{ id: reportProjectId, name: `#${reportProjectId}` }] : []);
 
-  if (!redmineDomain || !hasRedmineApiKey || !reportProjectId) {
+  if (!redmineDomain || !hasRedmineApiKey || !reportProjects.length) {
     alert(reportMessage("report_settings_required"));
     return;
   }
@@ -104,6 +110,7 @@ async function logTimeForMonth() {
   const currentMonthLabel = `${new Date().getMonth() + 1}/${new Date().getFullYear()}`;
   openMonthlyLogModal({
     monthLabel: currentMonthLabel,
+    reportProjects,
     onPreview: async (modalInstance) => {
       const {
         previewButton,
@@ -120,6 +127,7 @@ async function logTimeForMonth() {
       startButton.textContent = reportMessage("report_confirm_logging");
       deleteButton.disabled = true;
       closeButton.disabled = true;
+      modalInstance.projectSelect.disabled = true;
       previewButton.textContent = reportMessage("report_scanning");
       resultBody.replaceChildren();
       progressList.replaceChildren();
@@ -145,7 +153,7 @@ async function logTimeForMonth() {
         if (!reportTracker) throw new Error(reportMessage("report_missing_tracker"));
 
         const issues = await findMonthlyReportIssues(redmineDomain, redmineApiKey, {
-          projectId: reportProjectId,
+          projectId: modalInstance.projectSelect.value,
           trackerId: reportTracker.id,
           year,
           month,
@@ -228,6 +236,7 @@ async function logTimeForMonth() {
         previewButton.textContent = reportMessage("report_check_tasks");
         deleteButton.disabled = false;
         closeButton.disabled = false;
+        modalInstance.projectSelect.disabled = false;
       }
     },
     onDelete: async (modalInstance) => {
@@ -241,6 +250,7 @@ async function logTimeForMonth() {
       previewButton.disabled = true;
       deleteButton.disabled = true;
       closeButton.disabled = true;
+      modalInstance.projectSelect.disabled = true;
       statusText.textContent = reportMessage("report_deleting");
 
       const updateProgress = (message, type = "info") => {
@@ -269,6 +279,7 @@ async function logTimeForMonth() {
         previewButton.disabled = false;
         deleteButton.disabled = false;
         closeButton.disabled = false;
+        modalInstance.projectSelect.disabled = false;
       }
     },
     onStart: async (modalInstance) => {
@@ -282,6 +293,7 @@ async function logTimeForMonth() {
       modalInstance.previewButton.disabled = true;
       modalInstance.deleteButton.disabled = true;
       closeButton.disabled = true;
+      modalInstance.projectSelect.disabled = true;
       resultBody.replaceChildren();
       copyButton.disabled = true;
 
@@ -324,6 +336,7 @@ async function logTimeForMonth() {
           updateProgress(reportMessage("report_no_matching_issue"));
           startButton.disabled = true;
           closeButton.disabled = false;
+          modalInstance.projectSelect.disabled = false;
           return;
         }
 
@@ -446,11 +459,13 @@ async function logTimeForMonth() {
         startButton.disabled = true;
         startButton.textContent = reportMessage("report_logged_button");
         closeButton.disabled = false;
+        modalInstance.projectSelect.disabled = false;
       } catch (error) {
         statusText.textContent = reportMessage("report_error");
         updateProgress(reportMessage("report_fatal_error", { error: error.message }));
         startButton.disabled = true;
         closeButton.disabled = false;
+        modalInstance.projectSelect.disabled = false;
       } finally {
         startButton.textContent = reportMessage("report_logged_button");
         modalInstance.previewButton.disabled = false;
@@ -550,7 +565,7 @@ function isSafeMonthlyDeleteEntry(entry, currentUser, spentOn) {
   );
 }
 
-function openMonthlyLogModal({ monthLabel, onPreview, onStart, onDelete }) {
+function openMonthlyLogModal({ monthLabel, reportProjects = [], onPreview, onStart, onDelete }) {
   const overlay = document.createElement("div");
   overlay.className = "tb-monthly-log-overlay";
   overlay.innerHTML = `
@@ -597,7 +612,15 @@ function openMonthlyLogModal({ monthLabel, onPreview, onStart, onDelete }) {
   const closeButton = overlay.querySelector(".tb-monthly-log-close");
   const previewButton = overlay.querySelector("#tb-monthly-log-preview");
   const startButton = overlay.querySelector("#tb-monthly-log-start");
+  const projectLabel = document.createElement("label");
+  projectLabel.textContent = reportMessage("report_project_select");
+  const projectSelect = document.createElement("select");
+  projectSelect.id = "tb-monthly-report-project";
+  projectSelect.append(...reportProjects.map((project) => new Option(project.name, project.id)));
+  projectLabel.append(projectSelect);
+  overlay.querySelector(".tb-monthly-log-body").prepend(projectLabel);
   const modalInstance = {
+    projectSelect,
     overlay,
     previewButton,
     startButton,
@@ -610,6 +633,14 @@ function openMonthlyLogModal({ monthLabel, onPreview, onStart, onDelete }) {
     table: overlay.querySelector("#timesheet-results-table"),
   };
 
+  projectSelect.onchange = () => {
+    modalInstance.previewIssues = [];
+    modalInstance.hasUnsafeReplacement = false;
+    modalInstance.resultBody.replaceChildren();
+    startButton.disabled = true;
+    modalInstance.copyButton.disabled = true;
+    modalInstance.statusText.textContent = reportMessage("report_ready_to_scan");
+  };
   const close = () => {
     overlay.remove();
     document.body.classList.remove("tb-modal-open");
@@ -698,7 +729,7 @@ async function injectLogTimeButton() {
     button.href = "#";
     button.id = "tb-log-time-btn";
     button.className = "icon icon-time-add";
-    button.innerText = reportMessage("report_log_8h");
+    button.innerText = reportMessage("report_log_configured");
 
     button.onclick = async (e) => {
       e.preventDefault();
@@ -778,14 +809,39 @@ async function handleExtractAndOpenModal(actionsEl, button) {
     return;
   }
 
-  const backlogIssueKey = findBacklogKeyInPage();
+  let backlogIssueKey = "";
+  try {
+    const issueId = location.pathname.match(/\/issues\/(\d+)/)?.[1];
+    if (issueId) {
+      backlogIssueKey =
+        (await sendRuntimeMessage({ type: "GET_BACKLOG_ISSUE_KEY", redmineIssueId: issueId })).data
+          ?.issueKey || "";
+    }
+  } catch (_error) {
+    /* Fall back to the issue's visible reference. */
+  }
+  backlogIssueKey ||= findBacklogKeyInPage();
   setButtonLoading(button, true);
 
   try {
     const attachments = extractRedmineAttachments(commentContentEl);
     const result = await sendRuntimeMessage({
       type: "EXTRACT_JAPANESE_CONTENT",
+      redmineIssueId: location.pathname.match(/\/issues\/(\d+)/)?.[1] || "",
       commentText: rawText,
+      issueKey: backlogIssueKey || "",
+      projectKey: backlogIssueKey
+        ? ""
+        : (() => {
+            const href =
+              document
+                .querySelector(
+                  "#header h1 a[href*='/projects/'], a[href^='/projects/'][href$='/issues']"
+                )
+                ?.getAttribute("href") || "";
+            const match = href.match(/\/projects\/([a-zA-Z0-9_-]+)/);
+            return match ? `redmine:${match[1]}` : "";
+          })(),
     });
     openBacklogModal({
       backlogIssueKey,
@@ -806,6 +862,8 @@ async function handleExtractAndOpenModal(actionsEl, button) {
             content,
             notifiedUserId,
             attachments: confirmedAttachments,
+            sourceCommentUrl: `${window.location.origin}${window.location.pathname}#${actionsEl.closest(".journal")?.id || ""}`,
+            sourceCommentText: rawText,
           });
         } catch (error) {
           await recordSyncActivity({
@@ -822,9 +880,24 @@ async function handleExtractAndOpenModal(actionsEl, button) {
           operation: "reverse-sync",
           issue: confirmedKey,
           count: 1,
-          ok: true,
+          ok: !sendResult.data.partial,
+          partial: sendResult.data.partial === true,
+          detail: (sendResult.data.attachmentResults || [])
+            .filter((attachment) => !attachment.ok)
+            .map((attachment) => `${attachment.filename}: ${attachment.error}`)
+            .join("; "),
           url: sendResult.data.backlogUrl,
         });
+        if (sendResult.data.partial) {
+          const filenames = sendResult.data.attachmentResults
+            .filter((attachment) => !attachment.ok)
+            .map((attachment) => attachment.filename)
+            .join(", ");
+          showToast(
+            globalThis.TB_GET_MESSAGE("sync_attachment_partial").replace("$files$", filenames),
+            "error"
+          );
+        }
         await openSuccessModal({
           redmineUrl: sendResult.data.backlogUrl,
           onClose: () => setButtonLoading(button, false),

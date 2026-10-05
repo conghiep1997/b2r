@@ -5,6 +5,8 @@
 
 // Cached key material to avoid re-deriving on every operation
 let cachedKeyMaterial = null;
+let pendingKeyMaterial = null;
+let pendingStorageId = null;
 
 /**
  * Encrypts sensitive data using AES-GCM-256.
@@ -26,7 +28,11 @@ async function encryptData(data) {
   const combined = new Uint8Array(iv.length + encrypted.byteLength);
   combined.set(iv);
   combined.set(new Uint8Array(encrypted), iv.length);
-  return btoa(String.fromCharCode(...combined));
+  let binary = "";
+  for (let offset = 0; offset < combined.length; offset += 8192) {
+    binary += String.fromCharCode(...combined.subarray(offset, offset + 8192));
+  }
+  return btoa(binary);
 }
 
 /**
@@ -64,6 +70,16 @@ async function decryptData(encryptedData) {
  * @returns {Promise<CryptoKey>} AES-GCM-256 key
  */
 async function deriveKey() {
+  if (!pendingKeyMaterial) {
+    pendingKeyMaterial = deriveKeyOnce().catch((error) => {
+      pendingKeyMaterial = null;
+      throw error;
+    });
+  }
+  return pendingKeyMaterial;
+}
+
+async function deriveKeyOnce() {
   // Use cached key material to avoid re-deriving on every operation
   if (cachedKeyMaterial) {
     return cachedKeyMaterial;
@@ -108,8 +124,20 @@ async function deriveKey() {
  * @returns {Promise<string>} Unique storage identifier
  */
 async function getUserStorageId() {
-  return new Promise((resolve) => {
+  if (typeof window !== "undefined") {
+    const response = await chrome.runtime.sendMessage({ type: "GET_CRYPTO_STORAGE_ID" });
+    if (!response?.ok || typeof response.data !== "string") {
+      throw new Error("Unable to initialize encrypted settings.");
+    }
+    return response.data;
+  }
+  if (pendingStorageId) return pendingStorageId;
+  pendingStorageId = new Promise((resolve, reject) => {
     chrome.storage.local.get(["tb_storage_id"], (result) => {
+      if (chrome.runtime.lastError) {
+        reject(new Error(chrome.runtime.lastError.message));
+        return;
+      }
       if (result.tb_storage_id) {
         resolve(result.tb_storage_id);
         return;
@@ -118,8 +146,16 @@ async function getUserStorageId() {
       // Generate new unique ID
       const newId = crypto.randomUUID();
       chrome.storage.local.set({ tb_storage_id: newId }, () => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message));
+          return;
+        }
         resolve(newId);
       });
     });
+  }).catch((error) => {
+    pendingStorageId = null;
+    throw error;
   });
+  return pendingStorageId;
 }

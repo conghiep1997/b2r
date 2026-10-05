@@ -3,9 +3,10 @@
  * Loads modules and coordinates message handling between content scripts and external APIs.
  */
 
-/* global TB_LOGGER, TB_SYNC_ACTIVITY, getBacklogIssueInfo, getBacklogUsers, testModelAvailability */
+/* global TB_LOGGER, TB_SYNC_ACTIVITY, TB_SYNC_STATE, TB_MIGRATION, TB_COMMENT_SYNC, TB_GLOSSARY, getBacklogIssueInfo, getBacklogUsers, testModelAvailability, getUserStorageId */
 
 importScripts(
+  "modules/utils/sync-rules.js",
   "modules/utils/version.js",
   "modules/utils/settings-view.js",
   "modules/utils/message-validation.js",
@@ -17,12 +18,18 @@ importScripts(
   "modules/constants/prompts.js",
   "constants.js",
   "modules/utils/helpers.js",
+  "modules/utils/project-profiles.js",
+  "modules/utils/custom-fields.js",
   "modules/utils/crypto.js",
   "modules/utils/logger.js",
   "modules/utils/markdown.js",
   "modules/services/ai.js",
   "modules/services/redmine.js",
-  "modules/services/backlog.js"
+  "modules/services/backlog.js",
+  "modules/services/sync-state.js",
+  "modules/services/migration.js",
+  "modules/services/comment-sync.js",
+  "modules/services/glossary.js"
 );
 
 const DEBUG_PREFIX = "[TB-BG]";
@@ -182,15 +189,108 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   const handlers = {
-    OPEN_OPTIONS_PAGE: () => chrome.runtime.openOptionsPage(),
-    GET_UI_SETTINGS: async () => {
-      assertTrustedExtensionPageSender(sender, await getSettings());
-      return TB_SETTINGS_VIEW.forUi(await getSettings());
-    },
-    GET_REPORT_SETTINGS: async () => {
+    GET_BACKLOG_ISSUE_KEY: async (msg) => {
       const settings = await getSettings();
       assertTrustedRedmineSender(sender, settings.redmineDomain);
-      return TB_SETTINGS_VIEW.forReport(settings);
+      const matches = (await TB_SYNC_STATE.list(settings, "mapping")).filter(
+        (record) => String(record.issueId) === msg.redmineIssueId
+      );
+      return { issueKey: matches.length === 1 ? matches[0].identity : "" };
+    },
+    GET_PROJECT_GLOSSARY: async (msg) => {
+      assertOptionsSender(sender);
+      return TB_GLOSSARY.get(await getSettings(), msg.projectKey);
+    },
+    SAVE_PROJECT_GLOSSARY: async (msg) => {
+      assertOptionsSender(sender);
+      await TB_GLOSSARY.save(await getSettings(), msg.projectKey, msg.entries);
+    },
+    LIST_SYNC_RECOVERY: async () => {
+      assertOptionsSender(sender);
+      const settings = await getSettings();
+      return (await TB_SYNC_STATE.list(settings))
+        .filter((record) => ["migration", "mapping", "comment"].includes(record.kind))
+        .map((record) => ({
+          kind: record.kind,
+          issueKey: record.kind === "comment" ? record.request.backlogIssueKey : record.identity,
+          recordId: record.identity,
+          issueId: record.issueId || record.request?.redmineIssueId || record.result?.commentId,
+          state: record.state || "mapped",
+          total: record.total ?? record.comments?.length ?? 0,
+          completed:
+            record.state === "complete"
+              ? (record.total ?? record.comments?.length ?? 0)
+              : record.completed?.length || 0,
+          updatedAt: record.updatedAt,
+          uncertain:
+            (record.pendingComment !== null && record.pendingComment !== undefined) ||
+            record.state === "creating" ||
+            (record.kind === "comment" && record.state === "sending"),
+        }));
+    },
+    RESUME_MIGRATION: async (msg) => {
+      assertOptionsSender(sender);
+      const settings = await getSettings();
+      assertSettings(settings, ["redmineApiKey"]);
+      return TB_MIGRATION.resume(settings, msg.issueKey);
+    },
+    RESUME_COMMENT_SYNC: async (msg) => {
+      assertOptionsSender(sender);
+      return TB_COMMENT_SYNC.resume(await getSettings(), msg.recordId);
+    },
+    RESOLVE_COMMENT_SYNC: async (msg) => {
+      assertOptionsSender(sender);
+      return TB_COMMENT_SYNC.resolve(await getSettings(), msg.recordId);
+    },
+    RESOLVE_MIGRATION: async (msg) => {
+      assertOptionsSender(sender);
+      const settings = await getSettings();
+      assertSettings(settings, ["redmineApiKey"]);
+      return TB_MIGRATION.resolve(settings, msg.issueKey, msg.action, msg.redmineIssueId);
+    },
+    SAVE_ISSUE_MAPPING: async (msg) => {
+      assertOptionsSender(sender);
+      const settings = await getSettings();
+      assertSettings(settings, ["redmineApiKey"]);
+      if (!/^[A-Z0-9_]+-\d+$/.test(msg.issueKey || "") || !/^\d+$/.test(msg.redmineIssueId || "")) {
+        throw new Error("Invalid issue mapping.");
+      }
+      const issue = await TB_MIGRATION.remoteIssue(settings, msg.redmineIssueId);
+      return TB_SYNC_STATE.run(
+        () =>
+          TB_SYNC_STATE.write(settings, "mapping", msg.issueKey, {
+            issueId: issue.id,
+            projectId: issue.project?.id,
+          }),
+        settings,
+        "migration",
+        msg.issueKey
+      );
+    },
+    REMOVE_ISSUE_MAPPING: async (msg) => {
+      assertOptionsSender(sender);
+      const settings = await getSettings();
+      return TB_SYNC_STATE.run(
+        () => TB_SYNC_STATE.remove(settings, "mapping", msg.issueKey),
+        settings,
+        "migration",
+        msg.issueKey
+      );
+    },
+    GET_CRYPTO_STORAGE_ID: () => {
+      assertOptionsSender(sender);
+      return getUserStorageId();
+    },
+    OPEN_OPTIONS_PAGE: () => chrome.runtime.openOptionsPage(),
+    GET_UI_SETTINGS: async (msg) => {
+      const settings = await getSettings();
+      assertTrustedExtensionPageSender(sender, settings);
+      return TB_SETTINGS_VIEW.forUi(settingsForBacklog(settings, msg, sender));
+    },
+    GET_REPORT_SETTINGS: async (msg) => {
+      const settings = await getSettings();
+      assertTrustedRedmineSender(sender, settings.redmineDomain);
+      return TB_SETTINGS_VIEW.forReport(await settingsForRedmine(settings, msg, "report"));
     },
     LOG_ERROR: ({ log }) => TB_LOGGER?.saveLogToStorage(log),
     RECORD_SYNC_ACTIVITY: ({ entry }) => TB_SYNC_ACTIVITY.record(entry),
@@ -239,7 +339,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return { userName: user?.name || "" };
     },
     LOOKUP_AND_TRANSLATE_COMMENT: async (msg) => {
-      const settings = await getSettings();
+      const settings = settingsForBacklog(await getSettings(), msg, sender);
       assertTrustedBacklogSender(sender, settings.backlogDomain);
       assertSettings(settings, ["redmineApiKey", "ai"]);
       const redmineIssue = await findRedmineIssueWithCache(
@@ -253,8 +353,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         msg.commentText,
         settings,
         msg.commentUrl,
-        TB.PROMPTS.USER,
-        createAIStatusReporter(sender)
+        TB.PROMPTS.TRANSLATION.prompt(settings.translationRules, false, true),
+        createAIStatusReporter(sender),
+        getGlossaryProjectKey(msg)
       );
       const finalPreview = msg.userInfo ? `${msg.userInfo}\n${translated}` : translated;
       return {
@@ -268,7 +369,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         assertTrustedBacklogSender(sender, settings.backlogDomain);
         return TB_REQUEST_DEDUPER.run(
           TB_REQUEST_DEDUPER.createKey(msg.type, msg, getSenderScope(sender)),
-          () => handleSendToRedmine(msg, sender)
+          () => TB_COMMENT_SYNC.send(settings, msg, sender)
         );
       });
     },
@@ -277,7 +378,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         assertTrustedRedmineSender(sender, settings.redmineDomain);
         return TB_REQUEST_DEDUPER.run(
           TB_REQUEST_DEDUPER.createKey(msg.type, msg, getSenderScope(sender)),
-          () => handleSendToBacklog(msg)
+          () => TB_COMMENT_SYNC.send(settings, msg, sender)
         );
       });
     },
@@ -302,11 +403,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       assertOptionsSender(sender);
       return handleFetchProjectsWithCredentials(domain, apiKey);
     },
+    FETCH_REDMINE_ACTIVITIES_WITH_KEY: async ({ domain, apiKey }) => {
+      assertOptionsSender(sender);
+      await assertRedmineHostPermission(domain);
+      return globalThis.getTimeEntryActivities(domain, apiKey);
+    },
     CREATE_REDMINE_ISSUE: async (msg) => {
-      const settings = await getSettings();
+      const settings = settingsForBacklog(await getSettings(), msg, sender);
       assertTrustedBacklogSender(sender, settings.backlogDomain);
       assertSettings(settings, ["redmineApiKey", "ai"]);
-      return handleCreateRedmineIssue(msg);
+      return TB_MIGRATION.migrate(settings, msg);
     },
     REDMINE_AUTHORIZED_FETCH: async (msg) => {
       const settings = await getSettings();
@@ -315,21 +421,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return handleRedmineAuthorizedFetch(settings, msg);
     },
     EXTRACT_JAPANESE_CONTENT: async (msg) => {
-      const settings = await getSettings();
-      assertTrustedRedmineSender(sender, settings.redmineDomain);
-      assertSettings(settings, ["ai"]);
+      const baseSettings = await getSettings();
+      assertTrustedRedmineSender(sender, baseSettings.redmineDomain);
+      const settings = await settingsForRedmine(baseSettings, msg);
+      if (settings.translationRules.reverseMode !== "original") assertSettings(settings, ["ai"]);
       return {
         previewText: await translateText(
           msg.commentText,
           settings,
           null,
-          TB.PROMPTS.EXTRACT_JAPANESE,
-          createAIStatusReporter(sender)
+          TB.PROMPTS.TRANSLATION.prompt(settings.translationRules, true),
+          createAIStatusReporter(sender),
+          getGlossaryProjectKey(msg)
         ),
       };
     },
     TRANSLATE_TEXT_SIMPLE: async (msg) => {
-      const settings = await getSettings();
+      const settings = settingsForBacklog(await getSettings(), msg, sender);
       assertTrustedBacklogSender(sender, settings.backlogDomain);
       assertSettings(settings, ["ai"]);
       return {
@@ -337,13 +445,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           msg.text,
           settings,
           null,
-          TB.PROMPTS.SIMPLE_TRANSLATE,
-          createAIStatusReporter(sender)
+          TB.PROMPTS.TRANSLATION.prompt(settings.translationRules),
+          createAIStatusReporter(sender),
+          getGlossaryProjectKey(msg)
         ),
       };
     },
     TRANSLATE_COMMENT_FULL: async (msg) => {
-      const settings = await getSettings();
+      const settings = settingsForBacklog(await getSettings(), msg, sender);
       assertTrustedBacklogOrRedmineSender(sender, settings);
       assertSettings(settings, ["ai"]);
       return {
@@ -351,8 +460,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           msg.commentText,
           settings,
           msg.commentUrl || null,
-          TB.PROMPTS.USER,
-          createAIStatusReporter(sender)
+          TB.PROMPTS.TRANSLATION.prompt(settings.translationRules, false, true),
+          createAIStatusReporter(sender),
+          getGlossaryProjectKey(msg)
         ),
       };
     },
@@ -360,7 +470,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   const handler = handlers[message.type];
   if (handler) {
-    Promise.resolve(handler(message))
+    Promise.resolve()
+      .then(() => handler(message))
       .then((data) => sendResponse({ ok: true, data }))
       .catch((err) => {
         const errorString = err instanceof Error ? err.message : String(err || "Unknown error");
@@ -428,6 +539,11 @@ async function getSettings() {
     "defaultProjectId",
     "reportProjectId",
     "manualFields",
+    "syncRules",
+    "translationRules",
+    "logTimeRules",
+    "projectProfiles",
+    "customFields",
     "showRedmineSuccessModal",
   ];
   const items = await chrome.storage.local.get(keys);
@@ -504,7 +620,14 @@ async function getSettings() {
     defaultProjectId: items.defaultProjectId || "",
     reportProjectId: items.reportProjectId || "",
     manualFields: items.manualFields || "",
+    syncRules: globalThis.TB_SYNC_RULES.normalize(items.syncRules),
+    translationRules: TB.PROMPTS.TRANSLATION.normalize(items.translationRules),
+    logTimeRules: globalThis.TB_LOG_TIME_RULES.normalize(items.logTimeRules),
+    projectProfiles: globalThis.TB_PROJECT_PROFILES.normalize(
+      items.projectProfiles ? JSON.parse(await decryptData(items.projectProfiles)) : []
+    ),
     showRedmineSuccessModal: items.showRedmineSuccessModal !== false,
+    customFields: globalThis.TB_CUSTOM_FIELDS.normalize(items.customFields),
   };
 
   settingsCache = decryptedSettings;
@@ -571,8 +694,61 @@ function assertSettings(settings, required = []) {
 // Caching & Utility Functions
 // ============================================================================
 
+function settingsForBacklog(settings, message, sender = {}) {
+  const key =
+    message.issueKey ||
+    message.backlogIssueKey ||
+    message.issueData?.backlogIssueKey ||
+    message.projectKey ||
+    (sender.url || sender.tab?.url || "").match(/\/view\/([A-Z0-9_]+-\d+)/)?.[1] ||
+    "";
+  return globalThis.TB_PROJECT_PROFILES.forBacklog(settings, key);
+}
+
+async function settingsForRedmine(settings, message, purpose = "reverse") {
+  if (message.issueKey || message.backlogIssueKey) return settingsForBacklog(settings, message);
+  if (!globalThis.TB_PROJECT_PROFILES.current(settings).length || !message.redmineIssueId) {
+    return settings;
+  }
+  if (!/^[1-9]\d*$/.test(message.redmineIssueId)) throw new Error("Invalid Redmine issue ID.");
+  const mappings =
+    purpose === "report"
+      ? []
+      : (await TB_SYNC_STATE.list(settings, "mapping")).filter(
+          (record) => String(record.issueId) === message.redmineIssueId
+        );
+  if (mappings.length > 1) {
+    throw new Error("Multiple Backlog mappings match this issue. Review the mappings in Options.");
+  }
+  if (mappings.length === 1) {
+    return globalThis.TB_PROJECT_PROFILES.forBacklog(settings, mappings[0].identity);
+  }
+  const issue = await globalThis.getIssueDetails(
+    settings.redmineDomain,
+    settings.redmineApiKey,
+    message.redmineIssueId
+  );
+  return globalThis.TB_PROJECT_PROFILES.forRedmine(settings, issue.project?.id, purpose);
+}
+
 async function findRedmineIssueWithCache(domain, apiKey, issueKey, summary, backlogIssueType = "") {
-  const cacheKey = JSON.stringify([domain, issueKey, summary, backlogIssueType || ""]);
+  const settings = globalThis.TB_PROJECT_PROFILES.forBacklog(await getSettings(), issueKey);
+  const mapping = await TB_SYNC_STATE.read(settings, "mapping", issueKey);
+  if (mapping) {
+    const issue = await TB_MIGRATION.remoteIssue(settings, mapping.issueId);
+    if (String(issue.project?.id) !== String(mapping.projectId)) {
+      throw new Error("Mapped destination project has changed. Review the mapping in Options.");
+    }
+    return { id: issue.id, title: issue.subject };
+  }
+  const cacheKey = JSON.stringify([
+    domain,
+    issueKey,
+    summary,
+    backlogIssueType || "",
+    settings.syncRules,
+    settings.defaultProjectId,
+  ]);
   const now = Date.now();
   const cached = issueLookupCache.get(cacheKey);
 
@@ -580,7 +756,15 @@ async function findRedmineIssueWithCache(domain, apiKey, issueKey, summary, back
     return cached.data;
   }
 
-  const result = await findRedmineIssue(domain, apiKey, issueKey, summary, backlogIssueType);
+  const result = await findRedmineIssue(
+    domain,
+    apiKey,
+    issueKey,
+    summary,
+    backlogIssueType,
+    settings.syncRules,
+    settings.defaultProjectId
+  );
   issueLookupCache.set(cacheKey, { data: result, time: now });
   return result;
 }
@@ -703,19 +887,21 @@ function assertTrustedRedmineSender(sender, redmineDomain) {
 }
 
 function assertTrustedBacklogSender(sender, backlogDomain = "") {
-  const senderUrl = sender?.tab?.url || sender?.url || "";
+  const senderUrl = sender?.url || sender?.tab?.url || "";
   try {
-    const host = new URL(senderUrl).hostname.toLowerCase();
-    if (host.endsWith(".backlog.com") || host.endsWith(".backlog.jp")) {
-      return;
-    }
+    const source = new URL(senderUrl);
     if (backlogDomain) {
       const configured = String(backlogDomain).includes("://")
         ? backlogDomain
         : `https://${backlogDomain}`;
-      if (new URL(configured).hostname.toLowerCase() === host) {
+      if (new URL(configured).origin === source.origin) {
         return;
       }
+    } else if (
+      source.protocol === "https:" &&
+      (source.hostname.endsWith(".backlog.com") || source.hostname.endsWith(".backlog.jp"))
+    ) {
+      return;
     }
   } catch (_error) {
     // fall through
@@ -754,6 +940,14 @@ function createAIStatusReporter(sender) {
   return (status) => {
     chrome.tabs.sendMessage(tabId, { type: "TB_AI_STATUS", status }, options).catch(() => {});
   };
+}
+
+function getGlossaryProjectKey(message) {
+  if (message.projectKey) return TB_GLOSSARY.validateProject(message.projectKey);
+  const match =
+    String(message.issueKey || "").match(/^([A-Z0-9_]+)-\d+$/) ||
+    String(message.commentUrl || "").match(/\/view\/([A-Z0-9_]+)-\d+/);
+  return match?.[1] || "";
 }
 
 async function handleRedmineAuthorizedFetch(settings, msg) {

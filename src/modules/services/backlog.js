@@ -34,7 +34,7 @@ async function getBacklogUsers(projectKeyOrIssueKey = null) {
   console.log(`[BacklogService] Domain: ${domain}, Project: ${projectKey}`);
 
   try {
-    const response = await fetch(url.toString(), { redirect: "error" });
+    const response = await timeoutFetch(url.toString(), { redirect: "error" });
 
     console.log(`[BacklogService] Response status: ${response.status}`);
 
@@ -68,7 +68,7 @@ async function getBacklogIssueInfo(issueKey) {
   const url = new URL(`api/v2/issues/${issueKey}`, domain);
   url.searchParams.set("apiKey", settings.backlogApiKey);
 
-  const response = await fetch(url.toString(), { redirect: "error" });
+  const response = await timeoutFetch(url.toString(), { redirect: "error" });
 
   if (!response.ok) {
     const errorMsg = await readErrorMessage(response);
@@ -88,8 +88,16 @@ async function getBacklogIssueInfo(issueKey) {
   };
 }
 
-async function handleSendToBacklog({ backlogIssueKey, content, notifiedUserId, attachments = [] }) {
-  const settings = await getSettings();
+async function handleSendToBacklog({
+  backlogIssueKey,
+  content,
+  notifiedUserId,
+  attachments = [],
+  settingsOverride = null,
+  syncMarker = "",
+  onBeforeSubmit = null,
+}) {
+  const settings = settingsOverride || (await getSettings());
   if (!settings.backlogApiKey) {
     throw new Error(TB.MESSAGES.SETTINGS.BACKLOG_API_KEY_REQUIRED);
   }
@@ -99,14 +107,26 @@ async function handleSendToBacklog({ backlogIssueKey, content, notifiedUserId, a
   url.searchParams.set("apiKey", settings.backlogApiKey);
 
   const body = new URLSearchParams();
-  body.append("content", content);
+  body.append("content", `${content}${syncMarker ? `\n\n${syncMarker}` : ""}`);
   if (Array.isArray(notifiedUserId)) {
     notifiedUserId.forEach((id) => body.append("notifiedUserId[]", id));
   } else if (notifiedUserId) {
     notifiedUserId.split(",").forEach((id) => body.append("notifiedUserId[]", id.trim()));
   }
 
-  const response = await fetch(url.toString(), {
+  // Backlog binds space upload IDs to the comment at creation time.
+  // https://developer.nulab.com/docs/backlog/api/2/add-comment/
+  const attachmentResults = await uploadAttachmentsToBacklog(
+    domain,
+    settings.backlogApiKey,
+    attachments,
+    settings.redmineDomain || TB.REDMINE_DOMAIN
+  );
+  for (const attachment of attachmentResults) {
+    if (attachment.ok) body.append("attachmentId[]", attachment.attachmentId);
+  }
+  await onBeforeSubmit?.();
+  const response = await timeoutFetch(url.toString(), {
     method: "POST",
     redirect: "error",
     headers: {
@@ -117,60 +137,83 @@ async function handleSendToBacklog({ backlogIssueKey, content, notifiedUserId, a
 
   if (!response.ok) {
     const errorMsg = await readErrorMessage(response);
-    throw new Error(
+    const error = new Error(
       `${TB.MESSAGES.BACKLOG.POST_FAILED}: ${sanitizeErrorMessage(errorMsg, response.status)}`
     );
+    error.status = response.status;
+    throw error;
   }
 
   const result = await response.json();
   const backlogUrl = `${domain.endsWith("/") ? domain : domain + "/"}view/${backlogIssueKey}#comment-${result.id}`;
 
-  if (attachments.length > 0) {
-    await uploadAttachmentsToBacklog(
-      domain,
-      settings.backlogApiKey,
-      backlogIssueKey,
-      result.id,
-      attachments
-    );
-  }
-
   return {
     message: TB.MESSAGES.TOAST.SEND_BACKLOG_SUCCESS,
     backlogUrl,
+    commentId: result.id,
+    attachmentResults,
+    partial: attachmentResults.some((attachment) => !attachment.ok),
   };
 }
 
-async function uploadAttachmentsToBacklog(domain, apiKey, issueKey, commentId, attachments) {
+async function uploadAttachmentsToBacklog(domain, apiKey, attachments, redmineDomain) {
+  const results = [];
   for (const attachment of attachments) {
     try {
-      const blob = await downloadRedmineAttachment(attachment.url);
-      const uploadUrl = new URL(
-        `api/v2/issues/${issueKey}/comments/${commentId}/attachments`,
-        domain
-      );
+      const blob = await downloadRedmineAttachment(attachment.url, redmineDomain);
+      const uploadUrl = new URL("api/v2/space/attachment", domain);
       uploadUrl.searchParams.set("apiKey", apiKey);
 
       const formData = new FormData();
       formData.append("file", blob, attachment.filename);
 
-      const uploadResponse = await fetch(uploadUrl.toString(), {
-        method: "POST",
-        redirect: "error",
-        body: formData,
-      });
+      const uploadResponse = await timeoutFetch(
+        uploadUrl.toString(),
+        {
+          method: "POST",
+          redirect: "error",
+          body: formData,
+        },
+        60000
+      );
 
       if (!uploadResponse.ok) {
-        console.warn(`[BacklogService] Failed to upload attachment ${attachment.filename}`);
+        throw new Error(`HTTP ${uploadResponse.status}`);
       }
+      const uploaded = await uploadResponse.json();
+      if (!Number.isSafeInteger(uploaded?.id) || uploaded.id <= 0) {
+        throw new Error("Invalid attachment upload ID.");
+      }
+      results.push({ filename: attachment.filename, ok: true, attachmentId: uploaded.id });
     } catch (error) {
-      console.warn(`[BacklogService] Attachment upload error for ${attachment.filename}:`, error);
+      results.push({
+        filename: attachment.filename,
+        ok: false,
+        error: sanitizeErrorMessage(error.message),
+      });
     }
   }
+  return results;
 }
 
-async function downloadRedmineAttachment(url) {
-  const response = await fetch(url, { credentials: "include" });
+async function downloadRedmineAttachment(url, redmineDomain) {
+  const destination = new URL(url);
+  const configured = new URL(redmineDomain);
+  const basePath = configured.pathname.replace(/\/$/, "");
+  if (
+    destination.origin !== configured.origin ||
+    destination.username ||
+    destination.password ||
+    !destination.pathname.startsWith(`${basePath}/attachments/download/`) ||
+    !/^\d+(?:\/|$)/.test(destination.pathname.slice(`${basePath}/attachments/download/`.length))
+  ) {
+    throw new Error("Attachment URL is outside the configured Redmine workspace.");
+  }
+  const response = await timeoutFetch(
+    destination.href,
+    { credentials: "include", redirect: "error" },
+    60000
+  );
   if (!response.ok) {
     throw new Error(`Redmine attachment download failed: ${response.status}`);
   }
@@ -217,7 +260,7 @@ async function downloadBacklogFile(domain, attachmentId, filename = "", issueKey
       );
       apiUrl.searchParams.set("apiKey", settings.backlogApiKey);
 
-      const apiRes = await fetch(apiUrl.toString(), { redirect: "error" });
+      const apiRes = await timeoutFetch(apiUrl.toString(), { redirect: "error" }, 60000);
       if (apiRes.ok) {
         const contentType = apiRes.headers.get("content-type") || "";
         const blob = await apiRes.blob();
@@ -248,7 +291,7 @@ async function downloadBacklogFile(domain, attachmentId, filename = "", issueKey
   }
 
   const webUrl = `${origin}/downloadAttachment/${attachmentId}/${encodeURIComponent(safeFilename)}`;
-  const response = await fetch(webUrl, { credentials: "include" });
+  const response = await timeoutFetch(webUrl, { credentials: "include" }, 60000);
 
   if (!response.ok) {
     throw new Error(`Backlog file download failed: ${response.status}`);

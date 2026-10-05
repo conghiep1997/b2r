@@ -229,20 +229,56 @@ function getChromeRuntime() {
  */
 async function timeoutFetch(url, options = {}, timeoutMs = 10000) {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const deadline = Date.now() + timeoutMs;
+  const externalSignal = options.signal;
 
-  try {
-    const response = await fetch(url, {
-      ...options,
-      signal: controller.signal,
+  async function bounded(operation) {
+    let timeoutId;
+    let externalAbort;
+    const failure = new Promise((_, reject) => {
+      timeoutId = setTimeout(
+        () => {
+          controller.abort();
+          reject(new Error(`Request timeout after ${timeoutMs}ms.`));
+        },
+        Math.max(0, deadline - Date.now())
+      );
+      externalAbort = () => {
+        controller.abort();
+        const error = new Error("Request cancelled.");
+        error.name = "AbortError";
+        reject(error);
+      };
+      if (externalSignal?.aborted) externalAbort();
+      else externalSignal?.addEventListener("abort", externalAbort, { once: true });
     });
-    return response;
-  } catch (error) {
-    if (error.name === "AbortError") {
-      throw new Error(`Request timeout after ${timeoutMs}ms.`);
+    try {
+      if (externalSignal?.aborted) return await failure;
+      if (Date.now() >= deadline) {
+        controller.abort();
+        throw new Error(`Request timeout after ${timeoutMs}ms.`);
+      }
+      return await Promise.race([operation(), failure]);
+    } catch (error) {
+      if (controller.signal.aborted && !externalSignal?.aborted && Date.now() >= deadline) {
+        throw new Error(`Request timeout after ${timeoutMs}ms.`);
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
+      externalSignal?.removeEventListener("abort", externalAbort);
     }
-    throw error;
-  } finally {
-    clearTimeout(timeoutId);
   }
+
+  const response = await bounded(() => fetch(url, { ...options, signal: controller.signal }));
+  const readers = new Set(["text", "json", "blob", "arrayBuffer", "formData", "bytes"]);
+  return new Proxy(response, {
+    get(target, property) {
+      const value = Reflect.get(target, property, target);
+      if (readers.has(property) && typeof value === "function") {
+        return (...args) => bounded(() => value.apply(target, args));
+      }
+      return typeof value === "function" ? value.bind(target) : value;
+    },
+  });
 }

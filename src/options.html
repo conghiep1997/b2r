@@ -189,6 +189,21 @@
         color: #0369a1;
       }
 
+      .workspace-tools {
+        margin-top: 24px;
+      }
+      .workspace-tools > summary {
+        color: var(--text);
+      }
+      .workspace-tools .field {
+        margin-bottom: 14px;
+      }
+      .glossary-term {
+        display: grid;
+        gap: 12px;
+        margin-top: 12px;
+      }
+
       .secondary-section-content {
         padding-top: 12px;
       }
@@ -241,7 +256,8 @@
         border-color: #60a5fa !important;
       }
 
-      :root[data-theme="dark"] .provider-models-list button.selected {
+      :root[data-theme="dark"] .provider-models-list button.selected,
+      :root[data-theme="dark"] .provider-models-list button.test-pass {
         background: #047857 !important;
         color: #ecfdf5 !important;
         border-color: #34d399 !important;
@@ -262,6 +278,73 @@
         margin-bottom: 8px;
         font-weight: 700;
       }
+      .policy-editor {
+        margin-block: 20px;
+      }
+      .policy-editor select,
+      #translationSettings select,
+      #logTimeSettings select {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 10px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--surface, white);
+        color: var(--text);
+      }
+      .policy-row,
+      .profile-row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        margin-block: 12px;
+      }
+      .policy-row label,
+      .profile-row label {
+        display: grid;
+        gap: 6px;
+        font-weight: 600;
+      }
+      .policy-row input:not([type="checkbox"]),
+      .policy-row select,
+      .policy-row textarea,
+      .profile-row input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 10px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--surface, white);
+        color: var(--text);
+      }
+      .policy-row textarea {
+        min-height: 80px;
+        resize: vertical;
+      }
+      .profile-row p {
+        grid-column: 1 / -1;
+        overflow-wrap: anywhere;
+      }
+      .policy-row button,
+      .profile-row button {
+        justify-self: start;
+        align-self: end;
+      }
+      #advancedSettings fieldset {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px;
+        margin-block: 16px;
+      }
+      #advancedSettings legend {
+        font-weight: 700;
+      }
+      @media (max-width: 600px) {
+        .policy-row,
+        .profile-row {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
 
       .field input {
         width: 100%;
@@ -276,6 +359,44 @@
       .field textarea {
         box-sizing: border-box;
         max-width: 100%;
+      }
+
+      .field select {
+        width: 100%;
+        min-height: 42px;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--panel);
+        color: var(--text);
+        font: inherit;
+      }
+
+      #advancedSettings .field {
+        margin-block: 14px;
+      }
+
+      #advancedSettings fieldset {
+        min-width: 0;
+      }
+
+      .policy-row input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        margin: 0;
+        justify-self: start;
+      }
+
+      #profileInheritRow:not([hidden]) {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        margin-block: 12px;
+      }
+
+      #profileInherit {
+        flex: 0 0 auto;
+        margin-top: 3px;
       }
 
       .field textarea {
@@ -389,6 +510,21 @@
         color: var(--warning-text);
       }
 
+      :root[data-theme="dark"] .status.status-success {
+        background: var(--success-bg) !important;
+        color: var(--success-text);
+      }
+
+      :root[data-theme="dark"] .status.status-error {
+        background: var(--danger-bg) !important;
+        color: var(--danger-text);
+      }
+
+      :root[data-theme="dark"] .status.status-warning {
+        background: var(--warning-bg) !important;
+        color: var(--warning-text);
+      }
+
       .note {
         margin-top: 16px;
         padding: 14px 16px;
@@ -462,41 +598,6 @@
         }
       }
 
-      @keyframes select-pulse {
-        0% {
-          transform: scale(1);
-          box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6);
-        }
-        40% {
-          transform: scale(1.1);
-          box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
-        }
-        100% {
-          transform: scale(1);
-          box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.35);
-        }
-      }
-
-      @keyframes test-ok {
-        0%,
-        100% {
-          box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-        }
-        50% {
-          box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
-        }
-      }
-
-      @keyframes test-err {
-        0%,
-        100% {
-          box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
-        }
-        50% {
-          box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
-        }
-      }
-
       @keyframes spin {
         0% {
           transform: rotate(0deg);
@@ -506,57 +607,241 @@
         }
       }
 
-      #geminiModelsList button {
+      .provider-models-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: flex-start;
+      }
+
+      .model-choice {
+        display: flex;
+        gap: 4px;
+        max-width: 100%;
+        min-width: 0;
+      }
+
+      .provider-models-list .model-test {
+        flex: 0 0 40px;
+        justify-content: center;
+        padding: 6px;
+      }
+
+      .provider-keys-list button,
+      #geminiKeysList button {
+        padding: 8px 12px;
+        border: 1px solid var(--border);
+        background: var(--panel);
+        color: var(--text);
+        font-size: 13px;
+      }
+
+      .provider-models-list button {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex: 0 1 auto;
+        min-width: 0;
+        max-width: 100%;
+        min-height: 36px;
+        box-sizing: border-box;
+        text-align: left;
+        white-space: normal;
+        overflow-wrap: anywhere;
         background: #dbeafe;
         color: #1e40af;
         border: 1px solid #bfdbfe;
         border-radius: 8px;
         padding: 6px 12px;
-        font-size: 12px;
+        font-size: 13px;
         cursor: pointer;
-        transition: all 0.25s ease;
+        line-height: 1.5;
+        transition:
+          background-color 160ms ease,
+          border-color 160ms ease;
       }
 
-      #geminiModelsList button:hover {
+      .provider-models-list button:hover {
         background: #bfdbfe;
-        transform: translateY(-1px);
       }
 
-      #geminiModelsList button.selected {
-        background: #10b981;
+      .provider-models-list button.selected,
+      .provider-models-list button.test-pass {
+        background: #047857;
         color: #fff;
         border-color: #059669;
-        animation: select-pulse 0.4s ease;
-        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.35);
       }
 
-      #geminiModelsList button.test-pass {
-        background: #10b981;
-        color: #fff;
-        border-color: #059669;
-        animation: test-ok 0.8s ease infinite;
-        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.3);
+      .provider-models-list button.test-fail,
+      :root[data-theme="dark"] .provider-models-list button.test-fail {
+        background: #b91c1c !important;
+        color: #fff !important;
+        border-color: #dc2626 !important;
       }
 
-      #geminiModelsList button.test-fail {
-        background: #ef4444;
-        color: #fff;
-        border-color: #dc2626;
-        animation: test-err 0.8s ease infinite;
-        box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.3);
+      .model-label {
+        min-width: 0;
       }
 
       .test-icon {
+        flex: 0 0 auto;
         font-size: 14px;
         vertical-align: middle;
-        margin-left: 6px;
-        opacity: 0.6;
+        opacity: 1;
         cursor: pointer;
         transition: opacity 0.2s;
       }
 
       .test-icon:hover {
         opacity: 1;
+      }
+      /* A neutral layout keeps connection, policy and support controls distinct. */
+      .wrap {
+        max-width: 960px;
+      }
+
+      #optionsForm > .settings-section,
+      #advancedSettings {
+        padding: 16px 18px;
+        margin-bottom: 16px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: var(--panel);
+      }
+
+      #optionsForm > .settings-section > summary,
+      #advancedSettings > summary {
+        padding-block: 4px;
+        color: var(--text);
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .settings-section .field + .field {
+        margin-top: 16px;
+      }
+
+      .field-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+
+      .field-heading label {
+        margin: 0;
+      }
+
+      .field p,
+      .policy-editor > p,
+      fieldset > p {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.6;
+      }
+
+      .field p[style],
+      .provider-key-help {
+        font-size: 13px !important;
+        line-height: 1.6;
+      }
+
+      #onboardingCard li {
+        margin-block: 10px;
+      }
+
+      #onboardingCard li > span {
+        display: block;
+        margin-top: 4px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      #onboardingCard li > .status-success {
+        color: var(--success-text);
+        background: transparent;
+      }
+
+      #translationSettings,
+      #logTimeSettings {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px 18px;
+      }
+
+      #translationSettings > p,
+      #logTimeSettings > p,
+      #translationSettings > .field:has(#translation_reverseMode),
+      #logTimeSettings > .field:has(#logTime_activityMode) {
+        grid-column: 1 / -1;
+      }
+
+      #translationSettings > .field,
+      #logTimeSettings > .field {
+        margin: 0;
+      }
+
+      #loadLogTimeActivities {
+        grid-column: 1 / -1;
+        justify-self: start;
+      }
+
+      #optionsForm > .save-bar {
+        position: sticky;
+        bottom: 12px;
+        z-index: 2;
+        padding: 12px;
+        margin-block: 8px 16px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: var(--panel);
+        box-shadow: 0 4px 16px rgb(15 23 42 / 12%);
+      }
+
+      .save-bar .status {
+        flex: 1;
+        min-width: 0;
+        overflow-wrap: anywhere;
+      }
+
+      .workspace-tools {
+        margin-top: 16px;
+        box-shadow: none;
+      }
+
+      details.policy-editor {
+        padding: 12px 14px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+      }
+
+      details.policy-editor > summary {
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      button:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+
+      @media (max-width: 620px) {
+        #translationSettings,
+        #logTimeSettings {
+          grid-template-columns: minmax(0, 1fr);
+        }
+
+        #optionsForm > .settings-section,
+        #advancedSettings {
+          padding: 12px;
+        }
       }
     </style>
   </head>
@@ -621,19 +906,8 @@
         </section>
         <form id="optionsForm" class="grid">
           <!-- Nhóm cấu hình Redmine -->
-          <details
-            id="redmineSettings"
-            open
-            style="
-              padding: 16px;
-              background: #dbeafe;
-              border: 1px solid #3b82f6;
-              border-radius: 12px;
-              margin-bottom: 16px;
-              display: block;
-            "
-          >
-            <summary style="padding: 4px 0; font-weight: 600; color: #1e40af; cursor: pointer">
+          <details id="redmineSettings" class="settings-section" open>
+            <summary>
               <span data-i18n="options_redmine_section"
                 >💎 Cấu hình Redmine - Click để thu gọn/mở rộng</span
               >
@@ -660,7 +934,12 @@
                 <label for="redmineApiKey" data-i18n="options_redmine_api_key"
                   >Redmine API Key</label
                 >
-                <input id="redmineApiKey" type="text" placeholder="Nhập API key" />
+                <input id="redmineApiKey" type="password" placeholder="Nhập API key" />
+                <p data-i18n="options_encryption_help" class="note">
+                  API keys are encrypted locally. Someone with access to your entire Chrome profile
+                  and extension files may still recover them. Use limited-access keys and revoke
+                  them if the profile is compromised.
+                </p>
                 <p style="margin-top: 6px; font-size: 12px; color: var(--muted)">
                   🔑 Lấy API Key tại:
                   <a
@@ -675,17 +954,12 @@
               </div>
 
               <div class="field" style="margin-bottom: 12px">
-                <label for="defaultProjectId"
-                  >Project mặc định (Dùng cho Migrate)
-                  <button
-                    type="button"
-                    id="syncProjectsBtn"
-                    class="secondary btn-sync"
-                    style="float: right; margin-top: -8px"
-                  >
+                <div class="field-heading">
+                  <label for="defaultProjectId">Project mặc định (Dùng cho Migrate) </label
+                  ><button type="button" id="syncProjectsBtn" class="secondary btn-sync">
                     🔄 Đồng bộ Project
                   </button>
-                </label>
+                </div>
                 <select
                   id="defaultProjectId"
                   style="
@@ -749,7 +1023,14 @@
                   >
                 </summary>
                 <div class="field" style="padding-bottom: 16px">
+                  <section id="customFieldsPanel" class="policy-editor">
+                    <div id="customFieldsEditor"></div>
+                    <button id="addCustomField" type="button" data-i18n="options_mapping_add">
+                      Add mapping
+                    </button>
+                  </section>
                   <textarea
+                    hidden
                     id="manualFields"
                     placeholder='{ "Severity": 0, "Reproduction Rate": 0, "Role": 0, "QC Activity": 0 }'
                     style="
@@ -769,11 +1050,8 @@
                     data-i18n="options_custom_fields_help"
                     style="margin-top: 6px; font-size: 12px; color: var(--muted)"
                   >
-                    💡 Nhập mã ID của các trường bắt buộc. Ví dụ:
-                    <code
-                      >{ "Severity": 46, "Reproduction Rate": 0, "Role": 11, "QC Activity": 8, "Q&A
-                      Category": 58 }</code
-                    >
+                    💡 Nhập mã ID của các trường bắt buộc. Ví dụ: Configure IDs and exact API values
+                    using the field editor.
                   </p>
                 </div>
               </details>
@@ -781,19 +1059,8 @@
           </details>
 
           <!-- Nhóm cấu hình Backlog -->
-          <details
-            id="backlogSettings"
-            open
-            style="
-              padding: 16px;
-              background: #fef3c7;
-              border: 1px solid #f59e0b;
-              border-radius: 12px;
-              margin-bottom: 16px;
-              display: block;
-            "
-          >
-            <summary style="padding: 4px 0; font-weight: 600; color: #b45309; cursor: pointer">
+          <details id="backlogSettings" class="settings-section" open>
+            <summary>
               <span data-i18n="options_backlog_section">📝 Cấu hình Backlog</span>
             </summary>
             <div style="padding-top: 12px">
@@ -816,7 +1083,7 @@
                 <label for="backlogApiKey" data-i18n="options_backlog_api_key"
                   >Backlog API Key</label
                 >
-                <input id="backlogApiKey" type="text" placeholder="Nhập Backlog API key" />
+                <input id="backlogApiKey" type="password" placeholder="Nhập Backlog API key" />
                 <p style="margin-top: 6px; font-size: 12px; color: var(--muted)">
                   <span data-i18n="options_backlog_help_prefix">🔑 Lấy tại:</span>
                   <strong data-i18n="options_backlog_account_api">Tài khoản > API</strong>
@@ -830,18 +1097,8 @@
           </details>
 
           <!-- Primary AI Configuration -->
-          <details
-            id="primaryAiSettings"
-            open
-            style="
-              padding: 16px;
-              background: #d1fae5;
-              border: 1px solid #10b981;
-              border-radius: 12px;
-              margin-bottom: 16px;
-            "
-          >
-            <summary style="padding: 4px 0; font-weight: 600; color: #065f46; cursor: pointer">
+          <details id="primaryAiSettings" class="settings-section" open>
+            <summary>
               <span data-i18n="options_primary_ai_section">🤖 Cấu hình AI Chính (Primary)</span>
             </summary>
             <div class="grid" style="padding-top: 12px; gap: 12px">
@@ -878,17 +1135,21 @@
                   >.
                 </p>
                 <div style="margin-bottom: 12px">
-                  <p style="margin: 0 0 6px; font-size: 11px; color: #166534; font-weight: 500">
+                  <p
+                    style="margin: 0 0 6px; font-size: 13px; color: var(--muted); font-weight: 500"
+                  >
                     <span data-i18n="options_models_help">Models (click chọn/bỏ)</span>
                   </p>
-                  <div id="geminiModelsList" style="display: flex; flex-wrap: wrap; gap: 6px"></div>
-                  <p style="margin: 4px 0 0; font-size: 11px; color: var(--muted)">
+                  <div id="geminiModelsList" class="provider-models-list"></div>
+                  <p style="margin: 4px 0 0; font-size: 13px; color: var(--muted)">
                     <span data-i18n="options_selected">Đã chọn:</span>
                     <span id="selectedModelCount">0</span>
                   </p>
                 </div>
                 <div>
-                  <p style="margin: 0 0 6px; font-size: 11px; color: #166534; font-weight: 500">
+                  <p
+                    style="margin: 0 0 6px; font-size: 13px; color: var(--muted); font-weight: 500"
+                  >
                     <span data-i18n="options_keys_help"
                       >Keys (nhập rồi Lưu, Enter để thêm nhanh, click để xóa)</span
                     >
@@ -899,6 +1160,9 @@
                   ></div>
                   <input
                     id="geminiApiKeys"
+                    type="password"
+                    autocomplete="off"
+                    data-i18n-aria-label="options_api_key_placeholder"
                     placeholder="Enter a key, then Save or press Enter to add quickly"
                     data-i18n-placeholder="options_key_quick_add"
                     style="
@@ -912,7 +1176,7 @@
                       font-size: 12px;
                     "
                   />
-                  <p style="margin: 4px 0 0; font-size: 11px; color: var(--muted)">
+                  <p style="margin: 4px 0 0; font-size: 13px; color: var(--muted)">
                     <span data-i18n="options_added">Đã thêm:</span>
                     <span id="selectedKeyCount">0</span>/10
                   </p>
@@ -927,7 +1191,7 @@
                   placeholder="Enter API key"
                   data-i18n-placeholder="options_groq_key_placeholder"
                 />
-                <p style="margin-top: 6px; font-size: 11px; color: var(--muted)">
+                <p style="margin-top: 6px; font-size: 13px; color: var(--muted)">
                   🔑 Lấy tại:
                   <a
                     href="https://console.groq.com/keys"
@@ -946,7 +1210,7 @@
                   placeholder="Enter API key"
                   data-i18n-placeholder="options_cerebras_key_placeholder"
                 />
-                <p style="margin-top: 6px; font-size: 11px; color: var(--muted)">
+                <p style="margin-top: 6px; font-size: 13px; color: var(--muted)">
                   🔑 Lấy tại:
                   <a
                     href="https://cloud.cerebras.ai/"
@@ -969,7 +1233,7 @@
                   placeholder="Enter API key"
                   data-i18n-placeholder="options_openrouter_key_placeholder"
                 />
-                <p style="margin-top: 6px; font-size: 11px; color: var(--muted)">
+                <p style="margin-top: 6px; font-size: 13px; color: var(--muted)">
                   🔑 Lấy tại:
                   <a href="https://openrouter.ai/keys" target="_blank">OpenRouter Keys</a>. 💡 Nhiều
                   model miễn phí (suffix :free).
@@ -979,17 +1243,8 @@
           </details>
 
           <!-- Fallback AI Configuration -->
-          <details
-            id="fallbackAiSettings"
-            style="
-              padding: 16px;
-              background: #ede9fe;
-              border: 1px solid #8b5cf6;
-              border-radius: 12px;
-              margin-bottom: 16px;
-            "
-          >
-            <summary style="padding: 4px 0; font-weight: 600; color: #5b21b6; cursor: pointer">
+          <details id="fallbackAiSettings" class="settings-section">
+            <summary>
               <span data-i18n="options_fallback_ai_section"
                 >🔄 Cấu hình AI Dự phòng (Fallback)</span
               >
@@ -1022,19 +1277,20 @@
               <!-- Fallback Groq Key -->
               <div id="fallbackGeminiConfig" style="display: none">
                 <div style="margin-bottom: 12px">
-                  <p style="margin: 0 0 6px; font-size: 11px; color: #166534; font-weight: 500">
+                  <p
+                    style="margin: 0 0 6px; font-size: 13px; color: var(--muted); font-weight: 500"
+                  >
                     Models dự phòng (click chọn/bỏ)
                   </p>
-                  <div
-                    id="fallbackGeminiModelsList"
-                    style="display: flex; flex-wrap: wrap; gap: 6px"
-                  ></div>
-                  <p style="margin: 4px 0 0; font-size: 11px; color: var(--muted)">
+                  <div id="fallbackGeminiModelsList" class="provider-models-list"></div>
+                  <p style="margin: 4px 0 0; font-size: 13px; color: var(--muted)">
                     Đã chọn: <span id="fallbackGeminiSelectedModelCount">0</span>
                   </p>
                 </div>
                 <div>
-                  <p style="margin: 0 0 6px; font-size: 11px; color: #166534; font-weight: 500">
+                  <p
+                    style="margin: 0 0 6px; font-size: 13px; color: var(--muted); font-weight: 500"
+                  >
                     Keys d&#7921; ph&#242;ng (nh&#7853;p r&#7891;i L&#432;u, Enter &#273;&#7875;
                     th&#234;m nhanh, click &#273;&#7875; x&#243;a)
                   </p>
@@ -1044,6 +1300,9 @@
                   ></div>
                   <input
                     id="fallbackGeminiApiKeys"
+                    type="password"
+                    autocomplete="off"
+                    data-i18n-aria-label="options_api_key_placeholder"
                     placeholder="Enter a key, then Save or press Enter to add quickly"
                     data-i18n-placeholder="options_key_quick_add"
                     style="
@@ -1057,7 +1316,7 @@
                       font-size: 12px;
                     "
                   />
-                  <p style="margin: 4px 0 0; font-size: 11px; color: var(--muted)">
+                  <p style="margin: 4px 0 0; font-size: 13px; color: var(--muted)">
                     Đã thêm: <span id="fallbackGeminiSelectedKeyCount">0</span>/10
                   </p>
                 </div>
@@ -1080,7 +1339,7 @@
                   placeholder="Enter API key"
                   data-i18n-placeholder="options_groq_key_placeholder"
                 />
-                <p style="margin-top: 6px; font-size: 11px; color: var(--muted)">
+                <p style="margin-top: 6px; font-size: 13px; color: var(--muted)">
                   🔑
                   <a href="https://console.groq.com/keys" target="_blank"
                     >Lấy key tại Groq Console</a
@@ -1100,7 +1359,7 @@
                   placeholder="Enter API key"
                   data-i18n-placeholder="options_cerebras_key_placeholder"
                 />
-                <p style="margin-top: 6px; font-size: 11px; color: var(--muted)">
+                <p style="margin-top: 6px; font-size: 13px; color: var(--muted)">
                   🔑
                   <a href="https://cloud.cerebras.ai/" target="_blank"
                     >Lấy key tại Cerebras Cloud</a
@@ -1120,24 +1379,15 @@
                   placeholder="Enter API key"
                   data-i18n-placeholder="options_openrouter_key_placeholder"
                 />
-                <p style="margin-top: 6px; font-size: 11px; color: var(--muted)">
+                <p style="margin-top: 6px; font-size: 13px; color: var(--muted)">
                   🔑 <a href="https://openrouter.ai/keys" target="_blank">Lấy key tại OpenRouter</a>
                 </p>
               </div>
             </div>
           </details>
 
-          <details
-            id="uiSettings"
-            style="
-              padding: 16px;
-              background: #f8fafc;
-              border: 1px solid #cbd5e1;
-              border-radius: 12px;
-              margin-bottom: 16px;
-            "
-          >
-            <summary style="padding: 4px 0; font-weight: 600; color: #334155; cursor: pointer">
+          <details id="uiSettings" class="settings-section">
+            <summary>
               <span data-i18n="options_ui_section">Tùy chọn giao diện</span>
             </summary>
             <div class="field check-field" style="padding-top: 12px; margin-bottom: 0">
@@ -1154,11 +1404,322 @@
             </div>
           </details>
 
-          <div class="actions">
+          <details id="advancedSettings" class="secondary-section">
+            <summary data-i18n="options_advanced_title">Cài đặt nâng cao</summary>
+            <div class="secondary-section-content">
+              <section id="projectProfilesSettings" class="policy-editor">
+                <h3 data-i18n="options_profiles_title">Project profiles</h3>
+                <p data-i18n="options_profiles_help">
+                  Profiles belong to both server origins. Projects without a profile use global
+                  defaults.
+                </p>
+                <div id="projectProfilesEditor"></div>
+                <button id="addProjectProfile" type="button" data-i18n="options_profiles_add">
+                  Add project profile
+                </button>
+                <datalist id="profileProjects"></datalist>
+                <div class="field">
+                  <label for="policyProfile" data-i18n="options_profiles_editing"
+                    >Editing rules for</label
+                  ><select id="policyProfile">
+                    <option value="global" data-i18n="options_profiles_global">
+                      Global defaults
+                    </option>
+                  </select>
+                </div>
+                <label id="profileInheritRow" hidden
+                  ><input id="profileInherit" type="checkbox" /><span
+                    data-i18n="options_profiles_inherit"
+                    >Use global rules for this profile</span
+                  ></label
+                >
+                <button
+                  id="validateConfiguration"
+                  type="button"
+                  data-i18n="options_configuration_validate"
+                >
+                  Check configuration
+                </button>
+                <p id="configurationStatus" role="status" aria-live="polite"></p>
+              </section>
+              <fieldset id="translationSettings">
+                <legend data-i18n="options_translation_title">Translation directions</legend>
+                <p data-i18n="options_translation_help">
+                  These languages control content, independently of the interface language. Save
+                  with Save settings.
+                </p>
+                <div class="field">
+                  <label for="translation_source" data-i18n="options_translation_source"
+                    >Backlog source language</label
+                  >
+                  <select id="translation_source"></select>
+                </div>
+                <div class="field">
+                  <label for="translation_target" data-i18n="options_translation_target"
+                    >Redmine translation language</label
+                  >
+                  <select id="translation_target"></select>
+                </div>
+                <div class="field">
+                  <label for="translation_reverseMode" data-i18n="options_translation_reverse_mode"
+                    >Redmine → Backlog action</label
+                  >
+                  <select id="translation_reverseMode">
+                    <option value="extract" data-i18n="options_translation_extract">
+                      Extract original passages
+                    </option>
+                    <option value="translate" data-i18n="options_translation_translate">
+                      Translate
+                    </option>
+                    <option value="original" data-i18n="options_translation_original">
+                      Keep full original content
+                    </option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label
+                    for="translation_reverseSource"
+                    data-i18n="options_translation_reverse_source"
+                    >Redmine source language (translation)</label
+                  >
+                  <select id="translation_reverseSource"></select>
+                </div>
+                <div class="field">
+                  <label
+                    for="translation_reverseTarget"
+                    data-i18n="options_translation_reverse_target"
+                    >Backlog language to translate into or extract</label
+                  >
+                  <select id="translation_reverseTarget"></select>
+                </div>
+              </fieldset>
+              <fieldset id="logTimeSettings">
+                <legend data-i18n="options_log_time_title">Report time logging</legend>
+                <p data-i18n="options_log_time_help">
+                  Configure daily hours and allocation. Load activities from your Redmine, select
+                  them, then save settings. Missing activities block logging.
+                </p>
+                <div class="field">
+                  <label for="logTime_dailyHours" data-i18n="options_log_daily_hours"
+                    >Hours per day</label
+                  >
+                  <input
+                    id="logTime_dailyHours"
+                    type="number"
+                    min="0.25"
+                    max="24"
+                    step="0.25"
+                    value="8"
+                    required
+                  />
+                </div>
+                <div class="field">
+                  <label for="logTime_allocation" data-i18n="options_log_allocation"
+                    >Hour allocation</label
+                  >
+                  <select id="logTime_allocation">
+                    <option value="equal" data-i18n="options_log_equal">Equal shares</option>
+                    <option value="estimate" data-i18n="options_log_estimate">
+                      By task estimates (missing estimates use weight 1)
+                    </option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="logTime_activityMode" data-i18n="options_log_activity_mode"
+                    >Activity selection</label
+                  >
+                  <select id="logTime_activityMode">
+                    <option value="default" data-i18n="options_log_activity_default">
+                      Same activity for every task
+                    </option>
+                    <option value="legacy" data-i18n="options_log_activity_legacy">
+                      Coding / testing based on task title and tracker
+                    </option>
+                  </select>
+                </div>
+                <button
+                  id="loadLogTimeActivities"
+                  type="button"
+                  data-i18n="options_log_load_activities"
+                >
+                  Load activities from Redmine
+                </button>
+                <div class="field">
+                  <label for="logTime_defaultActivityId" data-i18n="options_log_default_activity"
+                    >Default / coding activity</label
+                  >
+                  <select id="logTime_defaultActivityId">
+                    <option value="">—</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="logTime_testingActivityId" data-i18n="options_log_testing_activity"
+                    >Testing activity (coding / testing mode)</label
+                  >
+                  <select id="logTime_testingActivityId">
+                    <option value="">—</option>
+                  </select>
+                </div>
+                <p id="logTimeStatus" role="status"></p>
+              </fieldset>
+              <fieldset id="migrationSettings">
+                <legend data-i18n="options_migration_rules_title">
+                  Issue migration and matching
+                </legend>
+                <p data-i18n="options_advanced_help">
+                  Quy tắc dùng khi chưa có mapping issue. Chỉ thay đổi khi quy ước project thay đổi;
+                  lưu bằng nút Lưu cấu hình.
+                </p>
+                <div class="field">
+                  <label for="syncSubjectTemplate" data-i18n="options_subject_template"
+                    >Mẫu tiêu đề migration</label
+                  >
+                  <input id="syncSubjectTemplate" maxlength="500" />
+                  <p data-i18n="options_subject_template_help">
+                    Dùng {issueKey}, {summary}, {translatedSummary}. Ví dụ: [{issueKey}] {summary} /
+                    ({translatedSummary}).
+                  </p>
+                </div>
+                <div class="field">
+                  <label for="syncTitleDelimiter" data-i18n="options_title_delimiter"
+                    >Dấu phân cách tiêu đề gốc / bản dịch</label
+                  >
+                  <input id="syncTitleDelimiter" maxlength="80" placeholder=" / (" />
+                  <p data-i18n="options_title_delimiter_help">
+                    Để trống để giữ cách nhận diện hiện tại. Nhập chuỗi phân cách chính xác, kể cả
+                    khoảng trắng; không dùng regex.
+                  </p>
+                </div>
+                <div class="field">
+                  <label for="syncSearchMode" data-i18n="options_search_mode"
+                    >Tìm issue Redmine theo</label
+                  >
+                  <select id="syncSearchMode">
+                    <option value="key-title" data-i18n="options_search_key_title">
+                      Mã issue, sau đó tiêu đề gốc
+                    </option>
+                    <option value="key" data-i18n="options_search_key">Chỉ mã issue</option>
+                    <option value="title" data-i18n="options_search_title">Chỉ tiêu đề gốc</option>
+                  </select>
+                </div>
+                <div class="field check-field">
+                  <input id="syncRestrictProject" type="checkbox" />
+                  <label for="syncRestrictProject" data-i18n="options_restrict_project"
+                    >Chỉ tìm trong project Redmine mặc định (cần chọn project trước)</label
+                  >
+                </div>
+                <details id="trackerAliasesPanel" class="policy-editor">
+                  <summary data-i18n="options_tracker_aliases">Tracker mapping</summary>
+                  <p data-i18n="options_tracker_aliases_help">
+                    Enter the source issue type and preferred Redmine tracker names in order.
+                  </p>
+                  <div id="trackerAliasesEditor"></div>
+                  <button id="addTrackerAlias" type="button" data-i18n="options_mapping_add">
+                    Add mapping
+                  </button>
+                  <textarea id="syncTrackerAliases" hidden aria-hidden="true"></textarea>
+                </details>
+                <details id="dueDateRulesPanel" class="policy-editor">
+                  <summary data-i18n="options_due_date_title">Migration due-date rules</summary>
+                  <p data-i18n="options_due_date_help">
+                    Configure required dates and default working days by tracker. Zero days means no
+                    automatic date. Unlisted trackers have optional dates.
+                  </p>
+                  <div id="dueDateRulesEditor"></div>
+                  <button id="addDueDateRule" type="button" data-i18n="options_mapping_add">
+                    Add mapping
+                  </button>
+                </details>
+                <div id="advancedCustomFields"></div>
+              </fieldset>
+            </div>
+          </details>
+
+          <div class="actions save-bar">
             <button class="primary" type="submit" data-i18n="options_save">Lưu cấu hình</button>
-            <div id="status" class="status"></div>
+            <div id="status" class="status" role="status" aria-live="polite"></div>
           </div>
         </form>
+
+        <details id="projectGlossary" class="secondary-section card workspace-tools">
+          <summary class="secondary-section-summary" data-i18n="glossary_title">
+            Project glossary
+          </summary>
+          <div class="secondary-section-content">
+            <p data-i18n="glossary_help">
+              Use a Backlog project key (PROJECT) or redmine:project. Terms are encrypted and scoped
+              to the configured workspace.
+            </p>
+            <div class="field">
+              <label for="glossaryProjectKey" data-i18n="glossary_project">Project key</label>
+              <input id="glossaryProjectKey" maxlength="108" placeholder="PROJECT" />
+            </div>
+            <div class="actions">
+              <button
+                id="loadProjectGlossary"
+                type="button"
+                class="secondary"
+                data-i18n="glossary_load"
+              >
+                Load
+              </button>
+              <button id="addGlossaryTerm" type="button" class="secondary" data-i18n="glossary_add">
+                Add term
+              </button>
+              <button
+                id="saveProjectGlossary"
+                type="button"
+                class="primary"
+                data-i18n="glossary_save"
+              >
+                Save glossary
+              </button>
+            </div>
+            <div id="glossaryTerms"></div>
+            <p id="glossaryStatus" role="status" aria-live="polite"></p>
+          </div>
+        </details>
+
+        <details id="syncRecovery" class="secondary-section card workspace-tools">
+          <summary class="secondary-section-summary" data-i18n="recovery_title">
+            Migration recovery and issue mappings
+          </summary>
+          <div class="secondary-section-content">
+            <p data-i18n="recovery_help">
+              Resume saved migrations in the configured workspace. Completed comments are skipped.
+            </p>
+            <div class="field">
+              <label for="mappingSource" data-i18n="recovery_source">Backlog issue key</label>
+              <input id="mappingSource" placeholder="PROJECT-123" />
+            </div>
+            <div class="field">
+              <label for="mappingDestination" data-i18n="recovery_destination"
+                >Redmine issue ID</label
+              >
+              <input id="mappingDestination" type="number" min="1" />
+            </div>
+            <div class="actions">
+              <button
+                id="saveIssueMapping"
+                type="button"
+                class="primary"
+                data-i18n="recovery_save_mapping"
+              >
+                Save mapping
+              </button>
+              <button
+                id="refreshSyncRecovery"
+                type="button"
+                class="secondary"
+                data-i18n="recovery_refresh"
+              >
+                Refresh
+              </button>
+            </div>
+            <p id="syncRecoveryStatus" role="status" aria-live="polite"></p>
+            <div id="syncRecoveryList"></div>
+          </div>
+        </details>
 
         <section class="note secondary-section" aria-labelledby="syncHistoryTitle">
           <details>
@@ -1247,7 +1808,7 @@
                 <p
                   id="bugScreenshotHelp"
                   data-i18n="options_screenshot_help"
-                  style="margin: 4px 0 0; font-size: 11px; color: var(--muted)"
+                  style="margin: 4px 0 0; font-size: 13px; color: var(--muted)"
                 >
                   PNG, JPEG, or WebP; maximum 5 MB.
                 </p>
@@ -1306,7 +1867,9 @@
             </summary>
             <div class="secondary-section-content">
               <div id="updateStatus" style="margin-bottom: 12px">
-                <p style="margin: 0; color: #64748b">Đang kiểm tra phiên bản...</p>
+                <p data-i18n="options_update_idle" style="margin: 0; color: var(--muted)">
+                  Bấm kiểm tra để tìm bản cập nhật.
+                </p>
               </div>
               <div class="actions">
                 <button type="button" id="checkUpdateBtn" class="secondary">
@@ -1326,9 +1889,7 @@
         </div>
       </div>
 
-      <div class="disclaimer">
-        Extension này chỉ làm theo ý bạn...nếu có lỗi thì chắc chắc bạn bấm nhầm thôi 👀
-      </div>
+      <div class="disclaimer">Gặp sự cố? Gửi báo lỗi để được hỗ trợ.</div>
     </div>
 
     <script src="modules/constants/models.js"></script>
@@ -1339,6 +1900,18 @@
     <script src="constants.js"></script>
     <script src="modules/utils/crypto.js"></script>
     <script src="modules/utils/logger.js"></script>
+    <script src="modules/ui/options-recovery.js"></script>
+    <script src="modules/ui/options-glossary.js"></script>
+    <script src="modules/ui/options-domain.js"></script>
+    <script src="modules/ui/options-providers.js"></script>
+    <script src="modules/ui/options-onboarding.js"></script>
+    <script src="modules/ui/options-settings.js"></script>
+    <script src="modules/utils/sync-rules.js"></script>
+    <script src="modules/utils/project-profiles.js"></script>
+    <script src="modules/utils/custom-fields.js"></script>
+    <script src="modules/ui/options-sync-rules.js"></script>
+    <script src="modules/ui/options-policy-editors.js"></script>
+    <script src="modules/ui/options-project-profiles.js"></script>
     <script src="options.js"></script>
   </body>
 </html>

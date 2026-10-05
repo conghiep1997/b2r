@@ -30,6 +30,63 @@ function createNormalizer() {
   return context.normalizeTranslationOutput;
 }
 
+test("translation applies project terminology to both providers and restores before success", async () => {
+  const calls = [];
+  const statuses = [];
+  const context = vm.createContext({
+    console: { warn() {} },
+    TB: {
+      PROVIDERS: { NONE: "none" },
+      PROMPTS: { USER: (text) => text },
+      MESSAGES: { TOAST: { RATE_LIMIT_FAILED: "failed" } },
+    },
+    TB_GLOSSARY: {
+      async prepare(_settings, project, text, prompt) {
+        assert.equal(project, "DEMO");
+        assert.equal(text, "original");
+        return {
+          text: "protected",
+          prompt: (value) => `Glossary: ${prompt(value)}`,
+          restore: (output) => output.replace("protected", "original"),
+        };
+      },
+    },
+    record: (provider, text, prompt) => {
+      calls.push({ provider, text, prompt });
+      if (calls.length === 1) throw Object.assign(new Error("rate limit"), { status: 429 });
+      return text;
+    },
+  });
+  vm.runInContext(
+    source +
+      "\ncallAIsByProvider = async (provider, _model, _settings, text, _url, prompt) => record(provider, text, prompt(text)); isRetryableProviderError = () => true;",
+    context
+  );
+  const output = await context.translateText(
+    "original",
+    {
+      primaryProvider: "groq",
+      primaryModel: "primary",
+      fallbackProvider: "cerebras",
+      fallbackModel: "fallback",
+    },
+    null,
+    (text) => `Translate ${text}`,
+    (status) => statuses.push(status),
+    "DEMO"
+  );
+  assert.equal(output, "original");
+  assert.deepEqual(
+    calls.map(({ text, prompt }) => [text, prompt]),
+    [
+      ["protected", "Glossary: Translate protected"],
+      ["protected", "Glossary: Translate protected"],
+    ]
+  );
+  assert.equal(statuses.at(-1).phase, "success");
+  assert.equal(statuses.at(-1).provider, "cerebras");
+});
+
 test("normalizeTranslationOutput removes prompt boundary markers from AI output", () => {
   const normalizeTranslationOutput = createNormalizer();
   const raw = ["[BẮT ĐẦU]", "Nội dung dịch tiếng Việt", "[KẾT THÚC]"].join("\n");

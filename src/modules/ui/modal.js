@@ -9,6 +9,7 @@ let modalElements = null;
 let modalPreviousFocus = null;
 let customFieldsMetadata = [];
 let redmineSettings = null;
+let modalMetadataRequestId = 0;
 
 globalThis.TB_RENDER_AI_STATUS = (status, fallbackElement) => {
   if (!status) return;
@@ -36,13 +37,6 @@ chrome.runtime.onMessage.addListener((message) => {
   globalThis.TB_RENDER_AI_STATUS(message.status, globalThis.TB_ACTIVE_AI_STATUS_TARGET);
 });
 
-const DEFAULT_MANUAL_FIELDS = {
-  Severity: 46,
-  "Reproduction Rate": 0,
-  Role: 11,
-  "QC Activity": 8,
-  "Q&A Category": 58,
-};
 const NOTE_SEPARATOR_REGEX = /^--- Note \d+ ---\s*\n/gm;
 const NOTE_LIST_SCROLL_THRESHOLD = 4;
 
@@ -457,6 +451,7 @@ function showDryRunResult({ action, target, count, skipped = 0, warning = "" }) 
   panel.hidden = false;
 }
 
+/* global TB_MIGRATION_SELECTION */
 function openConfirmModal(options) {
   modalPreviousFocus = document.activeElement;
   const {
@@ -474,6 +469,7 @@ function openConfirmModal(options) {
     translateBatch,
     backlogIssueType = "",
     backlogMilestone = "",
+    sourceIssueKey = "",
   } = options;
   ensureModalShell();
   const {
@@ -522,7 +518,70 @@ function openConfirmModal(options) {
   let currentNotesList = [previewText];
   let memoizedBatchNotes = Array.isArray(initialBatchNotes) ? initialBatchNotes.slice() : null;
   let pendingBatchNotes = null;
+  const excludedComments = new Set();
+  const excludedFiles = new Set();
+  let migrationDescriptionInitialized = false;
+  const selectionPanel = document.createElement("div");
+  selectionPanel.id = "tb-migration-selection";
+  selectionPanel.hidden = !isMigration;
+  migrationFields.after(selectionPanel);
 
+  function migrationPlan() {
+    return TB_MIGRATION_SELECTION.plan(
+      previewTextarea.value.trim(),
+      batchOptionCheckbox.checked ? memoizedBatchNotes || [] : [],
+      excludedComments,
+      excludedFiles
+    );
+  }
+
+  function refreshMigrationSelection() {
+    if (!isMigration) return;
+    const notes = batchOptionCheckbox.checked ? memoizedBatchNotes || [] : [];
+    commentsPreviewList.querySelectorAll(".tb-note-card").forEach((card, index) => {
+      if (card.querySelector(".tb-note-selected")) return;
+      const input = document.createElement("input");
+      input.type = "checkbox";
+      input.className = "tb-note-selected";
+      input.checked = !excludedComments.has(index);
+      input.setAttribute(
+        "aria-label",
+        globalThis.TB_GET_MESSAGE("migration_include_comment").replace("$count$", index + 1)
+      );
+      input.addEventListener("change", () => {
+        input.checked ? excludedComments.delete(index) : excludedComments.add(index);
+        dryRunResult.hidden = true;
+        refreshMigrationSelection();
+      });
+      card.querySelector(".tb-note-card-header").prepend(input);
+    });
+    const summary = document.createElement("p");
+    const planned = migrationPlan();
+    summary.textContent = globalThis
+      .TB_GET_MESSAGE("migration_selection_count")
+      .replace("$comments$", planned.comments.length)
+      .replace("$files$", planned.files.length);
+    selectionPanel.replaceChildren(summary);
+    const candidateNotes = notes.filter((_, index) => !excludedComments.has(index));
+    for (const file of TB_MIGRATION_SELECTION.files([previewTextarea.value, ...candidateNotes])) {
+      const label = document.createElement("label");
+      label.style.display = "block";
+      const input = document.createElement("input");
+      input.type = "checkbox";
+      input.className = "tb-file-selected";
+      input.dataset.fileId = file.id;
+      input.checked = !excludedFiles.has(file.id);
+      input.addEventListener("change", () => {
+        input.checked ? excludedFiles.delete(file.id) : excludedFiles.add(file.id);
+        dryRunResult.hidden = true;
+        refreshMigrationSelection();
+      });
+      label.append(input, document.createTextNode(` ${file.filename}`));
+      selectionPanel.append(label);
+    }
+  }
+
+  let migrationMetadataReady = false;
   const validateMigrationForm = () => {
     if (!isMigration) return;
     const isProjectLoaded = projectSelect.options.length > 0 && projectSelect.value;
@@ -530,18 +589,20 @@ function openConfirmModal(options) {
     const isTranslationDone = !batchOptionCheckbox.checked || !!memoizedBatchNotes;
 
     const selectedTracker = trackerSelect.options[trackerSelect.selectedIndex]?.text;
-    const isDueDateRequired = ["Bug", "Task"].includes(selectedTracker);
+    const isDueDateRequired = Boolean(getMigrationDueDateRule(selectedTracker)?.required);
     const isDueDateFilled = !isDueDateRequired || migrateDueDateInput.value;
 
     const dynamicFields = modalElements.dynamicFieldsContainer.querySelectorAll(".tb-cf-input");
     let allRequiredFilled = true;
     dynamicFields.forEach((input) => {
-      if (!input.value.trim()) {
+      if (input.dataset.required !== "false" && !input.value.trim()) {
         allRequiredFilled = false;
       }
     });
 
     confirmButton.disabled = !(
+      migrationMetadataReady &&
+      trackerSelect.value &&
       isProjectLoaded &&
       isSubjectValid &&
       isTranslationDone &&
@@ -599,7 +660,10 @@ function openConfirmModal(options) {
       batchOptionText.textContent = TB.MESSAGES.MODAL.MIGRATE_COMMENTS_TEXT(commentsCount);
 
       migrateSubjectInput.value = migrateSubjectInput.value || issueTitle;
-      previewTextarea.value = previewText;
+      if (!migrationDescriptionInitialized) {
+        previewTextarea.value = previewText;
+        migrationDescriptionInitialized = true;
+      }
       confirmButton.textContent = TB.MESSAGES.MODAL.MIGRATE_CONFIRM;
 
       if (batchOptionCheckbox.checked) {
@@ -613,12 +677,14 @@ function openConfirmModal(options) {
           targetTextarea: commentsPreviewTextarea,
           onNotesChange: (nextNotes) => {
             memoizedBatchNotes = nextNotes;
+            refreshMigrationSelection();
           },
         });
       } else {
         setCommentsPreviewVisible(false);
       }
       validateMigrationForm();
+      refreshMigrationSelection();
     } else {
       previewFieldGroup.hidden = true;
       titleEl.textContent = TB.MESSAGES.MODAL.TITLE;
@@ -688,20 +754,7 @@ function openConfirmModal(options) {
   }
   trackerSelect.onchange = () => {
     const selectedTracker = trackerSelect.options[trackerSelect.selectedIndex]?.text;
-    // Handle defaults when switching tracker
-    if (selectedTracker === "Bug") {
-      migrateDueDateInput.value = getPlus3WorkingDays();
-      modalElements.migrateDueDateLabel.innerHTML = `${TB.MESSAGES.MODAL.DUE_DATE_LABEL}<span class="tb-required">*</span>`;
-    } else if (selectedTracker === "Task") {
-      modalElements.migrateDueDateLabel.innerHTML = `${TB.MESSAGES.MODAL.DUE_DATE_LABEL}<span class="tb-required">*</span>`;
-    } else {
-      migrateDueDateInput.value = "";
-      modalElements.migrateDueDateLabel.innerHTML = TB.MESSAGES.MODAL.DUE_DATE_LABEL;
-    }
-
-    // Hide Due Date for others
-    const isDueDateVisible = ["Bug", "Task"].includes(selectedTracker);
-    modalElements.migrateDueDateGroup.style.display = isDueDateVisible ? "block" : "none";
+    configureMigrationDueDate(selectedTracker);
 
     renderTrackerFields(selectedTracker, validateMigrationForm);
     validateMigrationForm();
@@ -709,22 +762,18 @@ function openConfirmModal(options) {
 
   migrateDueDateInput.onchange = validateMigrationForm;
 
-  fetchRedmineMetadataForModal(backlogIssueType, backlogMilestone).then(() => {
-    const initialTracker = trackerSelect.options[trackerSelect.selectedIndex]?.text;
+  fetchRedmineMetadataForModal(backlogIssueType, backlogMilestone, sourceIssueKey).then(
+    (loaded) => {
+      if (!loaded) return;
+      migrationMetadataReady = true;
+      const initialTracker = trackerSelect.options[trackerSelect.selectedIndex]?.text;
 
-    if (initialTracker === "Bug") {
-      migrateDueDateInput.value = getPlus3WorkingDays();
-      modalElements.migrateDueDateLabel.innerHTML = `${TB.MESSAGES.MODAL.DUE_DATE_LABEL}<span class="tb-required">*</span>`;
-    } else if (initialTracker === "Task") {
-      modalElements.migrateDueDateLabel.innerHTML = `${TB.MESSAGES.MODAL.DUE_DATE_LABEL}<span class="tb-required">*</span>`;
+      configureMigrationDueDate(initialTracker);
+
+      renderTrackerFields(initialTracker, validateMigrationForm);
+      validateMigrationForm();
     }
-
-    const isDueDateVisible = ["Bug", "Task"].includes(initialTracker);
-    modalElements.migrateDueDateGroup.style.display = isDueDateVisible ? "block" : "none";
-
-    renderTrackerFields(initialTracker, validateMigrationForm);
-    validateMigrationForm();
-  });
+  );
 
   projectSelect.onchange = (e) => {
     const newProjectId = e.target.value;
@@ -742,6 +791,7 @@ function openConfirmModal(options) {
     };
 
     previewTextarea.oninput = () => {
+      refreshMigrationSelection();
       if (isHtmlMode) {
         updatePreviewMode();
       }
@@ -869,7 +919,7 @@ function openConfirmModal(options) {
 
   dryRunButton.onclick = () => {
     if (isMigration) {
-      const plannedComments = batchOptionCheckbox.checked ? memoizedBatchNotes || [] : [];
+      const plannedComments = migrationPlan().comments;
       const nonempty = plannedComments.filter((note) => String(note || "").trim());
       const project = projectSelect.selectedOptions[0]?.textContent?.trim() || "";
       const warning = confirmButton.disabled
@@ -910,7 +960,10 @@ function openConfirmModal(options) {
         const custom_fields = [];
         const dynamicInputs = modalElements.dynamicFieldsContainer.querySelectorAll(".tb-cf-input");
         dynamicInputs.forEach((input) => {
-          custom_fields.push({ id: input.getAttribute("data-cfId"), value: input.value.trim() });
+          const value = input.tagName === "SELECT" ? input.value : input.value.trim();
+          if (value || input.dataset.required !== "false") {
+            custom_fields.push({ id: Number(input.dataset.cfId), value });
+          }
         });
 
         const issueData = {
@@ -919,7 +972,7 @@ function openConfirmModal(options) {
           priority_id: prioritySelect.value,
           fixed_version_id: versionSelect.value, // Added Target Version
           subject: migrateSubjectInput.value.trim(),
-          description: previewTextarea.value.trim(),
+          description: migrationPlan().description,
           due_date: migrateDueDateInput.value,
           custom_fields,
         };
@@ -932,8 +985,8 @@ function openConfirmModal(options) {
         // When migrate comments is enabled, require translated notes before create.
         let comments = [];
         if (batchOptionCheckbox.checked) {
-          comments = (memoizedBatchNotes || []).slice().filter((note) => String(note || "").trim());
-          if (commentsCount > 0 && comments.length === 0) {
+          comments = migrationPlan().comments;
+          if (commentsCount > 0 && !memoizedBatchNotes) {
             showToast(TB.MESSAGES.TOAST.EMPTY_COMMENT, "error");
             confirmButton.disabled = false;
             setModalLoading(false);
@@ -943,6 +996,7 @@ function openConfirmModal(options) {
         await onConfirm({
           issueData,
           comments,
+          selection: migrationPlan().selection,
         });
       } else {
         const id = issueIdInput.value.trim();
@@ -953,14 +1007,17 @@ function openConfirmModal(options) {
           return;
         }
         updateCurrentNotesFromTextarea();
-        const notesList = currentNotesList.filter((note) => String(note || "").trim());
+        const noteIndexes = currentNotesList
+          .map((note, index) => (String(note || "").trim() ? index : -1))
+          .filter((index) => index >= 0);
+        const notesList = noteIndexes.map((index) => currentNotesList[index]);
         if (!notesList.length) {
           showToast(TB.MESSAGES.TOAST.EMPTY_COMMENT, "error");
           confirmButton.disabled = false;
           setModalLoading(false);
           return;
         }
-        await onConfirm({ redmineIssueId: id, notesList });
+        await onConfirm({ redmineIssueId: id, notesList, noteIndexes });
       }
       // openSuccessModal (from onConfirm) owns overlay visibility — do not closeModal here.
       setModalLoading(false);
@@ -1449,11 +1506,16 @@ async function openSuccessModal({
   successCloseButton.focus();
 }
 
-async function fetchRedmineMetadataForModal(backlogIssueType, backlogMilestone) {
+async function fetchRedmineMetadataForModal(
+  backlogIssueType,
+  backlogMilestone,
+  sourceIssueKey = ""
+) {
+  const requestId = ++modalMetadataRequestId;
   const { projectSelect, trackerSelect, prioritySelect, versionSelect } = modalElements;
   try {
     const [settings, projectsRes, trackersRes, prioritiesRes] = await Promise.all([
-      sendRuntimeMessage({ type: "GET_UI_SETTINGS" }).catch(() => ({})),
+      sendRuntimeMessage({ type: "GET_UI_SETTINGS", issueKey: sourceIssueKey }),
       sendRuntimeMessage({
         type: "FETCH_REDMINE_METADATA",
         endpoint: "/projects.json?limit=100",
@@ -1467,6 +1529,7 @@ async function fetchRedmineMetadataForModal(backlogIssueType, backlogMilestone) 
       }).catch(() => ({ data: { issue_priorities: [] } })),
     ]);
 
+    if (requestId !== modalMetadataRequestId) return false;
     redmineSettings = settings.data || settings;
     customFieldsMetadata = [];
 
@@ -1483,18 +1546,23 @@ async function fetchRedmineMetadataForModal(backlogIssueType, backlogMilestone) 
       updateVersionsDropdown(projectSelect.value, backlogMilestone);
     }
 
-    const allowedTrackers = ["Task", "Bug", "Issue", "CR", "Q/A", "Q&A"];
     replaceSelectOptions(
       trackerSelect,
-      (trackersRes.data?.trackers || []).filter((tracker) =>
-        allowedTrackers.includes(tracker.name)
-      ),
+      trackersRes.data?.trackers || [],
       (tracker) => tracker.name,
       (tracker) => tracker.id
     );
 
     // Detect tracker from backlogIssueType
-    const mappedTracker = getMappedTrackerName(backlogIssueType || "");
+    const aliases =
+      redmineSettings?.syncRules?.trackerAliases?.[String(backlogIssueType || "").toLowerCase()];
+    const mappedTracker = aliases
+      ? aliases.find((name) =>
+          Array.from(trackerSelect.options).some(
+            (option) => option.text.toLowerCase() === name.toLowerCase()
+          )
+        ) || ""
+      : getMappedTrackerName(backlogIssueType || "");
     const matchedOption = Array.from(trackerSelect.options).find(
       (opt) => opt.text.toLowerCase() === mappedTracker.toLowerCase()
     );
@@ -1524,8 +1592,10 @@ async function fetchRedmineMetadataForModal(backlogIssueType, backlogMilestone) 
       (priority) => priority.id,
       (priority) => priority.is_default
     );
+    return true;
   } catch (error) {
     showToast(`${TB.MESSAGES.MODAL.ERROR_METADATA}: ${error.message}`, "error");
+    return false;
   }
 }
 
@@ -1538,6 +1608,7 @@ async function updateVersionsDropdown(projectId, backlogMilestone) {
       endpoint: `/projects/${projectId}/versions.json`,
     });
     const versions = versionsRes.data?.versions || [];
+    if (modalElements.projectSelect.value !== String(projectId)) return;
     versionSelect.innerHTML = `<option value="">${TB.MESSAGES.MODAL.VERSION_EMPTY}</option>`;
     versions.forEach((v) => {
       const opt = document.createElement("option");
@@ -1556,110 +1627,72 @@ async function updateVersionsDropdown(projectId, backlogMilestone) {
 
 function renderTrackerFields(trackerName, validateCallback) {
   const container = modalElements.dynamicFieldsContainer;
-  if (!container) return;
-  container.innerHTML = "";
-
-  let manualMap = {};
-  if (redmineSettings?.manualFields) {
-    try {
-      manualMap = JSON.parse(redmineSettings.manualFields);
-    } catch (e) {
-      /* ignore */
-    }
-  }
-
-  const configs = {
-    Bug: ["Severity", "Role", "QC Activity"],
-    "Q/A": ["Severity", "Role", "QC Activity", "Q&A Category"],
-    "Q&A": ["Severity", "Role", "QC Activity", "Q&A Category"],
-    CR: ["Severity"],
-    Task: [],
-    Issue: [],
-  };
-
-  const fieldsToShow = configs[trackerName] || [];
-  if (fieldsToShow.length === 0) {
-    container.style.display = "none";
-    return;
-  }
-
-  container.style.display = "grid";
+  container.replaceChildren();
+  const configured =
+    globalThis.TB_CUSTOM_FIELDS.normalize(redmineSettings?.customFields) ||
+    globalThis.TB_CUSTOM_FIELDS.legacy(redmineSettings?.manualFields);
+  const fields = configured.filter(
+    (field) =>
+      !field.trackers.length ||
+      field.trackers.some((name) => name.toLowerCase() === String(trackerName || "").toLowerCase())
+  );
+  container.style.display = fields.length ? "grid" : "none";
   container.className = "tb-field-grid";
-
-  fieldsToShow.forEach((fieldName) => {
-    // Priority: Settings Manual Map > Hardcoded Defaults > Discovery (which is disabled)
-    const cfId = manualMap[fieldName] || DEFAULT_MANUAL_FIELDS[fieldName];
-
-    if (!cfId) {
-      console.warn(`[TB-MODAL] No ID found for field: ${fieldName}`);
-      return;
-    }
-
+  for (const field of fields) {
     const group = document.createElement("div");
     group.className = "tb-field-group";
-    group.innerHTML = `<label>${fieldName}<span class="tb-required">*</span></label>`;
-
-    const optionsMap = {
-      Severity: ["Critical", "Major", "Minor", "Trivial"],
-      Role: [
-        "Business Analysis",
-        "Developer",
-        "Tester",
-        "Quality Assurance",
-        "Reporter",
-        "Comtor",
-        "Customer",
-        "Others",
-      ],
-      "QC Activity": [
-        "Document Review",
-        "Code Review",
-        "Unit Test",
-        "Integration Test",
-        "Acceptance Test",
-      ],
-      "Q&A Category": [
-        "10_Requirement",
-        "20_Database Definition",
-        "30_UI Design",
-        "40_Logic",
-        "50_Technical Issue",
-        "60_API",
-        "70_DLL",
-        "80_Test Data",
-        "90_Other",
-      ],
-    };
-
-    if (optionsMap[fieldName]) {
-      const select = document.createElement("select");
-      select.className = "tb-cf-input";
-      select.dataset.cfId = cfId;
-      select.innerHTML = `<option value="">${TB.MESSAGES.MODAL.SELECT_PLACEHOLDER}</option>`;
-      optionsMap[fieldName].forEach((opt) => {
-        const o = document.createElement("option");
-        o.value = opt;
-        o.textContent = opt;
-        select.appendChild(o);
-      });
-      select.addEventListener("change", validateCallback);
-      group.appendChild(select);
-    } else {
-      const input = document.createElement("input");
-      input.className = "tb-cf-input";
-      input.dataset.cfId = cfId;
-      if (fieldName === "Reproduction Rate") input.value = "100%";
-      input.addEventListener("input", validateCallback);
-      group.appendChild(input);
+    const label = document.createElement("label");
+    label.textContent = field.name;
+    if (field.required) {
+      const star = document.createElement("span");
+      star.className = "tb-required";
+      star.textContent = "*";
+      label.append(star);
     }
-    container.appendChild(group);
-  });
+    const input = document.createElement(field.type === "select" ? "select" : "input");
+    input.className = "tb-cf-input";
+    input.dataset.cfId = field.id;
+    input.dataset.required = String(field.required);
+    if (field.type === "select") {
+      input.add(new Option("--", ""));
+      field.options.forEach((value) => input.add(new Option(value, value)));
+    }
+    input.value = field.defaultValue;
+    input.addEventListener(field.type === "select" ? "change" : "input", validateCallback);
+    label.append(input);
+    group.append(label);
+    container.append(group);
+  }
 }
 
-function getPlus3WorkingDays() {
+function getMigrationDueDateRule(tracker) {
+  const rules =
+    redmineSettings?.syncRules?.dueDateRules ||
+    globalThis.TB_SYNC_RULES?.defaults.dueDateRules ||
+    {};
+  return Object.entries(rules).find(
+    ([name]) => name.toLowerCase() === String(tracker || "").toLowerCase()
+  )?.[1];
+}
+
+function configureMigrationDueDate(tracker) {
+  const rule = getMigrationDueDateRule(tracker);
+  const { migrateDueDateInput, migrateDueDateLabel, migrateDueDateGroup } = modalElements;
+  migrateDueDateInput.value = rule?.workingDays ? getPlus3WorkingDays(rule.workingDays) : "";
+  migrateDueDateLabel.textContent = TB.MESSAGES.MODAL.DUE_DATE_LABEL;
+  if (rule?.required) {
+    const star = document.createElement("span");
+    star.className = "tb-required";
+    star.textContent = "*";
+    migrateDueDateLabel.append(star);
+  }
+  migrateDueDateGroup.style.display = "block";
+}
+
+function getPlus3WorkingDays(days = 3) {
   const d = new Date();
   let count = 0;
-  while (count < 3) {
+  while (count < days) {
     d.setDate(d.getDate() + 1);
     if (d.getDay() !== 0 && d.getDay() !== 6) count++;
   }

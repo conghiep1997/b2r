@@ -5,7 +5,7 @@
  */
 
 /**
- * Finds Redmine issue by searching HTML first, then falling back to API.
+ * Finds Redmine issue using complete, paginated API results.
  * @param {string} redmineDomain - Redmine domain
  * @param {string} apiKey - Redmine API key
  * @param {string} issueKey - Issue key (e.g., CP-123)
@@ -18,66 +18,25 @@ async function findRedmineIssue(
   apiKey,
   issueKey,
   issueSummary = "",
-  backlogIssueType = ""
+  backlogIssueType = "",
+  rules = {},
+  projectId = ""
 ) {
-  const normalizedIssueKey = normalizeLoose(issueKey);
-  // Backlog summary is JP; Redmine often appends " / (VN translation)" — match JP only.
-  const normalizedIssueSummary = normalizeLoose(extractJapaneseTitlePart(issueSummary));
-  const preferredTrackers = getPreferredRedmineTrackerNames(backlogIssueType);
-  // Search key and JP title separately. Combining them AND-fails when subject has no key
-  // or when VN translation differs from what was indexed with the JP title.
-  const searchQueries = [issueKey, extractJapaneseTitlePart(issueSummary)].filter(Boolean);
-
-  try {
-    for (const searchQuery of searchQueries) {
-      const searchUrl = buildRedmineUrl(
-        redmineDomain,
-        `/search?${new URLSearchParams({
-          q: searchQuery,
-          scope: "all",
-          titles_only: "1",
-          issues: "1",
-          commit: "Search",
-        }).toString()}`
-      );
-      const html = await fetchRedmineSearchHtml(searchUrl);
-      const searchResults = extractRedmineSearchResults(html);
-      const bestMatch = pickBestRedmineSearchResult(
-        searchResults,
-        normalizedIssueKey,
-        normalizedIssueSummary,
-        preferredTrackers
-      );
-
-      if (bestMatch) {
-        const matchedTracker = normalizeLoose(
-          bestMatch.tracker || extractTrackerFromSearchSubject(bestMatch.subject)
-        );
-        const hasPreference = preferredTrackers.length > 0;
-        const trackerMatchesPreference =
-          matchedTracker &&
-          preferredTrackers.some((name) => normalizeLoose(name) === matchedTracker);
-        const strongTextMatch = hasStrongRedmineTextMatch(
-          bestMatch.subject,
-          normalizedIssueKey,
-          normalizedIssueSummary
-        );
-
-        // Accept HTML hit when tracker matches, is unknown, or text match is strong enough.
-        if (!hasPreference || trackerMatchesPreference || strongTextMatch) {
-          return { id: String(bestMatch.id), title: bestMatch.subject };
-        }
-        if (!matchedTracker) {
-          // Fall through to next query / API for tracker-aware confirmation
-        }
-      }
-    }
-  } catch (error) {
-    console.warn("[RedmineService] Search HTML failed, falling back to API:", error.message);
+  if (globalThis.TB_SYNC_RULES) rules = globalThis.TB_SYNC_RULES.normalize(rules);
+  if (rules.restrictToProject && !projectId) {
+    throw new Error("Select a default Redmine project before restricting issue search.");
   }
-
-  // Fallback to API if HTML search failed
-  return findRedmineIssueViaApi(redmineDomain, apiKey, issueKey, issueSummary, preferredTrackers);
+  // Only the paginated API can establish uniqueness across all search results.
+  const preferredTrackers = getPreferredRedmineTrackerNames(backlogIssueType, rules);
+  return findRedmineIssueViaApi(
+    redmineDomain,
+    apiKey,
+    issueKey,
+    issueSummary,
+    preferredTrackers,
+    rules,
+    projectId
+  );
 }
 
 /**
@@ -139,16 +98,26 @@ async function findRedmineIssueViaApi(
   apiKey,
   issueKey,
   issueSummary = "",
-  preferredTrackers = []
+  preferredTrackers = [],
+  rules = {},
+  projectId = ""
 ) {
-  const normalizedIssueKey = normalizeLoose(issueKey);
-  const normalizedIssueSummary = normalizeLoose(extractJapaneseTitlePart(issueSummary));
-  const subjectQueries = [issueKey, extractJapaneseTitlePart(issueSummary)].filter(Boolean);
+  const normalizedIssueKey = rules.searchMode === "title" ? "" : normalizeLoose(issueKey);
+  const normalizedIssueSummary =
+    rules.searchMode === "key" ? "" : normalizeLoose(extractJapaneseTitlePart(issueSummary, rules));
+  const subjectQueries = globalThis.TB_SYNC_RULES
+    ? globalThis.TB_SYNC_RULES.queries(issueKey, issueSummary, rules)
+    : [issueKey, extractJapaneseTitlePart(issueSummary, rules)].filter(Boolean);
   const seenIds = new Set();
   const issues = [];
 
   for (const subjectQuery of subjectQueries) {
-    const batch = await fetchIssuesBySubjectQuery(redmineDomain, apiKey, subjectQuery);
+    const batch = await fetchIssuesBySubjectQuery(
+      redmineDomain,
+      apiKey,
+      subjectQuery,
+      rules.restrictToProject ? projectId : ""
+    );
     for (const issue of batch) {
       if (!seenIds.has(issue.id)) {
         seenIds.add(issue.id);
@@ -157,7 +126,7 @@ async function findRedmineIssueViaApi(
     }
     if (
       issues.some((issue) =>
-        hasStrongRedmineTextMatch(issue.subject, normalizedIssueKey, normalizedIssueSummary)
+        hasStrongRedmineTextMatch(issue.subject, normalizedIssueKey, normalizedIssueSummary, rules)
       )
     ) {
       break;
@@ -176,7 +145,8 @@ async function findRedmineIssueViaApi(
     })),
     normalizedIssueKey,
     normalizedIssueSummary,
-    preferredTrackers
+    preferredTrackers,
+    rules
   );
 
   if (!bestMatch) {
@@ -185,34 +155,62 @@ async function findRedmineIssueViaApi(
   return { id: String(bestMatch.id), title: bestMatch.subject };
 }
 
-async function fetchIssuesBySubjectQuery(redmineDomain, apiKey, subjectQuery) {
-  // Use contains (~) and all statuses — same pattern as report-log-time lookup.
-  const url = buildRedmineUrl(
-    redmineDomain,
-    `/issues.json?${new URLSearchParams({
-      subject: `~${subjectQuery}`,
-      status_id: "*",
-      limit: "25",
-    }).toString()}`
-  );
-  const response = await fetch(url, {
-    headers: { "X-Redmine-API-Key": apiKey, Accept: "application/json" },
-  });
+async function fetchIssuesBySubjectQuery(redmineDomain, apiKey, subjectQuery, projectId = "") {
+  const issues = [];
+  const seen = new Set();
+  for (let offset = 0; ; ) {
+    // Use contains (~) and all statuses — same pattern as report-log-time lookup.
+    const url = buildRedmineUrl(
+      redmineDomain,
+      `/issues.json?${new URLSearchParams({
+        subject: `~${subjectQuery}`,
+        ...(projectId ? { project_id: projectId } : {}),
+        status_id: "*",
+        limit: "25",
+        offset: String(offset),
+      }).toString()}`
+    );
+    const response = await timeoutFetch(url, {
+      headers: { "X-Redmine-API-Key": apiKey, Accept: "application/json" },
+    });
 
-  if (!response.ok) {
-    throw new Error(`${TB.MESSAGES.REDMINE.LOOKUP_FAILED}: ${response.status}`);
+    if (!response.ok) {
+      throw new Error(`${TB.MESSAGES.REDMINE.LOOKUP_FAILED}: ${response.status}`);
+    }
+
+    const data = await safeReadJson(response);
+    if (!Array.isArray(data?.issues)) throw new Error("Invalid Redmine search response.");
+    const batch = data.issues;
+    if (!batch.length) break;
+    const fresh = batch.filter((issue) => !seen.has(issue.id));
+    if (!fresh.length) throw new Error("Redmine search pagination did not advance.");
+    for (const issue of fresh) {
+      seen.add(issue.id);
+      issues.push(issue);
+    }
+    offset += batch.length;
+    if (Number.isSafeInteger(data.total_count)) {
+      if (offset >= data.total_count) break;
+    } else if (batch.length < 25) break;
   }
-
-  const data = await safeReadJson(response);
-  return Array.isArray(data?.issues) ? data.issues : [];
+  return issues;
 }
 
 async function handleSendToRedmine(
-  { redmineIssueId, notes, backlogIssueKey, processedAttachments = null },
+  {
+    redmineIssueId,
+    notes,
+    backlogIssueKey,
+    processedAttachments = null,
+    syncMarker = "",
+    settingsOverride = null,
+    strictAttachments = false,
+    onBeforeSubmit = null,
+  },
   sender
 ) {
   // Send note to Redmine issue, including image processing
-  const settings = await getSettings();
+  const settings = settingsOverride || (await getSettings());
   const backlogDomain = sender?.tab?.url ? new URL(sender.tab.url).hostname : null;
   // Process attachments: download from Backlog, upload to Redmine
   const { updatedNotes, uploads } = await processNotesAttachments(
@@ -220,7 +218,8 @@ async function handleSendToRedmine(
     backlogDomain,
     settings,
     backlogIssueKey,
-    processedAttachments
+    processedAttachments,
+    strictAttachments
   );
 
   // Modal edits/preview use Markdown; Redmine notes use Textile.
@@ -230,12 +229,13 @@ async function handleSendToRedmine(
   const endpoint = buildRedmineUrl(settings.redmineDomain, `/issues/${redmineIssueId}.json`);
   const payload = {
     issue: {
-      notes: textileNotes,
+      notes: `${textileNotes}${syncMarker ? `\n\n${syncMarker}` : ""}`,
       uploads: uploads.length > 0 ? uploads : undefined,
     },
   };
 
-  const response = await fetch(endpoint, {
+  await onBeforeSubmit?.();
+  const response = await timeoutFetch(endpoint, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -253,9 +253,11 @@ async function handleSendToRedmine(
         redmineResponse: errorMsg,
       });
     }
-    throw new Error(
+    const error = new Error(
       `${TB.MESSAGES.REDMINE.SEARCH_PAGE_ERROR}: ${sanitizeErrorMessage(errorMsg, response.status)}`
     );
+    error.status = response.status;
+    throw error;
   }
 
   const responseData = await safeReadJson(response);
@@ -269,16 +271,23 @@ async function handleSendToRedmine(
   };
 }
 
-async function handleCreateRedmineIssue({ issueData, comments }) {
-  const settings = await getSettings();
-  const processedAttachments = new Map();
+async function handleCreateRedmineIssue({
+  issueData,
+  comments,
+  migrationMarker = "",
+  processedAttachments = new Map(),
+  settingsOverride = null,
+  strictAttachments = false,
+}) {
+  const settings = settingsOverride || (await getSettings());
 
   const { updatedNotes: updatedDescription, uploads: descUploads } = await processNotesAttachments(
     issueData.description || "",
     null, // Pass null, let the function grab from settings
     settings,
     issueData.backlogIssueKey,
-    processedAttachments
+    processedAttachments,
+    strictAttachments
   );
 
   const textileDescription =
@@ -294,7 +303,7 @@ async function handleCreateRedmineIssue({ issueData, comments }) {
       priority_id: issueData.priority_id,
       fixed_version_id: issueData.fixed_version_id || undefined,
       subject: issueData.subject,
-      description: textileDescription,
+      description: `${textileDescription}${migrationMarker ? `\n\n${migrationMarker}` : ""}`,
       due_date: issueData.due_date || undefined,
       category_id: issueData.category_id || undefined,
       uploads: descUploads.length > 0 ? descUploads : undefined,
@@ -303,7 +312,7 @@ async function handleCreateRedmineIssue({ issueData, comments }) {
   };
 
   try {
-    const response = await fetch(createUrl, {
+    const response = await timeoutFetch(createUrl, {
       method: "POST",
       headers: {
         "X-Redmine-API-Key": settings.redmineApiKey,
@@ -373,12 +382,14 @@ async function handleCreateRedmineIssue({ issueData, comments }) {
       });
     }
     // Rethrow a user-friendly error
-    throw new Error(
+    const friendlyError = new Error(
       `${TB.MESSAGES.REDMINE.API_REQUEST_FAILED}: ${sanitizeErrorMessage(
         error.message,
         error.status || 500
       )}`
     );
+    friendlyError.status = error.status;
+    throw friendlyError;
   }
 }
 
@@ -390,7 +401,7 @@ async function handleCreateRedmineIssue({ issueData, comments }) {
  * Fetch Redmine search page HTML.
  */
 async function fetchRedmineSearchHtml(searchUrl) {
-  const response = await fetch(searchUrl, { credentials: "include" });
+  const response = await timeoutFetch(searchUrl, { credentials: "include" });
   if (!response.ok) {
     throw new Error(`${TB.MESSAGES.REDMINE.SEARCH_PAGE_ERROR} ${response.status}`);
   }
@@ -405,10 +416,13 @@ async function fetchRedmineSearchHtml(searchUrl) {
  * Map Backlog issue type to preferred Redmine tracker name aliases.
  * QA → Q/A; Bug/CR/Task when known; 要望* → Task; empty/unknown → no preference.
  */
-function getPreferredRedmineTrackerNames(backlogIssueType = "") {
+function getPreferredRedmineTrackerNames(backlogIssueType = "", rules = {}) {
   const type = String(backlogIssueType || "")
     .trim()
     .toLowerCase();
+  if (Object.prototype.hasOwnProperty.call(rules.trackerAliases || {}, type)) {
+    return rules.trackerAliases[type];
+  }
   if (!type) {
     return [];
   }
@@ -459,6 +473,15 @@ function extractRedmineSearchResults(html) {
 
 const STRONG_SUMMARY_MIN_LENGTH = 12;
 
+function hasExactBacklogKey(subject, issueKey) {
+  if (!issueKey) return false;
+  const keys =
+    String(subject || "")
+      .normalize("NFKC")
+      .match(/[a-z0-9_]+-\d+/gi) || [];
+  return keys.some((key) => key.toLowerCase() === issueKey.toLowerCase());
+}
+
 /**
  * Strip Redmine search link prefix like "Task #123 (New): ".
  */
@@ -474,7 +497,8 @@ function stripRedmineSearchSubjectPrefix(subject = "") {
  * - "【調査】... / ([Điều tra] ...)"  → JP before " / ("
  * - "COUIX_PJ-1 【調査】... (VN)"     → full title still compared via includes()
  */
-function extractJapaneseTitlePart(subject = "") {
+function extractJapaneseTitlePart(subject = "", rules = {}) {
+  if (globalThis.TB_SYNC_RULES) return globalThis.TB_SYNC_RULES.title(subject, rules);
   const title = stripRedmineSearchSubjectPrefix(subject);
   if (!title) {
     return "";
@@ -486,17 +510,18 @@ function extractJapaneseTitlePart(subject = "") {
   return title.trim();
 }
 
-function hasStrongRedmineTextMatch(subject, normalizedIssueKey, normalizedIssueSummary) {
+function hasStrongRedmineTextMatch(
+  subject,
+  normalizedIssueKey,
+  normalizedIssueSummary,
+  rules = {}
+) {
   const normalizedSubject = normalizeLoose(subject);
-  const normalizedComparable = normalizeLoose(extractJapaneseTitlePart(subject));
+  const normalizedComparable = normalizeLoose(extractJapaneseTitlePart(subject, rules));
   if (!normalizedSubject && !normalizedComparable) {
     return false;
   }
-  if (
-    normalizedIssueKey &&
-    (normalizedSubject.includes(normalizedIssueKey) ||
-      normalizedComparable.includes(normalizedIssueKey))
-  ) {
+  if (normalizedIssueKey && hasExactBacklogKey(subject, normalizedIssueKey)) {
     return true;
   }
   if (!normalizedIssueSummary || normalizedIssueSummary.length < STRONG_SUMMARY_MIN_LENGTH) {
@@ -519,7 +544,8 @@ function pickBestRedmineSearchResult(
   results,
   normalizedIssueKey,
   normalizedIssueSummary,
-  preferredTrackers = []
+  preferredTrackers = [],
+  rules = {}
 ) {
   if (!results?.length) {
     return null;
@@ -528,16 +554,23 @@ function pickBestRedmineSearchResult(
   const scored = results
     .map((item) => {
       const normalizedSubject = normalizeLoose(item.subject);
-      const normalizedComparable = normalizeLoose(extractJapaneseTitlePart(item.subject));
+      const normalizedComparable = normalizeLoose(extractJapaneseTitlePart(item.subject, rules));
       const trackerName = normalizeLoose(
         item.tracker || extractTrackerFromSearchSubject(item.subject)
       );
       let score = 0;
+      const referencedKeys =
+        String(item.subject || "")
+          .normalize("NFKC")
+          .match(/[a-z0-9_]+-\d+/gi) || [];
       if (
         normalizedIssueKey &&
-        (normalizedSubject.includes(normalizedIssueKey) ||
-          normalizedComparable.includes(normalizedIssueKey))
+        referencedKeys.length &&
+        !hasExactBacklogKey(item.subject, normalizedIssueKey)
       ) {
+        return { item, score, trackerName, subject: item.subject };
+      }
+      if (normalizedIssueKey && hasExactBacklogKey(item.subject, normalizedIssueKey)) {
         score += 10;
       }
       if (
@@ -548,6 +581,7 @@ function pickBestRedmineSearchResult(
       ) {
         score += 5;
       }
+      if (score === 0) return { item, score, trackerName, subject: item.subject };
       if (preferred.length > 0 && trackerName) {
         if (preferred.includes(trackerName)) {
           score += 8;
@@ -563,13 +597,29 @@ function pickBestRedmineSearchResult(
     const preferredHit = scored.find(
       (entry) => entry.score > 0 && preferred.includes(entry.trackerName)
     );
+    if (
+      preferredHit &&
+      scored.filter(
+        (entry) => entry.score === preferredHit.score && preferred.includes(entry.trackerName)
+      ).length > 1
+    ) {
+      return null;
+    }
     if (preferredHit) {
       return preferredHit.item;
     }
     const strongest = scored[0];
+    if (strongest && scored.filter((entry) => entry.score === strongest.score).length > 1) {
+      return null;
+    }
     if (
       strongest &&
-      hasStrongRedmineTextMatch(strongest.subject, normalizedIssueKey, normalizedIssueSummary)
+      hasStrongRedmineTextMatch(
+        strongest.subject,
+        normalizedIssueKey,
+        normalizedIssueSummary,
+        rules
+      )
     ) {
       return strongest.item;
     }
@@ -581,7 +631,10 @@ function pickBestRedmineSearchResult(
     }
   }
 
-  return scored[0]?.score > 0 ? scored[0].item : results[0];
+  return scored[0]?.score > 0 &&
+    scored.filter((entry) => entry.score === scored[0].score).length === 1
+    ? scored[0].item
+    : null;
 }
 
 /**
@@ -601,7 +654,8 @@ async function processNotesAttachments(
   backlogDomain,
   settings,
   backlogIssueKey,
-  processedAttachments = null
+  processedAttachments = null,
+  strictAttachments = false
 ) {
   if (!notes) {
     return { updatedNotes: "", uploads: [] };
@@ -614,6 +668,7 @@ async function processNotesAttachments(
   }
 
   const uploads = [];
+  const failures = [];
   const attachmentRegistry = new Map();
   const imagePattern = /\[\[TB_IMG:\s*(\d+)\s*\]\]/g;
   const filePattern = /\[\[TB_FILE:\s*(\d+)\s*:\s*([^\]]+?)\s*\]\]/g;
@@ -643,12 +698,19 @@ async function processNotesAttachments(
         continue;
       }
 
-      const { filename } = info;
+      const sourceFilename = info.filename;
+      const filename = settings.attachmentIdentityPrefix
+        ? globalThis.TB_MIGRATION.attachmentFilename(
+            sourceFilename,
+            settings.attachmentIdentityPrefix,
+            attachmentId
+          )
+        : sourceFilename;
 
       const blob = await downloadBacklogFile(
         effectiveBacklogDomain, // Use the validated domain
         attachmentId,
-        filename,
+        sourceFilename,
         backlogIssueKey
       );
 
@@ -685,12 +747,21 @@ async function processNotesAttachments(
         throw new Error("Upload token was not received.");
       }
     } catch (e) {
+      failures.push(info.filename);
       console.error(`[TB] Attachment processing failed for ID ${attachmentId}:`, e.message);
       const reason = String(e?.message || "unknown error")
         .replace(/https?:\/\/[^\s]+/gi, "[URL]")
         .slice(0, 120);
       info.markup = `[Attachment Error: ${info.filename} — ${reason}]`;
     }
+  }
+
+  if (strictAttachments && failures.length) {
+    const error = new Error(
+      `Attachments were not transferred: ${failures.join(", ")}. Resume to retry the files.`
+    );
+    error.definitelyNotSent = true;
+    throw error;
   }
 
   let finalNotes = notes;
@@ -720,11 +791,15 @@ async function uploadToRedmine(domain, apiKey, blob, filename) {
   }
 
   const url = buildRedmineUploadUrl(domain, filename);
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "X-Redmine-API-Key": apiKey, "Content-Type": "application/octet-stream" },
-    body: blob,
-  });
+  const response = await timeoutFetch(
+    url,
+    {
+      method: "POST",
+      headers: { "X-Redmine-API-Key": apiKey, "Content-Type": "application/octet-stream" },
+      body: blob,
+    },
+    60000
+  );
   if (!response.ok) {
     const errorMsg = await readErrorMessage(response);
     const shortMsg = String(errorMsg)
@@ -934,9 +1009,10 @@ async function redmineAuthorizedFetch(redmineDomain, apiKey, pathWithQuery, init
     const url = /^https?:\/\//i.test(pathWithQuery)
       ? pathWithQuery
       : buildRedmineUrl(redmineDomain, pathWithQuery);
-    return fetch(url, {
+    return timeoutFetch(url, {
       ...init,
       method,
+      redirect: "error",
       headers: {
         ...headers,
         "X-Redmine-API-Key": apiKey,

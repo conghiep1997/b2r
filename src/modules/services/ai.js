@@ -165,13 +165,20 @@ async function testModelAvailability(provider, modelId, settings) {
  * @param {function} promptFn - Prompt builder function
  * @returns {Promise<string>} Translated text
  */
+/* global TB_GLOSSARY */
 async function translateText(
   commentText,
   settings,
   commentUrl = null,
   promptFn = TB.PROMPTS.USER,
-  onStatus
+  onStatus,
+  projectKey = ""
 ) {
+  if (promptFn.original) return commentText;
+  const glossary =
+    typeof TB_GLOSSARY !== "undefined"
+      ? await TB_GLOSSARY.prepare(settings, projectKey, commentText, promptFn)
+      : { text: commentText, prompt: promptFn, restore: (output) => output };
   const primaryProvider = settings.primaryProvider || TB.DEFAULT_PRIMARY_PROVIDER;
   const primaryModel = settings.primaryModel || TB.DEFAULT_PRIMARY_MODEL;
   const fallbackProvider = settings.fallbackProvider || TB.DEFAULT_FALLBACK_PROVIDER;
@@ -183,13 +190,14 @@ async function translateText(
       primaryProvider,
       primaryModel,
       settings,
-      commentText,
+      glossary.text,
       commentUrl,
-      promptFn,
+      glossary.prompt,
       onStatus
     );
+    const restored = glossary.restore(translated);
     emitAIStatus({ phase: "success", provider: primaryProvider, model: primaryModel }, onStatus);
-    return translated;
+    return restored;
   } catch (error) {
     // Fallback on rate limit and temporary provider overloads such as Gemini 503 high demand.
     const isRetryableProviderFailure = isRetryableProviderError(error);
@@ -208,16 +216,17 @@ async function translateText(
           fallbackProvider,
           fallbackModel,
           settings,
-          commentText,
+          glossary.text,
           commentUrl,
-          promptFn,
+          glossary.prompt,
           onStatus
         );
+        const restored = glossary.restore(translated);
         emitAIStatus(
           { phase: "success", provider: fallbackProvider, model: fallbackModel },
           onStatus
         );
-        return translated;
+        return restored;
       } catch (fallbackError) {
         emitAIStatus({ phase: "error", error: fallbackError.message }, onStatus);
         throw new Error(
@@ -624,7 +633,7 @@ async function callGeminiAPI(
         parts: [
           {
             text: isGemma
-              ? `${TB.PROMPTS.SYSTEM}\n\n${promptFn(commentText)}`
+              ? `${promptFn.system || TB.PROMPTS.SYSTEM}\n\n${promptFn(commentText)}`
               : promptFn(commentText),
           },
         ],
@@ -640,7 +649,7 @@ async function callGeminiAPI(
   // Only Gemini models support system_instruction parameter
   if (!isGemma) {
     payload.system_instruction = {
-      parts: [{ text: TB.PROMPTS.SYSTEM }],
+      parts: [{ text: promptFn.system || TB.PROMPTS.SYSTEM }],
     };
   }
 
@@ -680,8 +689,8 @@ async function callGeminiAPI(
   }
 
   const cleaned = extractCleanedTranslation(rawText);
-  if (promptFn === TB.PROMPTS.USER) {
-    return formatTranslation(commentText, cleaned, commentUrl);
+  if (promptFn.attribution || promptFn === TB.PROMPTS.USER) {
+    return formatTranslation(commentText, cleaned, commentUrl, promptFn.translationLabel);
   }
   return cleaned;
 }
@@ -715,7 +724,7 @@ async function callCerebrasAPI(
       body: JSON.stringify({
         model: model,
         messages: [
-          { role: "system", content: TB.PROMPTS.SYSTEM },
+          { role: "system", content: promptFn.system || TB.PROMPTS.SYSTEM },
           { role: "user", content: promptFn(commentText) },
         ],
         temperature: 0.2,
@@ -737,8 +746,8 @@ async function callCerebrasAPI(
   }
 
   const cleaned = extractCleanedTranslation(rawText);
-  if (promptFn === TB.PROMPTS.USER) {
-    return formatTranslation(commentText, cleaned, commentUrl);
+  if (promptFn.attribution || promptFn === TB.PROMPTS.USER) {
+    return formatTranslation(commentText, cleaned, commentUrl, promptFn.translationLabel);
   }
   return cleaned;
 }
@@ -762,7 +771,7 @@ async function callGroqAPI(
       body: JSON.stringify({
         model: model || "llama-3.3-70b-versatile",
         messages: [
-          { role: "system", content: TB.PROMPTS.SYSTEM },
+          { role: "system", content: promptFn.system || TB.PROMPTS.SYSTEM },
           { role: "user", content: promptFn(commentText) },
         ],
         temperature: 0.2,
@@ -784,8 +793,8 @@ async function callGroqAPI(
   }
 
   const cleaned = extractCleanedTranslation(rawText);
-  if (promptFn === TB.PROMPTS.USER) {
-    return formatTranslation(commentText, cleaned, commentUrl);
+  if (promptFn.attribution || promptFn === TB.PROMPTS.USER) {
+    return formatTranslation(commentText, cleaned, commentUrl, promptFn.translationLabel);
   }
   return cleaned;
 }
@@ -808,7 +817,7 @@ async function callOpenRouterAPI(
       body: JSON.stringify({
         model: model || "openai/gpt-4o-mini",
         messages: [
-          { role: "system", content: TB.PROMPTS.SYSTEM },
+          { role: "system", content: promptFn.system || TB.PROMPTS.SYSTEM },
           { role: "user", content: promptFn(commentText) },
         ],
         temperature: 0.2,
@@ -830,8 +839,8 @@ async function callOpenRouterAPI(
   }
 
   const cleaned = extractCleanedTranslation(rawText);
-  if (promptFn === TB.PROMPTS.USER) {
-    return formatTranslation(commentText, cleaned, commentUrl);
+  if (promptFn.attribution || promptFn === TB.PROMPTS.USER) {
+    return formatTranslation(commentText, cleaned, commentUrl, promptFn.translationLabel);
   }
   return cleaned;
 }
@@ -1002,10 +1011,10 @@ function fixMangledMarkers(text) {
   return result;
 }
 
-function formatTranslation(originalText, cleanedText, commentUrl = null) {
+function formatTranslation(originalText, cleanedText, commentUrl = null, languageLabel = "VN") {
   // Format output: add comment URL (if exists) and translation
   const prefix = commentUrl ? `${commentUrl}\n\n` : "";
-  return `${prefix}${originalText.trim()}\n\n---\n\n{{collapse(VN)\n\n${cleanedText}\n}}`;
+  return `${prefix}${originalText.trim()}\n\n---\n\n{{collapse(${languageLabel})\n\n${cleanedText}\n}}`;
 }
 
 function sanitizeErrorMessage(message, status) {

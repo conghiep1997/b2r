@@ -1,0 +1,49 @@
+name: b2r-redmine-sandbox
+services:
+  db:
+    image: postgres:16-bookworm
+    environment:
+      POSTGRES_DB: redmine
+      POSTGRES_USER: redmine
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U redmine -d redmine"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  redmine:
+    image: redmine:6.1-bookworm
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${REDMINE_PORT:-13001}:3000"
+    environment:
+      REDMINE_DB_POSTGRES: db
+      REDMINE_DB_DATABASE: redmine
+      REDMINE_DB_USERNAME: redmine
+      REDMINE_DB_PASSWORD_FILE: /run/secrets/db_password
+      REDMINE_SECRET_KEY_BASE_FILE: /run/secrets/session_secret
+    secrets:
+      - db_password
+      - session_secret
+    volumes:
+      - redmine_files:/usr/src/redmine/files
+    healthcheck:
+      test: ["CMD", "ruby", "-rnet/http", "-e", "exit(Net::HTTP.get_response(URI('http://127.0.0.1:3000/login')).code.to_i < 400 ? 0 : 1)"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 120s
+secrets:
+  db_password:
+    file: ./secrets/db_password.txt
+  session_secret:
+    file: ./secrets/session_secret.txt
+volumes:
+  postgres_data:
+  redmine_files:
