@@ -1,15 +1,17 @@
-# name
-cross-platform-sync
+---
+name: cross-platform-sync
+description: Guidance for Backlog and Redmine API flows used to sync comments, issues, attachments, logs, and report
+  time.
+---
 
-# description
-Guidance for Backlog and Redmine API flows used to sync comments, issues, attachments, logs, and report time.
+# cross-platform-sync
 
-# when to use
+## When to use
 - Editing `src/modules/services/backlog.js`, `redmine.js`, or `report-log-time.js`.
 - Changing sync logic in `src/background.js`, `src/content.js`, or `src/redmine_content.js`.
 - Debugging issue lookup, comment posting, attachment transfer, metadata loading, or project/user sync.
 
-# concise rules
+## Rules
 - Use Backlog API keys as `apiKey` query parameters where existing service methods do.
 - Use Redmine `X-Redmine-API-Key` headers for Redmine REST calls.
 - Never log raw URLs or error payloads that may include `apiKey` or authorization tokens.
@@ -22,7 +24,7 @@ Guidance for Backlog and Redmine API flows used to sync comments, issues, attach
 - Sanitize API error messages before showing users or storing logs.
 - Keep service code separate from DOM rendering; route UI work through content/options modules.
 
-# validation checklist
+## Validation
 - Decrypted settings are used only inside privileged/background or service flows.
 - Backlog and Redmine host permissions cover any new endpoint.
 - Comment markdown and attachment links remain usable after sync.

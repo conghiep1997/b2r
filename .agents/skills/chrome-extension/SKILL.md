@@ -1,16 +1,18 @@
-# name
-chrome-extension
+---
+name: chrome-extension
+description: Manifest V3 extension guidance for Backlog2Redmine lifecycle, content scripts, messaging, storage,
+  permissions, and packaged files.
+---
 
-# description
-Manifest V3 extension guidance for Backlog2Redmine lifecycle, content scripts, messaging, storage, permissions, and packaged files.
+# chrome-extension
 
-# when to use
+## When to use
 - Editing `manifest.json`.
 - Changing `src/background.js`, content script entrypoints, `chrome.*` APIs, alarms, notifications, or extension messaging.
 - Adding/removing permissions, host permissions, OAuth scopes, or web accessible resources.
 - Debugging extension load, service worker, or content script ordering issues.
 
-# concise rules
+## Rules
 - Preserve Manifest V3 service worker behavior; keep background dependencies compatible with `importScripts`.
 - Keep `manifest.json` content script order aligned with global symbols used by entrypoints.
 - Minimize `permissions`, `host_permissions`, OAuth scopes, and `web_accessible_resources`.
@@ -21,7 +23,7 @@ Manifest V3 extension guidance for Backlog2Redmine lifecycle, content scripts, m
 - Keep versions in `manifest.json` and `package.json` synchronized.
 - Do not edit `dist/`; update source and rebuild when needed.
 
-# validation checklist
+## Validation
 - `manifest_version` remains `3`.
 - Service worker loads all required globals before handlers run.
 - Content scripts match only the intended Backlog and Redmine URLs declared in `manifest.json`.

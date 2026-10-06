@@ -1,16 +1,18 @@
-# name
-ai-integration
+---
+name: ai-integration
+description: Guidance for Backlog2Redmine AI translation providers, model selection, prompts, retries, cooldowns,
+  and encrypted provider settings.
+---
 
-# description
-Guidance for Backlog2Redmine AI translation providers, model selection, prompts, retries, cooldowns, and encrypted provider settings.
+# ai-integration
 
-# when to use
+## When to use
 - Editing `src/modules/services/ai.js`.
 - Changing provider constants, model lists, or prompts in `src/modules/constants/` or `src/constants.js`.
 - Updating options UI for Gemini, Groq, Cerebras, OpenRouter, primary/fallback providers, keys, or models.
 - Debugging translation, model listing, provider fallback, or rate-limit behavior.
 
-# concise rules
+## Rules
 - Preserve provider IDs from `TB.PROVIDERS` and existing storage key names.
 - Keep primary/fallback provider flow deterministic except where existing random key/model selection is intentional.
 - Use existing `timeoutFetch`, `safeReadJson`, `readErrorMessage`, and `sanitizeErrorMessage` helpers.
@@ -19,7 +21,7 @@ Guidance for Backlog2Redmine AI translation providers, model selection, prompts,
 - Keep prompt changes in `src/modules/constants/prompts.js` unless a caller-specific override already exists.
 - Keep model availability checks lightweight and provider-specific.
 
-# validation checklist
+## Validation
 - Existing providers still list/test models through background messaging.
 - Translation fallback triggers only for retryable provider failures.
 - Options page masking and encrypted persistence still work.
