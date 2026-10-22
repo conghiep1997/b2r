@@ -96,7 +96,7 @@
     "message": "Cấu hình theo dự án"
   },
   "options_profiles_help": {
-    "message": "Chọn dự án Redmine đích và quy tắc riêng cho từng dự án Backlog. Dự án chưa có cấu hình riêng dùng quy tắc chung. Cấu hình áp dụng cho cặp máy chủ Backlog và Redmine hiện tại."
+    "message": "Chọn Redmine đích và quy tắc cho từng dự án Backlog. Dự án chưa cấu hình riêng sẽ dùng quy tắc chung. Áp dụng cho cặp máy chủ hiện tại."
   },
   "options_log_time_title": {
     "message": "Ghi thời gian từ báo cáo"
@@ -198,10 +198,10 @@
     "message": "Không đọc được mã Issue từ Backlog."
   },
   "toast_send_success": {
-    "message": "Đã gửi bình luận lên Redmine thành công."
+    "message": "Đã gửi lên Redmine."
   },
   "toast_send_backlog_success": {
-    "message": "Đã gửi bình luận lên Backlog thành công."
+    "message": "Đã gửi lên Backlog."
   },
   "toast_send_failed": {
     "message": "Gửi bình luận thất bại."
@@ -210,13 +210,13 @@
     "message": "Dịch bình luận thất bại."
   },
   "toast_rate_limit_retry": {
-    "message": "⚠️ Model chính chạm giới hạn (rate limit), đang thử lại với model dự phòng..."
+    "message": "Model chính đang bận. Đang thử model dự phòng..."
   },
   "toast_rate_limit_failed": {
     "message": "❌ Cả 2 model đều chạm giới hạn. Vui lòng đợi hoặc kiểm tra API key."
   },
   "toast_cross_provider_retry": {
-    "message": "⚠️ $provider$ chạm giới hạn, đang chuyển sang Gemini Flash Lite...",
+    "message": "$provider$ đang bận. Đang thử model dự phòng...",
     "placeholders": {
       "provider": {
         "content": "$1"
@@ -661,7 +661,7 @@
     "message": "Lỗi: Vui lòng cấu hình đầy đủ Redmine Domain, API Key và Report Project ID trong trang Options của extension."
   },
   "report_confirm_delete": {
-    "message": "Xác nhận xóa toàn bộ spent time của bạn trong tháng hiện tại?\n\nHành động này chỉ xóa entry thuộc đúng user hiện tại và đúng ngày trong tháng."
+    "message": "Xóa spent time của bạn trong tháng này? Chỉ entry của bạn trong tháng này bị xóa."
   },
   "report_deleting": {
     "message": "Đang xóa spent time tháng..."
@@ -957,7 +957,7 @@
     }
   },
   "options_ai_status_retry": {
-    "message": "$provider$ đang bận hoặc bị giới hạn tốc độ. Model này nghỉ $seconds$ giây; đang thử model khác ngay (lần $attempt$).",
+    "message": "$provider$ đang bận. Thử model $attempt$; model này nghỉ $seconds$ giây.",
     "placeholders": {
       "provider": {
         "content": "$1"
@@ -1243,7 +1243,7 @@
     "message": "Chọn dự án"
   },
   "options_bug_description": {
-    "message": "Mô tả sự cố và thêm ảnh nếu cần. Bạn có thể tải, sao chép báo cáo hoặc mở bản nháp trên GitHub để xem lại trước khi gửi. Ảnh cần được đính kèm riêng."
+    "message": "Mô tả sự cố. Tải hoặc sao chép báo cáo, hay xem lại bản nháp GitHub trước khi gửi. Tự đính kèm ảnh riêng."
   },
   "options_bug_subject": {
     "message": "Tiêu đề lỗi"
@@ -1525,7 +1525,7 @@
     "message": "Kiểm tra ngày, task và số giờ. Bấm Xác nhận & ghi time khi đã đúng."
   },
   "report_preview_review_warning": {
-    "message": "Có ngày cần kiểm tra spent time hiện tại trước khi ghi. Hãy xử lý dữ liệu hiện có rồi quét lại."
+    "message": "Kiểm tra spent time ở các ngày được đánh dấu rồi quét lại."
   },
   "report_preview_replace_warning": {
     "message": "Đã có $hours$ giờ trong ngày này. Ghi tiếp có thể thay thế các entry hiện có; hãy xử lý spent time trước.",
@@ -1567,7 +1567,7 @@
     "message": "Đã ghi xong"
   },
   "sync_attachment_partial": {
-    "message": "Đã gửi comment, nhưng các file sau upload thất bại: $files$. Mở comment Backlog để đính kèm file, không gửi lại comment.",
+    "message": "Đã gửi comment; upload lỗi: $files$. Đính kèm file từ comment Backlog, không gửi lại comment.",
     "placeholders": {
       "files": {
         "content": "$1"
@@ -1619,7 +1619,7 @@
     }
   },
   "recovery_uncertain_help": {
-    "message": "Server có thể đã nhận thao tác cuối. Hãy kiểm tra lại hoặc liên kết issue đã tạo. Chỉ cho phép gửi lại sau khi bạn đã kiểm tra issue đích."
+    "message": "Server có thể đã nhận thao tác. Hãy kiểm tra đích hoặc liên kết issue trước khi cho phép gửi lại."
   },
   "recovery_confirm_absent": {
     "message": " Tôi đã kiểm tra issue đích và thao tác chưa được nhận."

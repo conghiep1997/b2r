@@ -3,7 +3,7 @@
  */
 
 // Reserve each request's starting slot before awaiting the provider response.
-let lastUsedGeminiIndex = 0;
+let preferredGeminiCombinationId = null;
 const geminiCooldownUntilByCombination = new Map();
 const geminiCooldownUntilByKey = new Map();
 const lastUsedProviderIndexByProvider = {};
@@ -314,8 +314,11 @@ async function callAIsByProvider(provider, model, settings, text, url, promptFn,
     let lastError = null;
     let skippedCooldowns = 0;
     let nextCooldownReadyAt = Infinity;
-    const startIndex = lastUsedGeminiIndex % combinations.length;
-    lastUsedGeminiIndex = (startIndex + 1) % combinations.length;
+    const preferredIndex = combinations.findIndex(
+      ({ model: preferredModel, key: preferredKey }) =>
+        getGeminiCombinationId(preferredModel, preferredKey) === preferredGeminiCombinationId
+    );
+    const startIndex = preferredIndex >= 0 ? preferredIndex : 0;
 
     // Iterate through combinations in a round-robin fashion for failover
     for (let i = 0; i < combinations.length; i++) {
@@ -347,7 +350,7 @@ async function callAIsByProvider(provider, model, settings, text, url, promptFn,
           )} (Round-Robin)`
         );
         const result = await callGeminiAPI(currentKey, text, currentModel, promptFn, url);
-
+        preferredGeminiCombinationId = combinationId;
         return result;
       } catch (error) {
         const isRetryable = isRetryableProviderError(error);
@@ -361,7 +364,7 @@ async function callAIsByProvider(provider, model, settings, text, url, promptFn,
           ? getGeminiCooldownDuration(error)
           : GEMINI_UNAVAILABLE_COOLDOWN_MS;
         const retryAt = Date.now() + cooldownMs;
-        if (isGeminiKeyUnavailable(error) || isGeminiKeyRateLimited(error)) {
+        if (isGeminiKeyUnavailable(error)) {
           geminiCooldownUntilByKey.set(currentKey, retryAt);
         } else {
           geminiCooldownUntilByCombination.set(combinationId, retryAt);
@@ -440,12 +443,20 @@ async function callProviderWithFailover(provider, model, settings, text, url, pr
       lastUsedProviderIndexByProvider[provider] = (currentIndex + 1) % combinations.length;
       return result;
     } catch (error) {
-      if (!isRetryableProviderError(error)) {
+      const retryable = isRetryableProviderError(error);
+      const modelOrRouteUnavailable =
+        [400, 404, 422].includes(error?.status) ||
+        /model.*(not found|unavailable|unsupported)|no such model|unknown model/i.test(
+          error?.message || ""
+        );
+      if (!retryable && !modelOrRouteUnavailable) {
         throw error;
       }
       lastError = error;
-      const cooldownMs = getGeminiCooldownDuration(error);
-      providerCooldownUntilByCombination.set(combinationId, Date.now() + cooldownMs);
+      const cooldownMs = retryable ? getProviderCooldownDuration(error) : GEMINI_UNAVAILABLE_COOLDOWN_MS;
+      if (retryable) {
+        providerCooldownUntilByCombination.set(combinationId, Date.now() + cooldownMs);
+      }
       emitAIStatus(
         {
           phase: "retry",
@@ -549,6 +560,15 @@ function isGeminiCombinationUnavailable(error) {
 function isGeminiKeyRateLimited(error) {
   const message = (error?.message || "").toLowerCase();
   return error?.status === 429 || message.includes("429") || message.includes("rate limit");
+}
+
+function getProviderCooldownDuration(error) {
+  const message = (error?.message || "").toLowerCase();
+  const baseDuration =
+    error?.status === 429 || message.includes("rate limit") || message.includes("429")
+      ? GEMINI_RATE_LIMIT_COOLDOWN_MS
+      : GEMINI_OVERLOAD_COOLDOWN_MS;
+  return Math.max(baseDuration, error?.retryAfterMs || 0);
 }
 
 function getGeminiCooldownDuration(error) {

@@ -145,6 +145,58 @@ test("Gemini retry reports status through the current request callback", async (
   assert.deepEqual(phases, ["retry"]);
 });
 
+test("Gemini 429 cools down only the model/key combination and reuses the successful slot", async () => {
+  const context = vm.createContext({
+    console: { log() {}, warn() {}, error() {} },
+    TB: { PROVIDERS: { GEMINI: "gemini" }, GEMINI_MODELS: [] },
+    Math,
+  });
+  vm.runInContext(source, context);
+  vm.runInContext(
+    `const demoCalls = [];
+    callGeminiAPI = async (_key, _text, model) => {
+      demoCalls.push(model);
+      if (model === "limited") throw Object.assign(new Error("429 rate limit"), { status: 429 });
+      return "translated";
+    };
+    this.runDemo = () => callAIsByProvider(
+      "gemini", "limited",
+      { geminiModels: ["limited", "healthy"], geminiApiKeys: ["one"] },
+      "source", null, () => "prompt"
+    );
+    this.demoCalls = demoCalls;`,
+    context
+  );
+  assert.equal(await context.runDemo(), "translated");
+  assert.equal(await context.runDemo(), "translated");
+  assert.deepEqual(Array.from(context.demoCalls), ["limited", "healthy", "healthy"]);
+});
+
+test("provider failover advances only after success and retries model-specific failures", async () => {
+  const context = vm.createContext({
+    console: { log() {}, warn() {}, error() {} },
+    TB: { PROVIDERS: { GROQ: "groq" }, GROQ_MODELS: [] },
+  });
+  vm.runInContext(source, context);
+  vm.runInContext(
+    `const demoCalls = [];
+    callGroqAPI = async (_key, _text, model) => {
+      demoCalls.push(model);
+      if (model === "bad") throw Object.assign(new Error("model not found"), { status: 404 });
+      return "translated";
+    };
+    this.runDemo = () => callAIsByProvider(
+      "groq", "bad",
+      { groqModels: ["bad", "good"], groqApiKeys: ["one"] },
+      "source", null, () => "prompt"
+    );
+    this.demoCalls = demoCalls;`,
+    context
+  );
+  assert.equal(await context.runDemo(), "translated");
+  assert.deepEqual(Array.from(context.demoCalls), ["bad", "good"]);
+});
+
 test("AI status reporter targets only the requesting tab and frame", async () => {
   const background = fs.readFileSync(path.join(__dirname, "..", "src", "background.js"), "utf8");
   const start = background.indexOf("function createAIStatusReporter(sender)");

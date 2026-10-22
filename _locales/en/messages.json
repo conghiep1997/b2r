@@ -96,7 +96,7 @@
     "message": "Project profiles"
   },
   "options_profiles_help": {
-    "message": "Set a Redmine destination and separate rules for each Backlog project. Projects without a profile use global settings. Profiles apply to the current Backlog and Redmine servers."
+    "message": "Set a Redmine destination and rules per Backlog project. Projects without a profile use global settings. Applies to the current servers."
   },
   "options_log_time_title": {
     "message": "Report time logging"
@@ -198,19 +198,19 @@
     "message": "Could not read issueKey from Backlog."
   },
   "toast_send_success": {
-    "message": "Comment sent to Redmine successfully."
+    "message": "Sent to Redmine."
   },
   "toast_send_backlog_success": {
-    "message": "Comment sent to Backlog successfully."
+    "message": "Sent to Backlog."
   },
   "toast_rate_limit_retry": {
-    "message": "⚠️ Primary model rate limited, retrying with fallback..."
+    "message": "Primary model busy. Trying fallback..."
   },
   "toast_rate_limit_failed": {
     "message": "❌ Both models rate limited. Please wait or check API key."
   },
   "toast_cross_provider_retry": {
-    "message": "⚠️ $provider$ rate limited, switching to Gemini Flash Lite...",
+    "message": "$provider$ busy. Trying fallback...",
     "placeholders": {
       "provider": {
         "content": "$1"
@@ -588,7 +588,7 @@
     "message": "Error: Please configure the Redmine domain, API key, and report project ID in the extension Options."
   },
   "report_confirm_delete": {
-    "message": "Delete all of your spent time for the current month?\n\nOnly entries belonging to the current user and dates in this month will be deleted."
+    "message": "Delete your spent time for this month? Only your entries dated this month will be deleted."
   },
   "report_deleting": {
     "message": "Deleting this month's spent time..."
@@ -884,7 +884,7 @@
     }
   },
   "options_ai_status_retry": {
-    "message": "$provider$ is busy or rate limited. This model cools down for $seconds$s; trying another now (attempt $attempt$).",
+    "message": "$provider$ busy. Trying model $attempt$; this model cools down for $seconds$s.",
     "placeholders": {
       "provider": {
         "content": "$1"
@@ -1170,7 +1170,7 @@
     "message": "Choose a project"
   },
   "options_bug_description": {
-    "message": "Describe the problem and optionally add a screenshot. Download or copy the report, or open a draft on GitHub to review before submitting. Screenshots must be attached separately."
+    "message": "Describe the problem. Download or copy the report, or review a GitHub draft before submitting. Attach screenshots separately."
   },
   "options_bug_subject": {
     "message": "Bug title"
@@ -1525,7 +1525,7 @@
     "message": "Review the dates, tasks, and hours. Confirm when everything looks correct."
   },
   "report_preview_review_warning": {
-    "message": "Some dates need their existing spent time reviewed before logging. Resolve existing entries, then scan again."
+    "message": "Review existing spent time on flagged dates, then scan again."
   },
   "report_preview_replace_warning": {
     "message": "This day already has $hours$ hours. Logging could replace existing entries; review spent time first.",
@@ -1567,7 +1567,7 @@
     "message": "Logged"
   },
   "sync_attachment_partial": {
-    "message": "Comment sent, but these files failed to upload: $files$. Open the Backlog comment to attach them without resending the comment.",
+    "message": "Comment sent; upload failed for: $files$. Attach files from the Backlog comment without resending it.",
     "placeholders": {
       "files": {
         "content": "$1"
@@ -1619,7 +1619,7 @@
     }
   },
   "recovery_uncertain_help": {
-    "message": "The server may have received the last operation. Recheck first, or link the existing issue. Only unlock retry after checking the destination yourself."
+    "message": "The server may have received the operation. Check the destination or link its issue before allowing a retry."
   },
   "recovery_confirm_absent": {
     "message": " I checked the destination and the uncertain operation was not received."
