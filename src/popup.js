@@ -90,22 +90,36 @@ async function renderStatus() {
   ]);
   const redmineReady = Boolean(items.redmineApiKey);
   const backlogReady = Boolean(items.backlogApiKey);
+  const aiReady = Boolean(items.primaryProvider);
   const provider =
     PROVIDER_LABELS[items.primaryProvider] || items.primaryProvider || t("popup_not_selected");
-  const forwardReady = redmineReady && backlogReady;
-  setState("forwardStatus", forwardReady, forwardReady ? t("popup_active") : t("popup_not_ready"));
-  const reverseReady = backlogReady && Boolean(items.primaryProvider);
-  setState("reverseStatus", reverseReady, reverseReady ? t("popup_active") : t("popup_not_ready"));
-  setState("providerStatus", Boolean(items.primaryProvider), provider);
-  const configured = forwardReady && Boolean(items.primaryProvider);
+  const forwardReady = redmineReady && aiReady;
+  const forwardStatus = forwardReady
+    ? t("popup_active")
+    : !redmineReady
+      ? t("popup_missing_redmine_key")
+      : t("popup_missing_ai_provider");
+  setState("forwardStatus", forwardReady, forwardStatus);
+  const reverseReady = backlogReady && aiReady;
+  const reverseStatus = reverseReady
+    ? t("popup_active")
+    : !backlogReady
+      ? t("popup_missing_backlog_key")
+      : t("popup_missing_ai_provider");
+  setState("reverseStatus", reverseReady, reverseStatus);
+  setState("providerStatus", aiReady, provider);
+  const configured = aiReady && (redmineReady || backlogReady);
   document.getElementById("statusBadge").textContent = configured
     ? t("popup_ready")
     : t("popup_needs_setup");
   document.getElementById("statusBadge").classList.toggle("ready", configured);
   document.getElementById("statusBadge").classList.toggle("error", !redmineReady && !backlogReady);
+  const missingSetup = [];
+  if (!redmineReady && !backlogReady) missingSetup.push(t("popup_missing_both_keys"));
+  if (!aiReady) missingSetup.push(t("popup_missing_ai_provider"));
   document.getElementById("overallStatus").textContent = configured
     ? t("popup_configured")
-    : t("popup_setup_required");
+    : missingSetup.join(" · ");
   document.getElementById("defaultProjectValue").textContent =
     items.defaultProjectName || items.defaultProjectId || t("popup_not_selected");
   if (!items.defaultProjectName && items.defaultProjectId) {
@@ -155,9 +169,13 @@ function setupActions() {
     .getElementById("openRedmine")
     .addEventListener("click", () => openTab("https://redmine.splus-software.com"));
   document.getElementById("openMonthlyLog").addEventListener("click", async () => {
-    const settings = await chrome.storage.local.get(["redmineDomain", "reportProjectId"]);
-    if (!settings.reportProjectId) {
-      await chrome.tabs.create({ url: chrome.runtime.getURL("src/options.html#reportProjectId") });
+    const settings = await chrome.storage.local.get([
+      "redmineDomain",
+      "defaultProjectId",
+      "reportProjectId",
+    ]);
+    if (!settings.defaultProjectId && !settings.reportProjectId) {
+      await chrome.tabs.create({ url: chrome.runtime.getURL("src/options.html#defaultProjectId") });
       return;
     }
     openTab(settings.redmineDomain || "https://redmine.splus-software.com");

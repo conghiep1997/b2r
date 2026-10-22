@@ -22,7 +22,6 @@ test("new Vietnamese recovery labels preserve accented UTF-8 text", () => {
   assert.equal(messages.recovery_title.message, "Khôi phục migration và mapping issue");
   assert.match(messages.sync_attachment_partial.message, /Đã gửi comment/);
 });
-
 test("Options catalogs cover static attributes and all content languages", () => {
   const html = fs.readFileSync("src/options.html", "utf8");
   const keys = [...html.matchAll(/data-i18n(?:-placeholder|-alt|-aria-label)?="([^"]+)"/g)].map(

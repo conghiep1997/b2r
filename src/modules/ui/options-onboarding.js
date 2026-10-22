@@ -19,7 +19,7 @@ globalThis.TB_OPTIONS_ONBOARDING = Object.freeze({
     let cachedProjectsFingerprint = "";
     let cacheTimestamp = 0;
     const CACHE_DURATION = 5 * 60 * 1000;
-    async function fetchProjects(apiKey, selectedId = "", selectedReportId = "", force = false) {
+    async function fetchProjects(apiKey, selectedId = "", force = false) {
       if (!apiKey) return false;
       const redmineDomain =
         document.getElementById("redmineDomain").value.trim() || TB.REDMINE_DOMAIN;
@@ -34,21 +34,19 @@ globalThis.TB_OPTIONS_ONBOARDING = Object.freeze({
         cachedProjectsFingerprint === fingerprint &&
         now - cacheTimestamp < CACHE_DURATION
       ) {
-        renderProjectOptions(cachedProjects, selectedId, selectedReportId);
+        renderProjectOptions(cachedProjects, selectedId);
         await chrome.storage.local.set({ redmineConnectionVerified: fingerprint });
         updateOnboardingStatuses();
         return true;
       }
       const syncBtn = document.getElementById("syncProjectsBtn");
       const defaultProjectSelect = document.getElementById("defaultProjectId");
-      const reportProjectSelect = document.getElementById("reportProjectId");
       try {
         if (syncBtn) {
           syncBtn.disabled = true;
           syncBtn.textContent = `⌛ ${om("options_loading", "Đang tải...")}`;
         }
         setProjectPlaceholder(defaultProjectSelect, "options_loading");
-        setProjectPlaceholder(reportProjectSelect, "options_loading");
         const projects = await sendBackgroundRequest({
           type: "FETCH_REDMINE_PROJECTS_WITH_KEY",
           domain: redmineDomain,
@@ -60,7 +58,7 @@ globalThis.TB_OPTIONS_ONBOARDING = Object.freeze({
         cachedProjects = projects;
         cachedProjectsFingerprint = fingerprint;
         cacheTimestamp = now;
-        renderProjectOptions(projects, selectedId, selectedReportId);
+        renderProjectOptions(projects, selectedId);
         await chrome.storage.local.set({ redmineConnectionVerified: fingerprint });
         updateOnboardingStatuses();
         return true;
@@ -68,7 +66,6 @@ globalThis.TB_OPTIONS_ONBOARDING = Object.freeze({
         document.getElementById("onboardingStatus").textContent =
           `${om("options_projects_failed")} ${error.message}`;
         setProjectPlaceholder(defaultProjectSelect, "options_load_error");
-        setProjectPlaceholder(reportProjectSelect, "options_load_error");
         await chrome.storage.local.remove("redmineConnectionVerified");
         updateOnboardingStatuses();
         return false;
@@ -290,21 +287,17 @@ globalThis.TB_OPTIONS_ONBOARDING = Object.freeze({
       select.replaceChildren(option);
     }
 
-    function renderProjectOptions(projects, selectedId, selectedReportId) {
+    function renderProjectOptions(projects, selectedId) {
       const defaultSelect = document.getElementById("defaultProjectId");
-      const reportSelect = document.getElementById("reportProjectId");
       const placeholder = projects.length
         ? "options_choose_project"
         : "options_projects_empty_select";
       setProjectPlaceholder(defaultSelect, placeholder);
-      setProjectPlaceholder(reportSelect, placeholder);
       projects.forEach((p) => {
         const opt = new Option(p.name, p.id);
         defaultSelect.add(opt);
-        reportSelect.add(opt.cloneNode(true));
       });
       if (selectedId) defaultSelect.value = selectedId;
-      if (selectedReportId) reportSelect.value = selectedReportId;
     }
     return {
       fetchProjects,

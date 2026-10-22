@@ -1,5 +1,11 @@
 # Changelog - Backlog2Redmine
 
+## [1.8.19] - 2026-10-22
+- **✨ Added**: One Redmine project selector for issue migration and monthly reports.
+- **🔧 Fixed**: Popup setup status now reflects the required API key and AI provider for each sync direction; overall setup accepts either Redmine or Backlog key when an AI provider is selected.
+- **📝 Docs**: Simplified Options guidance and removed redundant API key and workspace-domain explanations.
+
+
 ## [1.8.18] - 2026-10-02
 
 ### Added

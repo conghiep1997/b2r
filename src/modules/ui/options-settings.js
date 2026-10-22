@@ -39,6 +39,7 @@ globalThis.TB_OPTIONS_SETTINGS = Object.freeze({
 
       const primaryModels = getSelectedModelsForProvider("primary", primaryProviderSelect.value);
       const fallbackModels = getSelectedModelsForProvider("fallback", fallbackProviderSelect.value);
+      const redmineProjectId = document.getElementById("defaultProjectId").value;
       const settings = {
         redmineDomain: document.getElementById("redmineDomain").value.trim() || TB.REDMINE_DOMAIN,
         backlogDomain: document.getElementById("backlogDomain").value.trim() || TB.BACKLOG_DOMAIN,
@@ -46,14 +47,14 @@ globalThis.TB_OPTIONS_SETTINGS = Object.freeze({
         primaryModel: primaryModels[0] || getDefaultModel(primaryProviderSelect.value),
         fallbackProvider: fallbackProviderSelect.value,
         fallbackModel: fallbackModels[0] || getDefaultModel(fallbackProviderSelect.value),
-        defaultProjectId: document.getElementById("defaultProjectId").value,
+        defaultProjectId: redmineProjectId,
         defaultProjectName: (() => {
           const projectSelect = document.getElementById("defaultProjectId");
           return projectSelect.value
             ? projectSelect.selectedOptions[0]?.textContent?.trim() || ""
             : "";
         })(),
-        reportProjectId: document.getElementById("reportProjectId").value,
+        reportProjectId: redmineProjectId,
         ...globalThis.TB_OPTIONS_PROJECT_PROFILES.readGlobal(),
         projectProfiles: await encryptData(
           JSON.stringify(globalThis.TB_OPTIONS_PROJECT_PROFILES.readProfiles())
@@ -201,7 +202,6 @@ globalThis.TB_OPTIONS_SETTINGS = Object.freeze({
         "fallbackProvider",
         "fallbackModel",
         "defaultProjectId",
-        "reportProjectId",
         "manualFields",
         "syncRules",
         "translationRules",
@@ -212,6 +212,9 @@ globalThis.TB_OPTIONS_SETTINGS = Object.freeze({
       ];
 
       chrome.storage.local.get(keys, async (items) => {
+        if (!items.defaultProjectId && items.reportProjectId) {
+          items.defaultProjectId = items.reportProjectId;
+        }
         document.getElementById("redmineDomain").value = items.redmineDomain || TB.REDMINE_DOMAIN;
         document.getElementById("backlogDomain").value = items.backlogDomain || TB.BACKLOG_DOMAIN;
         document.getElementById("manualFields").value = normalizeManualFields(items.manualFields);
@@ -282,7 +285,7 @@ globalThis.TB_OPTIONS_SETTINGS = Object.freeze({
           try {
             const decryptedKey = await decryptData(items.redmineApiKey);
             if (decryptedKey) {
-              fetchProjects(decryptedKey, items.defaultProjectId, items.reportProjectId);
+              fetchProjects(decryptedKey, items.defaultProjectId || items.reportProjectId);
             } else {
               console.warn("[OPTIONS] Failed to decrypt redmineApiKey");
             }

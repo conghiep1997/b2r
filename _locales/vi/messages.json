@@ -90,7 +90,7 @@
     "message": "Quy tắc hạn hoàn thành khi di chuyển"
   },
   "options_due_date_help": {
-    "message": "Cấu hình ngày bắt buộc và số ngày làm việc mặc định theo tracker. Số 0 nghĩa là không tự điền ngày. Tracker chưa khai báo có ngày hết hạn tùy chọn."
+    "message": "Đặt ngày bắt buộc và số ngày làm việc theo tracker. Số 0 tắt tự điền ngày."
   },
   "options_profiles_title": {
     "message": "Cấu hình theo dự án"
@@ -102,7 +102,7 @@
     "message": "Ghi thời gian từ báo cáo"
   },
   "options_log_time_help": {
-    "message": "Chọn số giờ mỗi ngày và cách chia cho các công việc (bước 0,25 giờ). Tải hoạt động từ Redmine, chọn rồi lưu cấu hình."
+    "message": "Đặt số giờ mỗi ngày, cách chia giờ và hoạt động Redmine."
   },
   "options_log_daily_hours": {
     "message": "Số giờ mỗi ngày"
@@ -141,7 +141,7 @@
     "message": "Hướng và ngôn ngữ dịch"
   },
   "options_translation_help": {
-    "message": "Các tùy chọn này điều khiển ngôn ngữ nội dung, độc lập với ngôn ngữ giao diện. Lưu cấu hình để áp dụng."
+    "message": "Chọn ngôn ngữ nội dung rồi lưu cấu hình."
   },
   "options_translation_source": {
     "message": "Ngôn ngữ nguồn Backlog"
@@ -590,6 +590,10 @@
   "popup_not_ready": {
     "message": "Chưa sẵn sàng"
   },
+  "popup_missing_redmine_key": { "message": "Thiếu khóa Redmine" },
+  "popup_missing_backlog_key": { "message": "Thiếu khóa Backlog" },
+  "popup_missing_both_keys": { "message": "Thiếu khóa API" },
+  "popup_missing_ai_provider": { "message": "Chưa chọn AI" },
   "popup_ready": {
     "message": "SẴN SÀNG"
   },
@@ -871,7 +875,7 @@
     "message": "Bắt đầu sử dụng"
   },
   "options_onboarding_intro": {
-    "message": "Kết nối các dịch vụ bạn sử dụng. Lưu cấu hình sau khi kiểm tra. Cần cấu hình Backlog khi gửi bình luận sang Backlog."
+    "message": "Kết nối dịch vụ rồi lưu cấu hình."
   },
   "options_onboarding_redmine": {
     "message": "Nhập khóa API Redmine, tải và chọn dự án mặc định"
@@ -1164,7 +1168,10 @@
     "message": "Tối"
   },
   "options_redmine_section": {
-    "message": "💎 Cấu hình Redmine"
+    "message": "Cấu hình Redmine"
+  },
+  "options_redmine_optional": {
+    "message": "Cấu hình Redmine khác"
   },
   "options_ui_section": {
     "message": "Tùy chọn giao diện"
@@ -1299,7 +1306,7 @@
     "message": "Trang tải xuống"
   },
   "options_redmine_help": {
-    "message": "💡 Redmine Domain được cấu hình sẵn."
+    "message": "Nhập địa chỉ máy chủ Redmine."
   },
   "options_api_account_help": {
     "message": "Lấy khóa API tại:"
@@ -1477,13 +1484,13 @@
     "message": "(Bấm vào \"Hiện\" tại mục \"Mã truy cập API\")."
   },
   "options_default_project": {
-    "message": "Dự án Redmine mặc định (di chuyển công việc)"
+    "message": "Dự án Redmine (di chuyển issue và báo cáo tháng)"
   },
   "options_report_help": {
     "message": "Chọn dự án dùng để báo cáo thời gian làm việc theo tháng."
   },
   "options_custom_fields_help": {
-    "message": "Dùng ID và giá trị chính xác trên Redmine của bạn. Cấu hình nhãn, trường bắt buộc và tracker bên dưới; extension không tự điền ID riêng của một hệ thống."
+    "message": "Dùng ID và giá trị trường trên Redmine của bạn."
   },
   "options_openrouter_suffix": {
     "message": " 💡 Nhiều model miễn phí (suffix :free)."
@@ -1567,14 +1574,11 @@
       }
     }
   },
-  "options_encryption_help": {
-    "message": "Khóa API được mã hóa trên máy. Người có toàn bộ dữ liệu hồ sơ Chrome và mã tiện ích vẫn có thể khôi phục khóa. Dùng khóa với quyền cần thiết và thu hồi nếu hồ sơ bị truy cập trái phép."
-  },
   "recovery_title": {
     "message": "Khôi phục migration và mapping issue"
   },
   "recovery_help": {
-    "message": "Tiếp tục migration đã lưu của workspace đang cấu hình. Comment đã hoàn thành sẽ được bỏ qua."
+    "message": "Tiếp tục migration đã lưu. Comment hoàn tất sẽ được bỏ qua."
   },
   "recovery_source": {
     "message": "Mã issue Backlog"
@@ -1651,19 +1655,19 @@
     "message": "Cài đặt nâng cao"
   },
   "options_advanced_help": {
-    "message": "Chọn cấu hình chung hoặc cấu hình dự án ở trên. Các quy tắc này điều khiển tiêu đề, tìm và di chuyển công việc. Liên kết công việc đã lưu được ưu tiên khi tìm đích."
+    "message": "Đặt quy tắc chung hoặc riêng theo dự án cho tiêu đề, tìm kiếm và migration."
   },
   "options_subject_template": {
     "message": "Mẫu tiêu đề khi di chuyển"
   },
   "options_subject_template_help": {
-    "message": "Dùng {issueKey}, {summary}, {translatedSummary}. Ví dụ: [{issueKey}] {summary} / ({translatedSummary})."
+    "message": "Dùng {issueKey}, {summary} và {translatedSummary}."
   },
   "options_title_delimiter": {
     "message": "Dấu phân cách tiêu đề gốc / bản dịch"
   },
   "options_title_delimiter_help": {
-    "message": "Để trống để giữ cách nhận diện hiện tại. Nhập chuỗi phân cách chính xác, kể cả khoảng trắng; không dùng regex."
+    "message": "Nhập dấu phân cách chính xác, kể cả khoảng trắng. Để trống để dùng mặc định."
   },
   "options_search_mode": {
     "message": "Tìm issue Redmine theo"
@@ -1684,7 +1688,7 @@
     "message": "Ánh xạ loại công việc Backlog sang Redmine"
   },
   "options_tracker_aliases_help": {
-    "message": "Mapping loại issue nguồn sang tracker Redmine theo thứ tự ưu tiên. Không có dòng thì giữ cách tìm mặc định; danh sách tracker trống tắt ưu tiên cho loại đó. Migration cũng chọn tracker ưu tiên đầu tiên có sẵn; kiểm tra lại trước khi gửi."
+    "message": "Chọn tracker Redmine ưu tiên theo loại issue nguồn. Migration dùng tracker đầu tiên có sẵn."
   },
   "glossary_load_required": {
     "message": "Tải thuật ngữ của project trước khi sửa hoặc lưu."
@@ -1699,7 +1703,7 @@
     "message": "Thuật ngữ theo project"
   },
   "glossary_help": {
-    "message": "Nhập mã project Backlog (PROJECT) hoặc redmine:project. Thuật ngữ được mã hóa và lưu riêng theo workspace đã cấu hình. Issue có liên kết Backlog dùng mã project Backlog."
+    "message": "Nhập mã project Backlog hoặc redmine:project. Thuật ngữ được mã hóa và lưu theo workspace."
   },
   "glossary_project": {
     "message": "Mã project"
@@ -1764,9 +1768,6 @@
   },
   "options_backlog_domain_placeholder": {
     "message": "https://your-space.backlog.com"
-  },
-  "options_backlog_domain_help": {
-    "message": "Nhập địa chỉ không gian làm việc Backlog của bạn."
   },
   "options_backlog_help_prefix": {
     "message": "Lấy khóa API tại:"

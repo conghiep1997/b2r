@@ -14,6 +14,12 @@
         --border: #d7dde7;
         --primary: #2563eb;
         --primary-strong: #1d4ed8;
+        --button-primary: #2563eb;
+        --button-primary-hover: #1d4ed8;
+        --button-secondary-bg: #f1f5f9;
+        --button-secondary-hover: #e2e8f0;
+        --button-secondary-text: #334155;
+        --button-secondary-border: #cbd5e1;
         --success-bg: #ecfdf3;
         --success-border: #86efac;
         --success-text: #166534;
@@ -34,6 +40,12 @@
         --border: #334155;
         --primary: #60a5fa;
         --primary-strong: #93c5fd;
+        --button-primary: #3b82f6;
+        --button-primary-hover: #2563eb;
+        --button-secondary-bg: #1e293b;
+        --button-secondary-hover: #334155;
+        --button-secondary-text: #e2e8f0;
+        --button-secondary-border: #475569;
         --success-bg: #123326;
         --success-border: #276749;
         --success-text: #a7f3d0;
@@ -43,6 +55,17 @@
         --warning-bg: #3a2815;
         --warning-border: #92400e;
         --warning-text: #fed7aa;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      select {
+        min-width: 0;
+        max-width: 100%;
       }
 
       body {
@@ -154,6 +177,34 @@
         font-size: 12px;
       }
 
+      .field-help {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .optional-settings {
+        margin-top: 12px;
+        border-top: 1px solid var(--border);
+      }
+
+      .optional-settings > summary {
+        padding: 12px 0 4px;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .optional-settings-content {
+        padding-top: 10px;
+      }
+
+      .onboarding-card > summary {
+        cursor: pointer;
+        font-weight: 700;
+      }
+
       .card {
         background: var(--panel);
         border: 1px solid rgba(215, 221, 231, 0.85);
@@ -198,6 +249,53 @@
       .workspace-tools .field {
         margin-bottom: 14px;
       }
+
+      .workspace-tools-group {
+        margin-top: 16px;
+        padding: 2px 18px;
+        box-shadow: none;
+      }
+
+      .workspace-tool + .workspace-tool {
+        border-top: 1px solid var(--border);
+      }
+
+      .workspace-tool > summary {
+        padding: 14px 0;
+        color: var(--text);
+        font-weight: 650;
+        cursor: pointer;
+      }
+
+      .workspace-tool[open] {
+        box-shadow: none;
+      }
+
+      .workspace-tool-content {
+        padding: 0 0 16px;
+      }
+
+      .workspace-tool-content > p:first-child {
+        margin: 0 0 12px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .mapping-fields {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .mapping-fields .field {
+        margin: 0;
+      }
+
+      @media (max-width: 600px) {
+        .mapping-fields {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
       .glossary-term {
         display: grid;
         gap: 12px;
@@ -241,8 +339,9 @@
       }
 
       :root[data-theme="dark"] .secondary {
-        color: var(--text);
-        background: #1e293b;
+        color: var(--button-secondary-text);
+        background: var(--button-secondary-bg);
+        border-color: var(--button-secondary-border);
       }
 
       :root[data-theme="dark"] details summary:not(.secondary-section-summary) {
@@ -348,7 +447,6 @@
 
       .field input {
         width: 100%;
-        box-sizing: border-box;
         border: 1px solid var(--border);
         border-radius: 12px;
         padding: 12px 14px;
@@ -357,7 +455,6 @@
 
       .field select,
       .field textarea {
-        box-sizing: border-box;
         max-width: 100%;
       }
 
@@ -434,45 +531,46 @@
       }
 
       button {
-        border: 0;
+        border: 1px solid var(--button-secondary-border);
         border-radius: 12px;
         padding: 12px 18px;
         font: inherit;
         font-weight: 700;
         cursor: pointer;
+        color: var(--button-secondary-text);
+        background: var(--button-secondary-bg);
+        transition:
+          background-color 140ms ease,
+          border-color 140ms ease,
+          transform 140ms ease;
       }
 
       .primary {
-        background: linear-gradient(180deg, #3b82f6, var(--primary));
+        border-color: var(--button-primary);
+        background: var(--button-primary);
         color: white;
-        box-shadow: 0 10px 20px rgba(37, 99, 235, 0.18);
       }
 
       .primary:hover {
-        background: linear-gradient(180deg, #2563eb, var(--primary-strong));
+        border-color: var(--button-primary-hover);
+        background: var(--button-primary-hover);
       }
 
       .secondary {
-        background: #f8fafc;
-        color: #475569;
-        border: 1px solid var(--border);
+        background: var(--button-secondary-bg);
+        color: var(--button-secondary-text);
+        border-color: var(--button-secondary-border);
       }
 
       .secondary:hover {
-        background: #f1f5f9;
-        border-color: #94a3b8;
+        background: var(--button-secondary-hover);
+        border-color: var(--button-secondary-border);
       }
 
       .btn-sync {
-        background: #eff6ff;
-        color: var(--primary-strong);
-        border: 1px solid #bfdbfe;
         font-size: 13px;
         padding: 8px 12px;
         white-space: nowrap;
-      }
-      .btn-sync:hover {
-        background: #dbeafe;
       }
 
       .status {
@@ -860,15 +958,11 @@
           <option value="light" data-i18n="options_theme_light">Sáng</option>
           <option value="dark" data-i18n="options_theme_dark">Tối</option>
         </select>
-        <p>
-          Lưu cấu hình Redmine, Backlog và AI để extension có thể dịch và đồng bộ comment qua lại
-          giữa 2 hệ thống.
-        </p>
       </div>
 
       <div class="card">
-        <section id="onboardingCard" class="note" aria-labelledby="onboardingTitle">
-          <h2 id="onboardingTitle" data-i18n="options_onboarding_title">Get started</h2>
+        <details id="onboardingCard" class="note onboarding-card">
+          <summary id="onboardingTitle" data-i18n="options_onboarding_title">Get started</summary>
           <p data-i18n="options_onboarding_intro"></p>
           <ol>
             <li>
@@ -903,7 +997,7 @@
             </button>
           </div>
           <p id="onboardingStatus" role="status" aria-live="polite"></p>
-        </section>
+        </details>
         <form id="optionsForm" class="grid">
           <!-- Nhóm cấu hình Redmine -->
           <details id="redmineSettings" class="settings-section" open>
@@ -919,8 +1013,6 @@
                   id="redmineDomain"
                   type="url"
                   value="https://redmine.splus-software.com"
-                  readonly
-                  style="background: #f3f4f6; color: #6b7280; cursor: not-allowed"
                 />
                 <p
                   data-i18n="options_redmine_help"
@@ -935,11 +1027,6 @@
                   >Redmine API Key</label
                 >
                 <input id="redmineApiKey" type="password" placeholder="Nhập API key" />
-                <p data-i18n="options_encryption_help" class="note">
-                  API keys are encrypted locally. Someone with access to your entire Chrome profile
-                  and extension files may still recover them. Use limited-access keys and revoke
-                  them if the profile is compromised.
-                </p>
                 <p style="margin-top: 6px; font-size: 12px; color: var(--muted)">
                   🔑 Lấy API Key tại:
                   <a
@@ -955,7 +1042,7 @@
 
               <div class="field" style="margin-bottom: 12px">
                 <div class="field-heading">
-                  <label for="defaultProjectId">Project mặc định (Dùng cho Migrate) </label
+                  <label for="defaultProjectId" data-i18n="options_default_project">Redmine project (issue migration and monthly reports)</label
                   ><button type="button" id="syncProjectsBtn" class="secondary btn-sync">
                     🔄 Đồng bộ Project
                   </button>
@@ -976,35 +1063,6 @@
                     -- Trước tiên cần lưu API Key --
                   </option>
                 </select>
-              </div>
-
-              <!-- REPORT PROJECT ID -->
-              <div class="field" style="margin-bottom: 0">
-                <label for="reportProjectId" data-i18n="options_report_project"
-                  >Project cho Report (Log Time Tháng)</label
-                >
-                <select
-                  id="reportProjectId"
-                  style="
-                    width: 100%;
-                    box-sizing: border-box;
-                    border: 1px solid var(--border);
-                    border-radius: 12px;
-                    padding: 12px 14px;
-                    font: inherit;
-                    background: white;
-                  "
-                >
-                  <option value="" data-i18n="options_save_api_first">
-                    -- Cần lưu API Key trước --
-                  </option>
-                </select>
-                <p
-                  data-i18n="options_report_help"
-                  style="margin-top: 6px; font-size: 12px; color: var(--muted)"
-                >
-                  💡 Project chứa các issue Report (dùng cho chức năng "Log Time Tháng").
-                </p>
               </div>
 
               <!-- Cấu hình Custom Fields (JSON Mapping) -->
@@ -1055,11 +1113,12 @@
                   </p>
                 </div>
               </details>
-            </div>
+                </div>
+              </details>
           </details>
 
           <!-- Nhóm cấu hình Backlog -->
-          <details id="backlogSettings" class="settings-section" open>
+          <details id="backlogSettings" class="settings-section">
             <summary>
               <span data-i18n="options_backlog_section">📝 Cấu hình Backlog</span>
             </summary>
@@ -1072,12 +1131,6 @@
                   placeholder="https://shift7.backlog.com"
                   data-i18n-placeholder="options_backlog_domain_placeholder"
                 />
-                <p
-                  data-i18n="options_backlog_domain_help"
-                  style="margin-top: 6px; font-size: 12px; color: var(--muted)"
-                >
-                  💡 Mặc định: https://shift7.backlog.com
-                </p>
               </div>
               <div class="field">
                 <label for="backlogApiKey" data-i18n="options_backlog_api_key"
@@ -1097,7 +1150,7 @@
           </details>
 
           <!-- Primary AI Configuration -->
-          <details id="primaryAiSettings" class="settings-section" open>
+          <details id="primaryAiSettings" class="settings-section">
             <summary>
               <span data-i18n="options_primary_ai_section">🤖 Cấu hình AI Chính (Primary)</span>
             </summary>
@@ -1409,10 +1462,6 @@
             <div class="secondary-section-content">
               <section id="projectProfilesSettings" class="policy-editor">
                 <h3 data-i18n="options_profiles_title">Project profiles</h3>
-                <p data-i18n="options_profiles_help">
-                  Profiles belong to both server origins. Projects without a profile use global
-                  defaults.
-                </p>
                 <div id="projectProfilesEditor"></div>
                 <button id="addProjectProfile" type="button" data-i18n="options_profiles_add">
                   Add project profile
@@ -1444,10 +1493,6 @@
               </section>
               <fieldset id="translationSettings">
                 <legend data-i18n="options_translation_title">Translation directions</legend>
-                <p data-i18n="options_translation_help">
-                  These languages control content, independently of the interface language. Save
-                  with Save settings.
-                </p>
                 <div class="field">
                   <label for="translation_source" data-i18n="options_translation_source"
                     >Backlog source language</label
@@ -1495,10 +1540,6 @@
               </fieldset>
               <fieldset id="logTimeSettings">
                 <legend data-i18n="options_log_time_title">Report time logging</legend>
-                <p data-i18n="options_log_time_help">
-                  Configure daily hours and allocation. Load activities from your Redmine, select
-                  them, then save settings. Missing activities block logging.
-                </p>
                 <div class="field">
                   <label for="logTime_dailyHours" data-i18n="options_log_daily_hours"
                     >Hours per day</label
@@ -1511,6 +1552,7 @@
                     step="0.25"
                     value="8"
                     required
+                    placeholder="8"
                   />
                 </div>
                 <div class="field">
@@ -1540,6 +1582,7 @@
                 <button
                   id="loadLogTimeActivities"
                   type="button"
+                  class="secondary btn-sync"
                   data-i18n="options_log_load_activities"
                 >
                   Load activities from Redmine
@@ -1566,29 +1609,21 @@
                 <legend data-i18n="options_migration_rules_title">
                   Issue migration and matching
                 </legend>
-                <p data-i18n="options_advanced_help">
-                  Quy tắc dùng khi chưa có mapping issue. Chỉ thay đổi khi quy ước project thay đổi;
-                  lưu bằng nút Lưu cấu hình.
-                </p>
                 <div class="field">
                   <label for="syncSubjectTemplate" data-i18n="options_subject_template"
                     >Mẫu tiêu đề migration</label
                   >
-                  <input id="syncSubjectTemplate" maxlength="500" />
-                  <p data-i18n="options_subject_template_help">
-                    Dùng {issueKey}, {summary}, {translatedSummary}. Ví dụ: [{issueKey}] {summary} /
-                    ({translatedSummary}).
-                  </p>
+                  <input
+                    id="syncSubjectTemplate"
+                    maxlength="500"
+                    placeholder="{issueKey} {summary} ({translatedSummary})"
+                  />
                 </div>
                 <div class="field">
                   <label for="syncTitleDelimiter" data-i18n="options_title_delimiter"
                     >Dấu phân cách tiêu đề gốc / bản dịch</label
                   >
                   <input id="syncTitleDelimiter" maxlength="80" placeholder=" / (" />
-                  <p data-i18n="options_title_delimiter_help">
-                    Để trống để giữ cách nhận diện hiện tại. Nhập chuỗi phân cách chính xác, kể cả
-                    khoảng trắng; không dùng regex.
-                  </p>
                 </div>
                 <div class="field">
                   <label for="syncSearchMode" data-i18n="options_search_mode"
@@ -1610,9 +1645,6 @@
                 </div>
                 <details id="trackerAliasesPanel" class="policy-editor">
                   <summary data-i18n="options_tracker_aliases">Tracker mapping</summary>
-                  <p data-i18n="options_tracker_aliases_help">
-                    Enter the source issue type and preferred Redmine tracker names in order.
-                  </p>
                   <div id="trackerAliasesEditor"></div>
                   <button id="addTrackerAlias" type="button" data-i18n="options_mapping_add">
                     Add mapping
@@ -1621,10 +1653,6 @@
                 </details>
                 <details id="dueDateRulesPanel" class="policy-editor">
                   <summary data-i18n="options_due_date_title">Migration due-date rules</summary>
-                  <p data-i18n="options_due_date_help">
-                    Configure required dates and default working days by tracker. Zero days means no
-                    automatic date. Unlisted trackers have optional dates.
-                  </p>
                   <div id="dueDateRulesEditor"></div>
                   <button id="addDueDateRule" type="button" data-i18n="options_mapping_add">
                     Add mapping
@@ -1641,92 +1669,12 @@
           </div>
         </form>
 
-        <details id="projectGlossary" class="secondary-section card workspace-tools">
-          <summary class="secondary-section-summary" data-i18n="glossary_title">
-            Project glossary
-          </summary>
-          <div class="secondary-section-content">
-            <p data-i18n="glossary_help">
-              Use a Backlog project key (PROJECT) or redmine:project. Terms are encrypted and scoped
-              to the configured workspace.
-            </p>
-            <div class="field">
-              <label for="glossaryProjectKey" data-i18n="glossary_project">Project key</label>
-              <input id="glossaryProjectKey" maxlength="108" placeholder="PROJECT" />
-            </div>
-            <div class="actions">
-              <button
-                id="loadProjectGlossary"
-                type="button"
-                class="secondary"
-                data-i18n="glossary_load"
-              >
-                Load
-              </button>
-              <button id="addGlossaryTerm" type="button" class="secondary" data-i18n="glossary_add">
-                Add term
-              </button>
-              <button
-                id="saveProjectGlossary"
-                type="button"
-                class="primary"
-                data-i18n="glossary_save"
-              >
-                Save glossary
-              </button>
-            </div>
-            <div id="glossaryTerms"></div>
-            <p id="glossaryStatus" role="status" aria-live="polite"></p>
-          </div>
-        </details>
-
-        <details id="syncRecovery" class="secondary-section card workspace-tools">
-          <summary class="secondary-section-summary" data-i18n="recovery_title">
-            Migration recovery and issue mappings
-          </summary>
-          <div class="secondary-section-content">
-            <p data-i18n="recovery_help">
-              Resume saved migrations in the configured workspace. Completed comments are skipped.
-            </p>
-            <div class="field">
-              <label for="mappingSource" data-i18n="recovery_source">Backlog issue key</label>
-              <input id="mappingSource" placeholder="PROJECT-123" />
-            </div>
-            <div class="field">
-              <label for="mappingDestination" data-i18n="recovery_destination"
-                >Redmine issue ID</label
-              >
-              <input id="mappingDestination" type="number" min="1" />
-            </div>
-            <div class="actions">
-              <button
-                id="saveIssueMapping"
-                type="button"
-                class="primary"
-                data-i18n="recovery_save_mapping"
-              >
-                Save mapping
-              </button>
-              <button
-                id="refreshSyncRecovery"
-                type="button"
-                class="secondary"
-                data-i18n="recovery_refresh"
-              >
-                Refresh
-              </button>
-            </div>
-            <p id="syncRecoveryStatus" role="status" aria-live="polite"></p>
-            <div id="syncRecoveryList"></div>
-          </div>
-        </details>
-
-        <section class="note secondary-section" aria-labelledby="syncHistoryTitle">
-          <details>
+        <section class="card workspace-tools-group">
+          <details id="syncHistory" class="workspace-tool">
             <summary id="syncHistoryTitle" data-i18n="options_sync_history_title">
               Recent sync activity
             </summary>
-            <div class="secondary-section-content">
+            <div class="workspace-tool-content">
               <ol id="syncActivityList" aria-live="polite"></ol>
               <p id="syncActivityEmpty" data-i18n="options_sync_history_empty">
                 No sync activity yet.
@@ -1739,6 +1687,89 @@
               >
                 Clear activity
               </button>
+            </div>
+          </details>
+
+          <details id="syncRecovery" class="workspace-tool">
+            <summary data-i18n="recovery_title">Migration recovery and issue mappings</summary>
+            <div class="workspace-tool-content">
+              <p data-i18n="recovery_help">
+                Resume a saved migration. Completed comments are skipped.
+              </p>
+              <div class="mapping-fields">
+                <div class="field">
+                  <label for="mappingSource" data-i18n="recovery_source">Backlog issue key</label>
+                  <input id="mappingSource" placeholder="PROJECT-123" />
+                </div>
+                <div class="field">
+                  <label for="mappingDestination" data-i18n="recovery_destination"
+                    >Redmine issue ID</label
+                  >
+                  <input id="mappingDestination" type="number" min="1" />
+                </div>
+              </div>
+              <div class="actions">
+                <button
+                  id="saveIssueMapping"
+                  type="button"
+                  class="primary"
+                  data-i18n="recovery_save_mapping"
+                >
+                  Save mapping
+                </button>
+                <button
+                  id="refreshSyncRecovery"
+                  type="button"
+                  class="secondary"
+                  data-i18n="recovery_refresh"
+                >
+                  Refresh
+                </button>
+              </div>
+              <p id="syncRecoveryStatus" role="status" aria-live="polite"></p>
+              <div id="syncRecoveryList"></div>
+            </div>
+          </details>
+
+          <details id="projectGlossary" class="workspace-tool">
+            <summary data-i18n="glossary_title">Project glossary</summary>
+            <div class="workspace-tool-content">
+              <p data-i18n="glossary_help">
+                Enter a Backlog project key or redmine:project. Terms are encrypted and scoped to
+                this workspace.
+              </p>
+              <div class="field">
+                <label for="glossaryProjectKey" data-i18n="glossary_project">Project key</label>
+                <input id="glossaryProjectKey" maxlength="108" placeholder="PROJECT" />
+              </div>
+              <div class="actions">
+                <button
+                  id="loadProjectGlossary"
+                  type="button"
+                  class="secondary"
+                  data-i18n="glossary_load"
+                >
+                  Load
+                </button>
+                <button
+                  id="addGlossaryTerm"
+                  type="button"
+                  class="secondary"
+                  data-i18n="glossary_add"
+                >
+                  Add term
+                </button>
+                <button
+                  id="saveProjectGlossary"
+                  type="button"
+                  class="primary"
+                  data-i18n="glossary_save"
+                >
+                  Save glossary
+                </button>
+              </div>
+              <div id="glossaryTerms"></div>
+              <p id="glossaryStatus" role="status" aria-live="polite"></p>
             </div>
           </details>
         </section>

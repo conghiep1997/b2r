@@ -119,18 +119,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     setFirstTextNode(
       document.querySelector("#defaultProjectId")?.parentElement?.querySelector("label"),
       "options_default_project",
-      "Project mặc định (Dùng cho Migrate)"
+      "Redmine project (issue migration and monthly reports)"
     );
-    ["defaultProjectId", "reportProjectId"].forEach((id) => {
-      const element = document.getElementById(id);
-      const option = element?.querySelector("option[value='']");
-      if (option) {
-        option.textContent = om(
-          option.dataset.i18n || "options_save_api_first",
-          option.textContent
-        );
-      }
-    });
+    const projectOption = document.querySelector("#defaultProjectId option[value='']");
+    if (projectOption) {
+      projectOption.textContent = om(
+        projectOption.dataset.i18n || "options_save_api_first",
+        projectOption.textContent
+      );
+    }
     const primaryFallback = document.querySelector("#fallbackProvider option[value='none']");
     if (primaryFallback) {
       primaryFallback.textContent = om("options_no_fallback", primaryFallback.textContent);
@@ -472,11 +469,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
   form.addEventListener("change", () => updateOnboardingStatuses());
 
-  if (location.hash === "#reportProjectId") {
+  if (location.hash === "#reportProjectId" || location.hash === "#defaultProjectId") {
     requestAnimationFrame(() => {
-      const reportProject = document.getElementById("reportProjectId");
-      reportProject?.scrollIntoView({ behavior: "smooth", block: "center" });
-      reportProject?.focus({ preventScroll: true });
+      document.getElementById("redmineSettings").open = true;
+      const projectSelect = document.getElementById("defaultProjectId");
+      projectSelect?.scrollIntoView({ behavior: "smooth", block: "center" });
+      projectSelect?.focus({ preventScroll: true });
     });
   }
 
@@ -816,8 +814,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const key = redmineApiKeyInput.value.trim();
     if (key && key !== "**********") {
       const defaultId = document.getElementById("defaultProjectId").value;
-      const reportId = document.getElementById("reportProjectId").value;
-      setTimeout(() => fetchProjects(key, defaultId, reportId), 500);
+      setTimeout(() => fetchProjects(key, defaultId), 500);
     }
   }
 
@@ -834,7 +831,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       await fetchProjects(
         key,
         document.getElementById("defaultProjectId").value,
-        document.getElementById("reportProjectId").value,
         true
       );
     } else {

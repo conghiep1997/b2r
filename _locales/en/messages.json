@@ -90,7 +90,7 @@
     "message": "Migration due-date rules"
   },
   "options_due_date_help": {
-    "message": "Configure required dates and default working days by tracker. Zero days means no automatic date. Unlisted trackers have optional dates."
+    "message": "Set required dates and default working days by tracker. Zero disables automatic dates."
   },
   "options_profiles_title": {
     "message": "Project profiles"
@@ -102,7 +102,7 @@
     "message": "Report time logging"
   },
   "options_log_time_help": {
-    "message": "Set daily hours and how to share them across tasks (0.25-hour steps). Load activities from Redmine, select them and save."
+    "message": "Set daily hours, allocation and Redmine activities."
   },
   "options_log_daily_hours": {
     "message": "Hours per day"
@@ -141,7 +141,7 @@
     "message": "Translation directions"
   },
   "options_translation_help": {
-    "message": "These settings control content language. The interface language is separate. Save settings to apply changes."
+    "message": "Choose content languages. Save settings to apply."
   },
   "options_translation_source": {
     "message": "Backlog source language"
@@ -517,6 +517,10 @@
   "popup_not_ready": {
     "message": "Not ready"
   },
+  "popup_missing_redmine_key": { "message": "Redmine key needed" },
+  "popup_missing_backlog_key": { "message": "Backlog key needed" },
+  "popup_missing_both_keys": { "message": "Keys needed" },
+  "popup_missing_ai_provider": { "message": "AI provider needed" },
   "popup_ready": {
     "message": "READY"
   },
@@ -798,7 +802,7 @@
     "message": "Get started"
   },
   "options_onboarding_intro": {
-    "message": "Connect the services you use. Save settings after testing. Backlog is needed when sending comments to Backlog."
+    "message": "Connect your services, then save settings."
   },
   "options_onboarding_redmine": {
     "message": "Add a Redmine API key, load projects and choose a default project"
@@ -1091,7 +1095,10 @@
     "message": "Dark"
   },
   "options_redmine_section": {
-    "message": "💎 Redmine settings"
+    "message": "Redmine settings"
+  },
+  "options_redmine_optional": {
+    "message": "More Redmine settings"
   },
   "options_ui_section": {
     "message": "Interface options"
@@ -1226,7 +1233,7 @@
     "message": "Download page"
   },
   "options_redmine_help": {
-    "message": "💡 The Redmine domain is preconfigured."
+    "message": "Enter your Redmine server address."
   },
   "options_api_account_help": {
     "message": "🔑 Get the API key from:"
@@ -1404,7 +1411,7 @@
     "message": "(Click \"Show\" next to \"API access key\")."
   },
   "options_default_project": {
-    "message": "Default Redmine project (issue migration)"
+    "message": "Redmine project (issue migration and monthly reports)"
   },
   "options_report_help": {
     "message": "Choose the project used for monthly time reports."
@@ -1483,7 +1490,7 @@
     "message": "Failed to translate comment."
   },
   "options_custom_fields_help": {
-    "message": "Use IDs and exact values from your Redmine. Configure labels, required fields and tracker scope below; no instance-specific IDs are supplied automatically."
+    "message": "Use field IDs and values from your Redmine instance."
   },
   "options_openrouter_suffix": {
     "message": " 💡 Many free models (suffix :free)."
@@ -1567,14 +1574,11 @@
       }
     }
   },
-  "options_encryption_help": {
-    "message": "API keys are encrypted locally. Someone with access to your entire Chrome profile and extension files may still recover them. Use limited-access keys and revoke them if the profile is compromised."
-  },
   "recovery_title": {
     "message": "Migration recovery and issue mappings"
   },
   "recovery_help": {
-    "message": "Resume saved migrations in the configured workspace. Completed comments are skipped."
+    "message": "Resume a saved migration. Completed comments are skipped."
   },
   "recovery_source": {
     "message": "Backlog issue key"
@@ -1651,19 +1655,19 @@
     "message": "Advanced settings"
   },
   "options_advanced_help": {
-    "message": "Choose global defaults or a project profile above. These rules control issue titles, matching and migration. Saved issue links take priority when matching."
+    "message": "Set global or project-specific rules for issue titles, matching and migration."
   },
   "options_subject_template": {
     "message": "Migration title template"
   },
   "options_subject_template_help": {
-    "message": "Use {issueKey}, {summary}, {translatedSummary}. Example: [{issueKey}] {summary} / ({translatedSummary})."
+    "message": "Use {issueKey}, {summary} and {translatedSummary}."
   },
   "options_title_delimiter": {
     "message": "Original / translated title separator"
   },
   "options_title_delimiter_help": {
-    "message": "Leave empty to preserve current recognition. Enter the exact separator, including spaces; regular expressions are not used."
+    "message": "Enter the exact separator, including spaces. Leave empty for the default."
   },
   "options_search_mode": {
     "message": "Find Redmine issues by"
@@ -1684,7 +1688,7 @@
     "message": "Tracker mapping by Backlog issue type"
   },
   "options_tracker_aliases_help": {
-    "message": "Map source issue types to preferred Redmine tracker names in order. No row keeps default matching; a blank tracker list disables preference for that type. The first available preferred tracker is also selected in migration; review it before sending."
+    "message": "Set preferred Redmine trackers by source issue type and order. The first available tracker is used during migration."
   },
   "glossary_load_required": {
     "message": "Load the project glossary before editing or saving."
@@ -1699,7 +1703,7 @@
     "message": "Project glossary"
   },
   "glossary_help": {
-    "message": "Use a Backlog project key (PROJECT) or redmine:project. Terms are encrypted and scoped to the configured workspace. For issues linked to Backlog, use the Backlog project key."
+    "message": "Enter a Backlog project key or redmine:project. Terms are encrypted and scoped to this workspace."
   },
   "glossary_project": {
     "message": "Project key"
@@ -1764,9 +1768,6 @@
   },
   "options_backlog_domain_placeholder": {
     "message": "https://your-space.backlog.com"
-  },
-  "options_backlog_domain_help": {
-    "message": "Enter the address of your Backlog workspace."
   },
   "options_backlog_help_prefix": {
     "message": "Get an API key from:"
