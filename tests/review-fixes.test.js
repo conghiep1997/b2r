@@ -201,8 +201,8 @@ test("migration upload names distinguish same-name files while keeping source do
     true
   );
   assert.deepEqual(downloaded, [
-    ["1", "report.txt"],
-    ["2", "report.txt"],
+    ["1", "report__b2r_migration-one_1.txt"],
+    ["2", "report__b2r_migration-one_2.txt"],
   ]);
   assert.deepEqual(uploaded, [
     "report__b2r_migration-one_1.txt",

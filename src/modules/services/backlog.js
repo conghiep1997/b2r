@@ -122,7 +122,7 @@ async function handleSendToBacklog({
   await onBeforeSubmit?.();
   let response;
   try {
-    response = await fetch(url.toString(), {
+    response = await timeoutFetch(url.toString(), {
       method: "POST",
       redirect: "error",
       headers: {
@@ -164,7 +164,7 @@ async function uploadAttachmentsToBacklog(domain, settings, attachments) {
     const formData = new FormData();
     formData.append("file", blob, attachment.filename);
 
-    const uploadResponse = await fetch(uploadUrl.toString(), {
+    const uploadResponse = await timeoutFetch(uploadUrl.toString(), {
       method: "POST",
       redirect: "error",
       body: formData,
@@ -196,11 +196,11 @@ async function downloadRedmineAttachment(url, settings) {
   ) {
     throw new Error("Redmine attachment URL is outside the configured origin.");
   }
-  if (!/^\/attachments\/download\/\d+(?:\/|$)/.test(download.pathname)) {
+  if (!/(?:^|\/)attachments\/download\/\d+(?:\/|$)/.test(download.pathname)) {
     throw new Error("Unsupported Redmine attachment URL.");
   }
   const downloadUrl = download.toString();
-  const response = await fetch(downloadUrl, {
+  const response = await timeoutFetch(downloadUrl, {
     credentials: "include",
     redirect: "error",
     headers:
@@ -214,8 +214,8 @@ async function downloadRedmineAttachment(url, settings) {
   const blob = await response.blob();
   if (!blob.size) throw new Error("Redmine attachment is empty.");
   if (
-    response.headers.get("content-type")?.includes("text/html") &&
-    !/attachment/i.test(response.headers.get("content-disposition") || "")
+    response.headers?.get("content-type")?.includes("text/html") &&
+    !/attachment/i.test(response.headers?.get("content-disposition") || "")
   ) {
     throw new Error("Redmine returned a login page instead of an attachment.");
   }

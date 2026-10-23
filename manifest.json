@@ -57,6 +57,8 @@
         "src/constants.js",
         "src/modules/utils/helpers.js",
         "src/modules/utils/logger.js",
+        "src/modules/utils/markdown.js",
+        "src/modules/utils/render-markdown.js",
         "src/modules/ui/styles.js",
         "src/modules/ui/toast.js",
         "src/modules/ui/modal.js",

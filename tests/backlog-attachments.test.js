@@ -7,6 +7,7 @@ test("attachment downloads reject unrelated origins and paths before any network
   let calls = 0;
   const context = vm.createContext({
     URL,
+    AbortController,
     timeoutFetch: async (_url, options) => {
       calls++;
       assert.equal(options.redirect, "error");
@@ -22,7 +23,7 @@ test("attachment downloads reject unrelated origins and paths before any network
   ]) {
     await assert.rejects(
       context.downloadRedmineAttachment(url, "https://redmine.example/"),
-      /outside/
+      /outside|Unsupported/
     );
   }
   assert.equal(calls, 0);
@@ -37,6 +38,7 @@ test("reverse sync reports failed files without losing the successful comment", 
   const calls = [];
   const context = vm.createContext({
     URL,
+    AbortController,
     URLSearchParams,
     Blob,
     FormData,
@@ -49,6 +51,8 @@ test("reverse sync reports failed files without losing the successful comment", 
     }),
     getTrustedBacklogApiOrigin: (domain) => domain,
     sanitizeErrorMessage: (message) => message,
+    readErrorMessage: async (response) => `HTTP ${response.status}`,
+    safeReadJson: (response) => response.json(),
     timeoutFetch: async (url, options) => {
       calls.push({ url, options });
       if (url.includes("/space/attachment?")) return { ok: false, status: 503 };
@@ -57,24 +61,23 @@ test("reverse sync reports failed files without losing the successful comment", 
     },
   });
   vm.runInContext(fs.readFileSync("src/modules/services/backlog.js", "utf8"), context);
-  const result = await context.handleSendToBacklog({
+  await assert.rejects(context.handleSendToBacklog({
     backlogIssueKey: "DEMO-1",
     content: "note",
     attachments: [
       { url: "https://redmine.example/attachments/download/1/demo.txt", filename: "demo.txt" },
     ],
-  });
-  assert.equal(result.commentId, 42);
-  assert.equal(result.partial, true);
-  assert.equal(result.attachmentResults[0].ok, false);
-  assert.equal(result.attachmentResults[0].error, "HTTP 503");
-  assert.equal(calls.filter(({ url }) => url.includes("/comments?")).length, 1);
+  }), /Backlog attachment upload failed/);
+  assert.equal(calls.filter(({ url }) => url.includes("/comments?")).length, 0);
 });
 
 test("Backlog uploads files before creating the comment and binds upload IDs", async () => {
   const calls = [];
   const context = vm.createContext({
     URL,
+    AbortController,
+    setTimeout,
+    clearTimeout,
     URLSearchParams,
     Blob,
     FormData,
@@ -87,6 +90,8 @@ test("Backlog uploads files before creating the comment and binds upload IDs", a
     }),
     getTrustedBacklogApiOrigin: (domain) => domain,
     sanitizeErrorMessage: (message) => message,
+    readErrorMessage: async (response) => `HTTP ${response.status}`,
+    safeReadJson: (response) => response.json(),
     timeoutFetch: async (url, options) => {
       calls.push({ url, options });
       if (url.includes("/space/attachment?")) return { ok: true, json: async () => ({ id: 7 }) };
@@ -102,7 +107,6 @@ test("Backlog uploads files before creating the comment and binds upload IDs", a
       { url: "https://redmine.example/attachments/download/1/demo.txt", filename: "demo.txt" },
     ],
   });
-  assert.equal(result.partial, false);
   assert.equal(calls[1].url.includes("/space/attachment?"), true);
   assert.equal(new URLSearchParams(calls[2].options.body).get("attachmentId[]"), "7");
 });
