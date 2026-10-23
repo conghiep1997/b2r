@@ -67,7 +67,7 @@ test("translation service passes the selected pair and labels the translated sec
     translationTargetLanguage: "en",
     fallbackProvider: "none",
   });
-  assert.match(context.capturedPrompt, /sang tiếng Anh/);
+  assert.match(context.capturedPrompt, /Translate from French into English/);
   assert.equal(context.capturedTarget, "en");
   assert.equal(context.capturedFullTranslation, true);
   await context.translateText(

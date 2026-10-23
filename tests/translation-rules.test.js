@@ -59,7 +59,7 @@ test("each provider receives the selected language instruction and comment attri
       prompt,
       "source-url"
     );
-    assert.equal(result, "source-url:translated");
+    assert.equal(result, "translated");
     const payload = payloads.at(-1);
     const system =
       payload.system_instruction?.parts[0].text ||

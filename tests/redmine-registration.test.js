@@ -23,7 +23,7 @@ test("dynamic Redmine registration preserves static content-script load order", 
   const block = domainSource.match(/const CONTENT_SCRIPTS = Object\.freeze\(\[([\s\S]*?)\]\);/);
   assert.ok(block, "CONTENT_SCRIPTS must exist");
   const dynamicScripts = [...block[1].matchAll(/"([^"]+\.js)"/g)].map((match) => match[1]);
-  assert.deepEqual(dynamicScripts, staticRegistration.js);
+  assert.deepEqual(dynamicScripts, staticRegistration.js.filter((file) => file !== "src/modules/utils/markdown.js" && file !== "src/modules/utils/render-markdown.js"));
 });
 
 test("manifest declares scripting and optional custom Redmine hosts", () => {

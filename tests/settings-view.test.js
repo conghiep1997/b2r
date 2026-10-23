@@ -49,7 +49,7 @@ test("report settings expose Redmine fields without API key", () => {
       redmineDomain: "https://redmine.example.com",
       reportProjectId: "34",
       logTimeRules: undefined,
-      reportProjects: [{ id: "34", name: "#34" }],
+      reportProjects: [{ id: "34", name: "#34", globalProfile: true }],
     }
   );
 });

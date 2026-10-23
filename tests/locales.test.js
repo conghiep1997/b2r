@@ -28,7 +28,7 @@ test("Options catalogs cover static attributes and all content languages", () =>
     (match) => match[1]
   );
   const prompts = fs.readFileSync("src/modules/constants/prompts.js", "utf8");
-  const languages = prompts.match(/const languages = Object.freeze\(\{([\s\S]*?)\}\);/)[1];
+  const languages = prompts.match(/const LANGUAGE_NAMES = Object.freeze\(\{([\s\S]*?)\}\);/)[1];
   keys.push(
     ...[...languages.matchAll(/(\w+):/g)].map((match) => `options_content_language_${match[1]}`)
   );

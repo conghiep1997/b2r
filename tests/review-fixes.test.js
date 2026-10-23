@@ -204,6 +204,9 @@ test("migration upload names distinguish same-name files while keeping source do
     ["1", "report.txt"],
     ["2", "report.txt"],
   ]);
-  assert.notEqual(uploaded[0], uploaded[1]);
+  assert.deepEqual(uploaded, [
+    "report__b2r_migration-one_1.txt",
+    "report__b2r_migration-one_2.txt",
+  ]);
   assert.equal(result.uploads.length, 2);
 });

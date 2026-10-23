@@ -185,14 +185,28 @@ async function uploadAttachmentsToBacklog(domain, settings, attachments) {
 }
 
 async function downloadRedmineAttachment(url, settings) {
-  const downloadUrl = buildRedmineUrl(settings.redmineDomain, url);
-  if (!/^\/attachments\/download\/\d+(?:\/|$)/.test(new URL(downloadUrl).pathname)) {
+  const redmineDomain = typeof settings === "string" ? settings : settings?.redmineDomain;
+  const base = new URL(redmineDomain.endsWith("/") ? redmineDomain : `${redmineDomain}/`);
+  const download = new URL(url, base);
+  if (
+    !["http:", "https:"].includes(base.protocol) ||
+    download.origin !== base.origin ||
+    download.username ||
+    download.password
+  ) {
+    throw new Error("Redmine attachment URL is outside the configured origin.");
+  }
+  if (!/^\/attachments\/download\/\d+(?:\/|$)/.test(download.pathname)) {
     throw new Error("Unsupported Redmine attachment URL.");
   }
+  const downloadUrl = download.toString();
   const response = await fetch(downloadUrl, {
     credentials: "include",
     redirect: "error",
-    headers: settings.redmineApiKey ? { "X-Redmine-API-Key": settings.redmineApiKey } : {},
+    headers:
+      typeof settings === "object" && settings?.redmineApiKey
+        ? { "X-Redmine-API-Key": settings.redmineApiKey }
+        : {},
   });
   if (!response.ok) {
     throw new Error(`Redmine attachment download failed: ${response.status}`);
