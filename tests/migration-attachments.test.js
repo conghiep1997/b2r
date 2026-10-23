@@ -32,10 +32,7 @@ test("migration attachment failure prevents issue creation and is safe to retry"
     context.handleCreateRedmineIssue(request),
     (error) => error.definitelyNotSent === true
   );
-  await assert.rejects(
-    context.handleCreateRedmineIssue(request),
-    /could not be transferred/
-  );
+  await assert.rejects(context.handleCreateRedmineIssue(request), /could not be transferred/);
   assert.equal(writes, 0);
   assert.equal(downloads, 2);
 });

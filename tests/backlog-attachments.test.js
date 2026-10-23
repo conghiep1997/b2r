@@ -61,13 +61,16 @@ test("reverse sync reports failed files without losing the successful comment", 
     },
   });
   vm.runInContext(fs.readFileSync("src/modules/services/backlog.js", "utf8"), context);
-  await assert.rejects(context.handleSendToBacklog({
-    backlogIssueKey: "DEMO-1",
-    content: "note",
-    attachments: [
-      { url: "https://redmine.example/attachments/download/1/demo.txt", filename: "demo.txt" },
-    ],
-  }), /Backlog attachment upload failed/);
+  await assert.rejects(
+    context.handleSendToBacklog({
+      backlogIssueKey: "DEMO-1",
+      content: "note",
+      attachments: [
+        { url: "https://redmine.example/attachments/download/1/demo.txt", filename: "demo.txt" },
+      ],
+    }),
+    /Backlog attachment upload failed/
+  );
   assert.equal(calls.filter(({ url }) => url.includes("/comments?")).length, 0);
 });
 
