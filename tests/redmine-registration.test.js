@@ -5,7 +5,10 @@ const test = require("node:test");
 
 const root = path.join(__dirname, "..");
 const manifest = JSON.parse(fs.readFileSync(path.join(root, "manifest.json"), "utf8"));
-const optionsSource = fs.readFileSync(path.join(root, "src", "options.js"), "utf8");
+const optionsSource = fs.readFileSync(
+  path.join(root, "src", "modules", "ui", "options-domain.js"),
+  "utf8"
+);
 const backgroundSource = fs.readFileSync(path.join(root, "src", "background.js"), "utf8");
 const redmineContentSource = fs.readFileSync(path.join(root, "src", "redmine_content.js"), "utf8");
 

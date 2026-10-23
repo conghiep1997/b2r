@@ -1,4 +1,187 @@
 {
+  "options_profiles_report_project": {
+    "message": "ID dự án báo cáo (không bắt buộc; để trống dùng dự án đích)"
+  },
+  "options_configuration_project_required": {
+    "message": "Chọn dự án Redmine mặc định trước khi giới hạn phạm vi tìm kiếm của cấu hình chung."
+  },
+  "options_configuration_activity_required": {
+    "message": "Chọn hoạt động mặc định cho các cấu hình dùng một hoạt động cho mọi công việc."
+  },
+  "options_profiles_add": {
+    "message": "Thêm cấu hình dự án"
+  },
+  "options_profiles_global": {
+    "message": "Cấu hình chung"
+  },
+  "options_profiles_manager": {
+    "message": "Danh sách cấu hình theo dự án"
+  },
+  "options_profiles_new": {
+    "message": "Cấu hình mới"
+  },
+  "options_profiles_destination_pending": {
+    "message": "Chưa chọn dự án Redmine"
+  },
+  "options_profiles_server_pair": {
+    "message": "Áp dụng cho Backlog và Redmine"
+  },
+  "options_profiles_editing": {
+    "message": "Đang chỉnh quy tắc cho"
+  },
+  "options_profiles_inherit": {
+    "message": "Dùng quy tắc chung cho dự án này"
+  },
+  "options_profiles_inherit_help": {
+    "message": "Bỏ chọn để tự cấu hình quy tắc cho dự án này."
+  },
+  "options_profiles_name": {
+    "message": "Tên cấu hình"
+  },
+  "options_profiles_source": {
+    "message": "Mã dự án Backlog"
+  },
+  "options_profiles_destination": {
+    "message": "ID dự án Redmine"
+  },
+  "options_mapping_add": {
+    "message": "Thêm quy tắc"
+  },
+  "options_mapping_remove": {
+    "message": "Xóa"
+  },
+  "options_mapping_source_type": {
+    "message": "Loại issue Backlog"
+  },
+  "options_mapping_tracker_names": {
+    "message": "Tracker Redmine ưu tiên theo thứ tự (cách nhau bằng dấu phẩy; trống = tắt ưu tiên)"
+  },
+  "options_mapping_tracker": {
+    "message": "Tên tracker Redmine"
+  },
+  "options_mapping_required": {
+    "message": "Bắt buộc"
+  },
+  "options_mapping_working_days": {
+    "message": "Ngày hết hạn mặc định: số ngày làm việc từ hôm nay (0 = không tự điền)"
+  },
+  "options_mapping_field_name": {
+    "message": "Nhãn trường"
+  },
+  "options_mapping_field_id": {
+    "message": "ID custom field Redmine"
+  },
+  "options_mapping_field_type": {
+    "message": "Kiểu trường"
+  },
+  "options_mapping_text": {
+    "message": "Văn bản"
+  },
+  "options_mapping_select": {
+    "message": "Danh sách chọn"
+  },
+  "options_mapping_field_options": {
+    "message": "Giá trị API chính xác (mỗi dòng một giá trị, dùng cho danh sách chọn)"
+  },
+  "options_mapping_field_trackers": {
+    "message": "Hiện với tracker (cách nhau bằng dấu phẩy; trống = tất cả)"
+  },
+  "options_mapping_default_value": {
+    "message": "Giá trị mặc định (không bắt buộc)"
+  },
+  "options_mapping_duplicate_type": {
+    "message": "Mỗi mapping cần một loại issue Backlog riêng, không được trùng."
+  },
+  "options_mapping_duplicate_tracker": {
+    "message": "Mỗi quy tắc ngày cần một tên tracker riêng, không được trùng."
+  },
+  "options_due_date_title": {
+    "message": "Quy tắc hạn hoàn thành khi di chuyển"
+  },
+  "options_due_date_help": {
+    "message": "Đặt ngày bắt buộc và số ngày làm việc theo tracker. Số 0 tắt tự điền ngày."
+  },
+  "options_profiles_title": {
+    "message": "Cấu hình theo dự án"
+  },
+  "options_profiles_help": {
+    "message": "Gán mỗi dự án Backlog với dự án Redmine và bộ quy tắc tương ứng. Dự án chưa có cấu hình riêng sẽ dùng Cấu hình chung. Các cấu hình này áp dụng cho địa chỉ Backlog và Redmine hiện tại."
+  },
+  "options_log_time_title": {
+    "message": "Ghi thời gian từ báo cáo"
+  },
+  "options_log_time_help": {
+    "message": "Đặt số giờ mỗi ngày, cách chia giờ và hoạt động Redmine."
+  },
+  "options_log_daily_hours": {
+    "message": "Số giờ mỗi ngày"
+  },
+  "options_log_allocation": {
+    "message": "Cách phân bổ giờ"
+  },
+  "options_log_equal": {
+    "message": "Chia đều"
+  },
+  "options_log_estimate": {
+    "message": "Theo giờ ước tính (chưa có = trọng số 1)"
+  },
+  "options_log_activity_mode": {
+    "message": "Cách chọn hoạt động"
+  },
+  "options_log_activity_default": {
+    "message": "Một hoạt động cho mọi công việc"
+  },
+  "options_log_activity_legacy": {
+    "message": "Lập trình / kiểm thử theo tiêu đề và loại công việc"
+  },
+  "options_log_load_activities": {
+    "message": "Tải hoạt động từ Redmine"
+  },
+  "options_log_default_activity": {
+    "message": "Hoạt động mặc định / lập trình"
+  },
+  "options_log_testing_activity": {
+    "message": "Hoạt động kiểm thử"
+  },
+  "report_log_configured": {
+    "message": "Log time từ Report"
+  },
+  "options_translation_title": {
+    "message": "Hướng và ngôn ngữ dịch"
+  },
+  "options_translation_help": {
+    "message": "Thiết lập chiều dịch từ Backlog sang Redmine. Chọn Tự nhận diện nếu không biết ngôn ngữ nguồn."
+  },
+  "options_translation_source": {
+    "message": "Ngôn ngữ Backlog"
+  },
+  "options_translation_target": {
+    "message": "Ngôn ngữ Redmine"
+  },
+  "options_translation_same_language": {
+    "message": "Hãy chọn ngôn ngữ nguồn và ngôn ngữ đích khác nhau."
+  },
+  "options_translation_project_required": {
+    "message": "Chọn dự án Redmine để bật chiều dịch sang Redmine."
+  },
+  "options_translation_reverse_mode": {
+    "message": "Thao tác Redmine → Backlog"
+  },
+  "options_translation_extract": {
+    "message": "Trích xuất đoạn thuộc ngôn ngữ Backlog"
+  },
+  "options_translation_translate": {
+    "message": "Dịch"
+  },
+  "options_translation_original": {
+    "message": "Giữ nguyên toàn bộ nội dung"
+  },
+  "options_translation_reverse_source": {
+    "message": "Ngôn ngữ nguồn Redmine (khi dịch)"
+  },
+  "options_translation_reverse_target": {
+    "message": "Ngôn ngữ nội dung Backlog"
+  },
   "extension_name": {
     "message": "Backlog to Redmine Translator"
   },
@@ -30,10 +213,10 @@
     "message": "Không đọc được mã Issue từ Backlog."
   },
   "toast_send_success": {
-    "message": "Đã gửi bình luận lên Redmine thành công."
+    "message": "Đã gửi lên Redmine."
   },
   "toast_send_backlog_success": {
-    "message": "Đã gửi bình luận lên Backlog thành công."
+    "message": "Đã gửi lên Backlog."
   },
   "toast_send_failed": {
     "message": "Gửi bình luận thất bại."
@@ -42,13 +225,13 @@
     "message": "Dịch bình luận thất bại."
   },
   "toast_rate_limit_retry": {
-    "message": "⚠️ Model chính chạm giới hạn (rate limit), đang thử lại với model dự phòng..."
+    "message": "Model chính đang bận. Đang thử model dự phòng..."
   },
   "toast_rate_limit_failed": {
     "message": "❌ Cả 2 model đều chạm giới hạn. Vui lòng đợi hoặc kiểm tra API key."
   },
   "toast_cross_provider_retry": {
-    "message": "⚠️ $provider$ chạm giới hạn, đang chuyển sang Gemini Flash Lite...",
+    "message": "$provider$ đang bận. Đang thử model dự phòng...",
     "placeholders": {
       "provider": {
         "content": "$1"
@@ -381,7 +564,7 @@
     "message": "Đích"
   },
   "popup_default_project": {
-    "message": "Project mặc định"
+    "message": "Dự án Redmine"
   },
   "popup_open_settings": {
     "message": "Mở full settings"
@@ -422,6 +605,10 @@
   "popup_not_ready": {
     "message": "Chưa sẵn sàng"
   },
+  "popup_missing_redmine_key": { "message": "Thiếu khóa Redmine" },
+  "popup_missing_backlog_key": { "message": "Thiếu khóa Backlog" },
+  "popup_missing_both_keys": { "message": "Thiếu khóa API" },
+  "popup_missing_ai_provider": { "message": "Chưa chọn AI" },
   "popup_ready": {
     "message": "SẴN SÀNG"
   },
@@ -438,10 +625,10 @@
     "message": "Đang tải tên project..."
   },
   "popup_project_summary": {
-    "message": "Project dùng cho thao tác trên Redmine"
+    "message": "Dùng để di chuyển issue và lập báo cáo tháng"
   },
   "popup_project_summary_empty": {
-    "message": "Chọn project trong full settings để bắt đầu"
+    "message": "Chọn dự án Redmine trong Options để bắt đầu"
   },
   "popup_project_load_failed": {
     "message": "Không tải được tên project"
@@ -485,11 +672,14 @@
   "report_log_month": {
     "message": "Log Time Tháng"
   },
+  "report_choose_project": { "message": "Chọn project báo cáo" },
+  "report_cancel": { "message": "Hủy" },
+  "report_continue": { "message": "Tiếp tục" },
   "report_settings_required": {
     "message": "Lỗi: Vui lòng cấu hình đầy đủ Redmine Domain, API Key và Report Project ID trong trang Options của extension."
   },
   "report_confirm_delete": {
-    "message": "Quét log có dấu B2R của bạn trong tháng này? Log thủ công và không có dấu được giữ nguyên. Bạn sẽ xem danh sách xóa cụ thể trước khi xác nhận."
+    "message": "Xóa spent time của bạn trong tháng này? Chỉ entry của bạn trong tháng này bị xóa."
   },
   "report_deleting": {
     "message": "Đang xóa spent time tháng..."
@@ -534,7 +724,7 @@
     "message": "Trạng thái"
   },
   "report_delete_spent_time": {
-    "message": "Xóa log B2R trong tháng"
+    "message": "Xóa spent time tháng"
   },
   "report_copy_table": {
     "message": "Copy bảng"
@@ -703,22 +893,22 @@
     "message": "Bắt đầu sử dụng"
   },
   "options_onboarding_intro": {
-    "message": "Hoàn thành các bước này một lần để kết nối Backlog, Redmine và dịch vụ AI."
+    "message": "Kết nối dịch vụ rồi lưu cấu hình."
   },
   "options_onboarding_redmine": {
-    "message": "Nhập Redmine API key và tải danh sách project"
+    "message": "Nhập khóa API Redmine, tải và chọn dự án mặc định"
   },
   "options_onboarding_backlog": {
-    "message": "Nhập và kiểm tra Backlog API key"
+    "message": "Nhập và kiểm tra khóa API Backlog"
   },
   "options_onboarding_ai": {
-    "message": "Chọn nhà cung cấp dịch và kiểm tra model"
+    "message": "Chọn nhà cung cấp AI và kiểm tra kết nối"
   },
   "options_test_backlog": {
     "message": "Kiểm tra kết nối Backlog"
   },
   "options_test_ai": {
-    "message": "Kiểm tra model AI đã chọn"
+    "message": "Kiểm tra kết nối AI"
   },
   "options_screenshot_too_large": {
     "message": "Ảnh vượt quá giới hạn 5 MB."
@@ -742,7 +932,7 @@
     "message": "Cần cấp quyền truy cập Redmine domain để dùng extension."
   },
   "options_model_test_failed": {
-    "message": "Kiểm tra model thất bại"
+    "message": "Kiểm tra mô hình thất bại"
   },
   "options_save_redmine_key_first": {
     "message": "Vui lòng lưu Redmine API key trước."
@@ -771,7 +961,7 @@
     "message": "Chưa kiểm tra"
   },
   "options_onboarding_status_done": {
-    "message": "Hoàn tất"
+    "message": "Đã kết nối và lưu"
   },
   "options_ai_status_start": {
     "message": "Đang dịch bằng $provider$ ($model$)…",
@@ -785,7 +975,7 @@
     }
   },
   "options_ai_status_retry": {
-    "message": "$provider$ đang bận hoặc bị giới hạn tốc độ. Model này nghỉ $seconds$ giây; đang thử model khác ngay (lần $attempt$).",
+    "message": "$provider$ đang bận. Thử model $attempt$; model này nghỉ $seconds$ giây.",
     "placeholders": {
       "provider": {
         "content": "$1"
@@ -983,57 +1173,6 @@
   "options_language_en": {
     "message": "Tiếng Anh"
   },
-  "options_translation_source": {
-    "message": "Ngôn ngữ nguồn"
-  },
-  "options_translation_target": {
-    "message": "Ngôn ngữ đích"
-  },
-  "options_translation_auto": {
-    "message": "Tự nhận diện"
-  },
-  "options_translation_ja": {
-    "message": "Tiếng Nhật"
-  },
-  "options_translation_vi": {
-    "message": "Tiếng Việt"
-  },
-  "options_translation_en": {
-    "message": "Tiếng Anh"
-  },
-  "options_translation_ko": {
-    "message": "Tiếng Hàn"
-  },
-  "options_translation_zh_cn": {
-    "message": "Tiếng Trung giản thể"
-  },
-  "options_translation_zh_tw": {
-    "message": "Tiếng Trung phồn thể"
-  },
-  "options_translation_th": {
-    "message": "Tiếng Thái"
-  },
-  "options_translation_id": {
-    "message": "Tiếng Indonesia"
-  },
-  "options_translation_fr": {
-    "message": "Tiếng Pháp"
-  },
-  "options_translation_de": {
-    "message": "Tiếng Đức"
-  },
-  "options_translation_es": {
-    "message": "Tiếng Tây Ban Nha"
-  },
-  "options_translation_pt": {
-    "message": "Tiếng Bồ Đào Nha"
-  },
-  "options_translation_help": {
-    "message": "Mặc định: Nhật → Việt. Áp dụng khi dịch Backlog → Redmine và di chuyển issue."
-  },
-  "options_translation_same_language": {
-    "message": "Hãy chọn hai ngôn ngữ nguồn và đích khác nhau."
-  },
   "options_theme_label": {
     "message": "Giao diện"
   },
@@ -1047,7 +1186,10 @@
     "message": "Tối"
   },
   "options_redmine_section": {
-    "message": "💎 Cấu hình Redmine"
+    "message": "Cấu hình Redmine"
+  },
+  "options_redmine_optional": {
+    "message": "Cấu hình Redmine khác"
   },
   "options_ui_section": {
     "message": "Tùy chọn giao diện"
@@ -1059,37 +1201,40 @@
     "message": "🐞 Báo lỗi"
   },
   "options_document_title": {
-    "message": "Cấu hình Translate Backlog Comment"
+    "message": "Cấu hình Backlog & Redmine"
   },
   "options_subtitle": {
-    "message": "Lưu cấu hình Redmine, Backlog và AI để extension có thể dịch và đồng bộ comment qua lại giữa 2 hệ thống."
+    "message": "Kết nối Redmine, Backlog và AI để dịch và đồng bộ bình luận."
   },
   "options_redmine_domain": {
     "message": "Redmine Domain"
   },
   "options_redmine_api_key": {
-    "message": "Redmine API Key"
+    "message": "Khóa API Redmine"
   },
   "options_api_key_placeholder": {
-    "message": "Nhập API key"
+    "message": "Nhập khóa API"
   },
   "options_personal_account": {
     "message": "Tài khoản cá nhân"
   },
   "options_save_api_first": {
-    "message": "-- Trước tiên cần lưu API Key --"
+    "message": "Nhập khóa API để tải dự án"
   },
   "options_report_project": {
-    "message": "Project cho Report (Log Time Tháng)"
+    "message": "Dự án Redmine cho báo cáo tháng"
   },
   "options_backlog_domain": {
     "message": "Backlog Domain"
   },
   "options_backlog_api_key": {
-    "message": "Backlog API Key"
+    "message": "Khóa API Backlog"
   },
   "options_backlog_key_placeholder": {
-    "message": "Nhập Backlog API key"
+    "message": "Khóa API Backlog (Tài khoản > API)"
+  },
+  "options_redmine_key_placeholder": {
+    "message": "Khóa API Redmine (Tài khoản cá nhân > Mã truy cập API)"
   },
   "options_provider": {
     "message": "Nhà cung cấp"
@@ -1107,25 +1252,25 @@
     "message": "Đã thêm:"
   },
   "options_key_quick_add": {
-    "message": "Nhập key rồi Lưu hoặc Enter để thêm nhanh"
+    "message": "Khóa API (nhấn Enter để thêm)"
   },
   "options_loading": {
     "message": "Đang tải..."
   },
   "options_load_error": {
-    "message": "Lỗi tải (Kiểm tra Key)"
+    "message": "Không tải được dự án — hãy thử lại"
   },
   "options_choose_project": {
-    "message": "-- Chọn project --"
+    "message": "Chọn dự án"
   },
   "options_bug_description": {
-    "message": "Tạo báo cáo có cấu trúc kèm ảnh chụp và thông tin môi trường. Dữ liệu chỉ được tải xuống hoặc mở trong GitHub khi bạn xác nhận."
+    "message": "Mô tả sự cố. Tải hoặc sao chép báo cáo, hay xem lại bản nháp GitHub trước khi gửi. Tự đính kèm ảnh riêng."
   },
   "options_bug_subject": {
     "message": "Tiêu đề lỗi"
   },
   "options_bug_subject_placeholder": {
-    "message": "Ví dụ: Không gửi được comment sang Redmine"
+    "message": "Ví dụ: Không gửi được bình luận sang Redmine"
   },
   "options_bug_description_label": {
     "message": "Mô tả lỗi"
@@ -1143,7 +1288,7 @@
     "message": "URL trang xảy ra lỗi (không bắt buộc)"
   },
   "options_screenshot": {
-    "message": "Ảnh chụp màn hình (PNG/JPEG, tối đa 5 MB)"
+    "message": "Ảnh chụp màn hình (không bắt buộc)"
   },
   "options_screenshot_preview_failed": {
     "message": "Không thể xem trước ảnh này."
@@ -1152,10 +1297,10 @@
     "message": "📥 Tải báo cáo"
   },
   "options_copy_report": {
-    "message": "📋 Sao chép"
+    "message": "Sao chép báo cáo"
   },
   "options_open_github": {
-    "message": "Mở GitHub Issue"
+    "message": "Mở bản nháp trên GitHub"
   },
   "options_logs_title": {
     "message": "Quản lý Lỗi (Logs)"
@@ -1179,28 +1324,28 @@
     "message": "🔍 Kiểm tra cập nhật"
   },
   "options_download_page": {
-    "message": "📦 Trang Download"
+    "message": "Trang tải xuống"
   },
   "options_redmine_help": {
-    "message": "💡 Redmine Domain được cấu hình sẵn."
+    "message": "Nhập địa chỉ máy chủ Redmine."
   },
   "options_api_account_help": {
-    "message": "🔑 Lấy API Key tại:"
+    "message": "Lấy khóa API tại:"
   },
   "options_backlog_help": {
     "message": "🔑 Lấy tại: Tài khoản > API trong Backlog của bạn. Cần thiết để gửi comment và đồng bộ dữ liệu."
   },
   "options_gemini_provider": {
-    "message": "Google Gemini AI Studio (Miễn phí/Dịch tốt)"
+    "message": "Google Gemini AI Studio"
   },
   "options_groq_provider": {
-    "message": "Groq Cloud (Siêu nhanh - Llama 3)"
+    "message": "Groq Cloud"
   },
   "options_cerebras_provider": {
-    "message": "Cerebras (Hiệu năng cao)"
+    "message": "Cerebras"
   },
   "options_openrouter_provider": {
-    "message": "OpenRouter (Nhiều model miễn phí)"
+    "message": "OpenRouter"
   },
   "options_gemini_fallback": {
     "message": "Google Gemini AI Studio"
@@ -1215,16 +1360,16 @@
     "message": "OpenRouter"
   },
   "options_success_modal": {
-    "message": "Hiển thị modal thành công khi dịch/gửi comment sang Redmine"
+    "message": "Hiện thông báo sau khi gửi bình luận sang Redmine"
   },
   "options_success_modal_help": {
-    "message": "Chỉ áp dụng cho chức năng dịch comment. Di chuyển Issue luôn hiện modal kèm link Redmine. Bật lại nếu trước đó bạn đã chọn không hiển thị thông báo thành công."
+    "message": "Áp dụng khi đồng bộ bình luận. Di chuyển công việc luôn hiện thông báo kèm liên kết Redmine."
   },
   "options_support_note": {
-    "message": "Hỗ trợ đồng bộ 2 chiều: Backlog → Redmine (dịch theo cặp ngôn ngữ đã chọn) và Redmine → Backlog (lọc nội dung tiếng Nhật)."
+    "message": "Dịch và đồng bộ sử dụng quy tắc trong Cài đặt nâng cao. Xem lại nội dung trước khi gửi."
   },
   "options_disclaimer": {
-    "message": "Extension này chỉ làm theo ý bạn... nếu có lỗi thì chắc chắc bạn bấm nhầm thôi 👀"
+    "message": "Gặp sự cố? Gửi báo lỗi để được hỗ trợ."
   },
   "options_checking_server": {
     "message": "Đang kết nối đến server..."
@@ -1242,16 +1387,16 @@
     "message": "Phiên bản hiện tại:"
   },
   "options_models_help": {
-    "message": "Models (bấm để chọn/bỏ, dùng round-robin)"
+    "message": "Mô hình"
   },
   "options_keys_help": {
-    "message": "Keys (nhập rồi Lưu, Enter để thêm nhanh, bấm để xóa)"
+    "message": "Nhập khóa API rồi lưu hoặc nhấn Enter để thêm. Bấm × để xóa khóa; lưu để áp dụng thay đổi."
   },
   "options_enter_provider_key": {
-    "message": "Nhập key của provider trước"
+    "message": "Thêm khóa API của nhà cung cấp này trước."
   },
   "options_enter_gemini_key": {
-    "message": "Nhập Gemini key trước"
+    "message": "Thêm khóa API Gemini trước."
   },
   "options_no_logs": {
     "message": "Không có log lỗi để xuất."
@@ -1269,7 +1414,13 @@
     "message": "Xóa toàn bộ lịch sử log lỗi?"
   },
   "options_sync_projects": {
-    "message": "🔄 Đồng bộ Project"
+    "message": "Tải lại dự án"
+  },
+  "options_projects_reloaded": {
+    "message": "Đã tải lại danh sách dự án"
+  },
+  "options_projects_reload_failed": {
+    "message": "Không tải lại được danh sách dự án"
   },
   "options_test_provider_key": {
     "message": "Nhập key của provider trước"
@@ -1278,7 +1429,7 @@
     "message": "Nhập Gemini key trước"
   },
   "options_testing_model": {
-    "message": "Đang test model"
+    "message": "Đang kiểm tra mô hình"
   },
   "options_model_ok": {
     "message": "hoạt động tốt"
@@ -1309,7 +1460,7 @@
     "message": "Lỗi không xác định"
   },
   "options_bug_downloaded": {
-    "message": "Đã tải báo cáo và ảnh đính kèm."
+    "message": "Đã tải báo cáo và ảnh chụp thành hai tệp riêng."
   },
   "options_bug_copied": {
     "message": "Đã sao chép nội dung báo cáo."
@@ -1318,22 +1469,22 @@
     "message": "Không thể sao chép tự động. Hãy dùng nút Tải báo cáo."
   },
   "options_custom_fields_section": {
-    "message": "Cấu hình Custom Fields (JSON Mapping)"
+    "message": "Trường tùy chỉnh khi di chuyển"
   },
   "options_backlog_section": {
     "message": "📝 Cấu hình Backlog"
   },
   "options_primary_ai_section": {
-    "message": "🤖 Cấu hình AI Chính (Primary)"
+    "message": "🤖 Dịch vụ AI chính"
   },
   "options_fallback_ai_section": {
-    "message": "🔄 Cấu hình AI Dự phòng (Fallback)"
+    "message": "🔄 Dịch vụ AI dự phòng"
   },
   "options_get_key_from": {
     "message": "🔑 Lấy tại:"
   },
   "options_gemini_key_prefix": {
-    "message": "Lấy Gemini API key tại"
+    "message": "Lấy khóa API Gemini tại"
   },
   "options_gemini_console": {
     "message": "Google AI Studio"
@@ -1360,13 +1511,13 @@
     "message": "(Bấm vào \"Hiện\" tại mục \"Mã truy cập API\")."
   },
   "options_default_project": {
-    "message": "Project mặc định (Dùng cho Migrate)"
+    "message": "Dự án Redmine (di chuyển issue và báo cáo tháng)"
   },
   "options_report_help": {
-    "message": "💡 Chọn project Redmine dùng cho Log Time tháng."
+    "message": "Chọn dự án dùng để báo cáo thời gian làm việc theo tháng."
   },
   "options_custom_fields_help": {
-    "message": "💡 Nhập mã ID của các trường bắt buộc. Ví dụ: Severity: 46, Role: 11."
+    "message": "Dùng ID và giá trị trường trên Redmine của bạn."
   },
   "options_openrouter_suffix": {
     "message": " 💡 Nhiều model miễn phí (suffix :free)."
@@ -1401,7 +1552,7 @@
     "message": "Kiểm tra ngày, task và số giờ. Bấm Xác nhận & ghi time khi đã đúng."
   },
   "report_preview_review_warning": {
-    "message": "Có ngày cần kiểm tra spent time hiện tại trước khi ghi. Hãy xử lý dữ liệu hiện có rồi quét lại."
+    "message": "Kiểm tra spent time ở các ngày được đánh dấu rồi quét lại."
   },
   "report_preview_replace_warning": {
     "message": "Đã có $hours$ giờ trong ngày này. Ghi tiếp có thể thay thế các entry hiện có; hãy xử lý spent time trước.",
@@ -1442,46 +1593,360 @@
   "report_logged_button": {
     "message": "Đã ghi xong"
   },
-  "report_sync_title": {
-    "message": "Đồng bộ giờ theo Report"
+  "sync_attachment_partial": {
+    "message": "Đã gửi comment; upload lỗi: $files$. Đính kèm file từ comment Backlog, không gửi lại comment.",
+    "placeholders": {
+      "files": {
+        "content": "$1"
+      }
+    }
   },
-  "report_sync_hint": {
-    "message": "Chỉ log có dấu của Report này và log cũ bạn chọn bên dưới được phép sửa hoặc xóa. Các log khác được giữ nguyên và trừ khỏi tổng 8 giờ/ngày. Kiểm tra từng thao tác trước khi xác nhận. Không đồng bộ Report không có task."
+  "recovery_title": {
+    "message": "Khôi phục migration và mapping issue"
   },
-  "report_sync_legacy": {
-    "message": "Chọn log cũ được phép đồng bộ (không bắt buộc)"
+  "recovery_help": {
+    "message": "Tiếp tục migration đã lưu. Comment hoàn tất sẽ được bỏ qua."
   },
-  "report_sync_summary": {
-    "message": "Giữ nguyên $preserved$ giờ · Thêm $create$ · Sửa $update$ · Xóa $delete$"
+  "recovery_source": {
+    "message": "Mã issue Backlog"
   },
-  "report_sync_create": {
-    "message": "Thêm"
+  "recovery_destination": {
+    "message": "ID issue Redmine"
   },
-  "report_sync_update": {
-    "message": "Sửa"
+  "recovery_save_mapping": {
+    "message": "Lưu mapping"
   },
-  "report_sync_delete": {
-    "message": "Xóa"
+  "recovery_refresh": {
+    "message": "Làm mới"
   },
-  "report_sync_no_changes": {
-    "message": "Không có thay đổi."
+  "recovery_request_failed": {
+    "message": "Yêu cầu thất bại."
   },
-  "report_sync_accept": {
-    "message": "Xác nhận phương án này"
+  "recovery_working": {
+    "message": "Đang xử lý…"
   },
-  "report_sync_cancel": {
-    "message": "Hủy"
+  "recovery_updated": {
+    "message": "Đã cập nhật dữ liệu khôi phục."
   },
-  "report_sync_cancelled": {
-    "message": "Đã hủy đồng bộ. Xem trước lại để tiếp tục."
+  "recovery_empty": {
+    "message": "Chưa có migration hoặc mapping trong workspace này."
   },
-  "report_delete_typed": {
-    "message": "Xóa $count$ bản ghi giờ được liệt kê? Bản sao phục hồi sẽ được lưu cục bộ trước mỗi lần xóa. Không tự động hoàn tác. Nhập $phrase$ để xác nhận."
+  "recovery_remove_mapping": {
+    "message": "Xóa mapping"
   },
-  "report_delete_busy": {
-    "message": "Một thao tác Log Time khác đang chạy. Hãy chờ hoàn tất."
+  "recovery_resume": {
+    "message": "Tiếp tục / kiểm tra lại"
   },
-  "report_export_backups": {
-    "message": "Xuất bản sao phục hồi"
+  "recovery_partial": {
+    "message": "Còn $count$ comment. Kiểm tra issue đích và tiếp tục lại.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "recovery_uncertain_help": {
+    "message": "Server có thể đã nhận thao tác. Hãy kiểm tra đích hoặc liên kết issue trước khi cho phép gửi lại."
+  },
+  "recovery_confirm_absent": {
+    "message": " Tôi đã kiểm tra issue đích và thao tác chưa được nhận."
+  },
+  "recovery_resolve": {
+    "message": "Cho phép thử lại sau khi kiểm tra"
+  },
+  "recovery_confirmation_required": {
+    "message": "Hãy kiểm tra issue đích và chọn xác nhận trước."
+  },
+  "recovery_adopt": {
+    "message": "Liên kết issue đích đã tạo"
+  },
+  "recovery_state_ready": {
+    "message": "Sẵn sàng"
+  },
+  "recovery_state_creating": {
+    "message": "Chưa xác định kết quả tạo issue"
+  },
+  "recovery_state_sending": {
+    "message": "Đang gửi"
+  },
+  "recovery_state_partial": {
+    "message": "Chưa hoàn thành"
+  },
+  "recovery_state_complete": {
+    "message": "Hoàn thành"
+  },
+  "recovery_state_mapped": {
+    "message": "Đã liên kết"
+  },
+  "options_advanced_title": {
+    "message": "Cài đặt nâng cao"
+  },
+  "options_advanced_help": {
+    "message": "Đặt quy tắc chung hoặc riêng theo dự án cho tiêu đề, tìm kiếm và migration."
+  },
+  "options_policy_matching": {
+    "message": "Đối chiếu issue và di chuyển"
+  },
+  "options_policy_translation": {
+    "message": "Dịch thuật"
+  },
+  "options_policy_log_time": {
+    "message": "Ghi giờ từ báo cáo"
+  },
+  "options_policy_fields": {
+    "message": "Ánh xạ tracker và trường dữ liệu"
+  },
+  "options_advanced_tools": {
+    "message": "Thuật ngữ, hoạt động, khôi phục và hỗ trợ"
+  },
+  "options_subject_template": {
+    "message": "Mẫu tiêu đề khi di chuyển"
+  },
+  "options_subject_template_help": {
+    "message": "Dùng {issueKey}, {summary} và {translatedSummary}."
+  },
+  "options_title_delimiter": {
+    "message": "Dấu phân cách tiêu đề gốc / bản dịch"
+  },
+  "options_title_delimiter_help": {
+    "message": "Nhập dấu phân cách chính xác, kể cả khoảng trắng. Để trống để dùng mặc định."
+  },
+  "options_search_mode": {
+    "message": "Tìm issue Redmine theo"
+  },
+  "options_search_key_title": {
+    "message": "Mã issue, sau đó tiêu đề gốc"
+  },
+  "options_search_key": {
+    "message": "Chỉ mã issue"
+  },
+  "options_search_title": {
+    "message": "Chỉ tiêu đề gốc"
+  },
+  "options_restrict_project": {
+    "message": "Chỉ tìm trong dự án Redmine mặc định (cần chọn dự án trước)"
+  },
+  "options_tracker_aliases": {
+    "message": "Ánh xạ loại công việc Backlog sang Redmine"
+  },
+  "options_tracker_aliases_help": {
+    "message": "Chọn tracker Redmine ưu tiên theo loại issue nguồn. Migration dùng tracker đầu tiên có sẵn."
+  },
+  "glossary_load_required": {
+    "message": "Tải thuật ngữ của project trước khi sửa hoặc lưu."
+  },
+  "glossary_discard_confirm": {
+    "message": "Bỏ các thay đổi thuật ngữ chưa lưu?"
+  },
+  "glossary_clear_confirm": {
+    "message": "Xóa toàn bộ thuật ngữ đã lưu của project này?"
+  },
+  "glossary_title": {
+    "message": "Thuật ngữ theo project"
+  },
+  "glossary_help": {
+    "message": "Nhập mã project Backlog hoặc redmine:project. Thuật ngữ được mã hóa và lưu theo workspace."
+  },
+  "glossary_project": {
+    "message": "Mã project"
+  },
+  "glossary_load": {
+    "message": "Tải thuật ngữ"
+  },
+  "glossary_add": {
+    "message": "Thêm thuật ngữ"
+  },
+  "glossary_save": {
+    "message": "Lưu thuật ngữ"
+  },
+  "glossary_source": {
+    "message": "Thuật ngữ gốc"
+  },
+  "glossary_target": {
+    "message": "Bản dịch"
+  },
+  "glossary_keep": {
+    "message": "Giữ nguyên"
+  },
+  "glossary_remove": {
+    "message": "Xóa thuật ngữ"
+  },
+  "glossary_error": {
+    "message": "Không thể xử lý thuật ngữ."
+  },
+  "glossary_working": {
+    "message": "Đang xử lý…"
+  },
+  "glossary_loaded": {
+    "message": "Đã tải thuật ngữ."
+  },
+  "glossary_saved": {
+    "message": "Đã lưu thuật ngữ."
+  },
+  "migration_include_comment": {
+    "message": "Chuyển comment $count$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "migration_selection_count": {
+    "message": "Đã chọn: $comments$ comment và $files$ file. File bỏ chọn sẽ được xóa khỏi nội dung gửi đi.",
+    "placeholders": {
+      "comments": {
+        "content": "$1"
+      },
+      "files": {
+        "content": "$2"
+      }
+    }
+  },
+  "report_project_select": {
+    "message": "Project báo cáo"
+  },
+  "options_migration_rules_title": {
+    "message": "Di chuyển và tìm issue"
+  },
+  "options_backlog_domain_placeholder": {
+    "message": "https://your-space.backlog.com"
+  },
+  "options_backlog_help_prefix": {
+    "message": "Lấy khóa API tại:"
+  },
+  "options_backlog_account_api": {
+    "message": "Cài đặt cá nhân > API"
+  },
+  "options_backlog_help_suffix": {
+    "message": "Cần có để gửi bình luận sang Backlog."
+  },
+  "options_groq_key_placeholder": {
+    "message": "Nhập khóa API Groq"
+  },
+  "options_cerebras_key_placeholder": {
+    "message": "Nhập khóa API Cerebras"
+  },
+  "options_openrouter_key_placeholder": {
+    "message": "Nhập khóa API OpenRouter"
+  },
+  "options_bug_url_placeholder": {
+    "message": "https://…"
+  },
+  "options_screenshot_help": {
+    "message": "PNG, JPEG hoặc WebP, tối đa 5 MB. Khi báo lỗi trên GitHub, bạn cần tự đính kèm ảnh."
+  },
+  "options_screenshot_preview_alt": {
+    "message": "Xem trước ảnh chụp màn hình"
+  },
+  "options_bug_report_downloaded": {
+    "message": "Đã tải báo cáo."
+  },
+  "options_update_idle": {
+    "message": "Phiên bản hiện tại: v$version$. Bấm kiểm tra để tìm bản cập nhật.",
+    "placeholders": {
+      "version": {
+        "content": "$1"
+      }
+    }
+  },
+  "options_backlog_key_missing": {
+    "message": "Nhập khóa API Backlog rồi kiểm tra kết nối lại."
+  },
+  "options_ai_key_missing": {
+    "message": "Thêm khóa API cho nhà cung cấp AI đã chọn rồi kiểm tra lại."
+  },
+  "options_test_ai_success": {
+    "message": "Kết nối AI thành công ($model$).",
+    "placeholders": {
+      "model": {
+        "content": "$1"
+      }
+    }
+  },
+  "options_projects_failed": {
+    "message": "Không thể tải dự án. Kiểm tra địa chỉ máy chủ, kết nối và quyền API rồi thử lại."
+  },
+  "options_projects_empty": {
+    "message": "Đã kết nối Redmine nhưng không có dự án truy cập được. Kiểm tra quyền của tài khoản."
+  },
+  "options_onboarding_not_configured": {
+    "message": "Chưa cấu hình"
+  },
+  "options_onboarding_choose_project": {
+    "message": "Đã kết nối — hãy chọn dự án mặc định"
+  },
+  "options_onboarding_unsaved": {
+    "message": "Đã kết nối — hãy lưu để áp dụng"
+  },
+  "options_restrict_profile_project": {
+    "message": "Chỉ tìm trong dự án Redmine đích của cấu hình này"
+  },
+  "options_activity_unselected": {
+    "message": "Chưa chọn hoạt động"
+  },
+  "options_activities_failed": {
+    "message": "Không thể tải hoạt động. Kiểm tra kết nối Redmine rồi thử lại."
+  },
+  "options_test_model_label": {
+    "message": "Kiểm tra mô hình $model$",
+    "placeholders": {
+      "model": {
+        "content": "$1"
+      }
+    }
+  },
+  "options_remove_key": {
+    "message": "Xóa khóa API"
+  },
+  "options_key_duplicate": {
+    "message": "Khóa API này đã có trong danh sách. Dùng khóa khác hoặc xóa nội dung đang nhập."
+  },
+  "options_key_limit": {
+    "message": "Bạn có thể thêm tối đa 10 khóa API. Xóa một khóa trước khi thêm khóa mới."
+  },
+  "options_pending_key_failed": {
+    "message": "Có khóa API chưa thêm được. Kiểm tra khóa trùng hoặc giới hạn 10 khóa rồi lưu lại."
+  },
+  "options_content_language_auto": {
+    "message": "Tự nhận diện"
+  },
+  "options_content_language_ja": {
+    "message": "Tiếng Nhật"
+  },
+  "options_content_language_en": {
+    "message": "Tiếng Anh"
+  },
+  "options_content_language_vi": {
+    "message": "Tiếng Việt"
+  },
+  "options_content_language_ko": {
+    "message": "Tiếng Hàn"
+  },
+  "options_content_language_zh": {
+    "message": "Tiếng Trung"
+  },
+  "options_content_language_fr": {
+    "message": "Tiếng Pháp"
+  },
+  "options_content_language_de": {
+    "message": "Tiếng Đức"
+  },
+  "options_content_language_es": {
+    "message": "Tiếng Tây Ban Nha"
+  },
+  "options_content_language_pt": {
+    "message": "Tiếng Bồ Đào Nha"
+  },
+  "options_content_language_th": {
+    "message": "Tiếng Thái"
+  },
+  "options_content_language_id": {
+    "message": "Tiếng Indonesia"
+  },
+  "options_redmine_key_missing": {
+    "message": "Nhập khóa API Redmine rồi tải lại danh sách dự án."
+  },
+  "options_projects_empty_select": {
+    "message": "Không có dự án truy cập được"
   }
 }

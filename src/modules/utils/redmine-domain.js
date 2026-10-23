@@ -17,6 +17,8 @@
     "src/modules/ui/modal.js",
     "src/modules/services/redmine.js",
     "src/modules/services/report-log-time.js",
+    "src/modules/utils/custom-fields.js",
+    "src/modules/utils/sync-rules.js",
     "src/redmine_content.js",
   ]);
 

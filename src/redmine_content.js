@@ -1,4 +1,4 @@
-/* globals getTrackers, findIssues, findTimeEntries, deleteTimeEntry, getCurrentUser, logTimeFromReport, planReportSync */
+/* globals getTrackers, findIssues, findTimeEntries, deleteTimeEntry, getCurrentUser, getIssueDetails, logTimeFromReport, planReportSync */
 
 globalThis.__B2R_REDMINE_LOADED__ = true;
 
@@ -58,6 +58,17 @@ async function getSettings() {
   return response.data || {};
 }
 
+async function getReportSettingsForProject(reportProjectId, selection = {}) {
+  const response = await sendRuntimeMessage({
+    type: "GET_REPORT_SETTINGS",
+    reportProjectId: String(reportProjectId),
+    ...(selection.profileKey ? { profileKey: selection.profileKey } : {}),
+    ...(selection.globalProfile ? { globalProfile: true } : {}),
+  });
+  if (!response?.ok) throw new Error(response?.error || reportMessage("report_settings_required"));
+  return response.data;
+}
+
 // ====================
 // MONTHLY LOGGING FEATURE
 // ====================
@@ -90,11 +101,24 @@ function injectMonthlyLogButton() {
  * Main logic for logging time for the entire month.
  */
 async function logTimeForMonth() {
-  const settings = await getSettings();
-  const { redmineDomain, reportProjectId, hasRedmineApiKey } = settings;
-
-  if (!redmineDomain || !hasRedmineApiKey || !reportProjectId) {
+  const baseSettings = await getSettings();
+  const { redmineDomain, reportProjects = [], hasRedmineApiKey } = baseSettings;
+  if (!redmineDomain || !hasRedmineApiKey || !reportProjects.length) {
     alert(reportMessage("report_settings_required"));
+    return;
+  }
+
+  const selectedReportProject = await chooseReportProject(
+    reportProjects,
+    baseSettings.reportProjectId
+  );
+  if (!selectedReportProject) return;
+  const { id: reportProjectId, profileKey, globalProfile } = selectedReportProject;
+  let settings;
+  try {
+    settings = await getReportSettingsForProject(reportProjectId, { profileKey, globalProfile });
+  } catch (error) {
+    alert(error.message);
     return;
   }
 
@@ -157,8 +181,20 @@ async function logTimeForMonth() {
           const date = extractJapaneseReportDate(issue.subject);
           if (!date) continue;
           try {
-            const initialPreview = await logTimeFromReport(issue.id, true, date, true);
-            const preview = await confirmReportSync(initialPreview, [], true);
+            const initialPreview = await logTimeFromReport(
+              issue.id,
+              true,
+              date,
+              true,
+              null,
+              settings
+            );
+            const preview = await confirmReportSync(
+              initialPreview,
+              [],
+              true,
+              settings.logTimeRules
+            );
             if (!preview) throw new Error(reportMessage("report_sync_cancelled"));
             previews.push({ ...preview, reportSubject: issue.subject });
           } catch (error) {
@@ -346,8 +382,19 @@ async function logTimeForMonth() {
           const dateLabel = issue.date || `issue #${issue.reportIssueId}`;
           try {
             updateProgress(dateLabel, "date");
-            const fresh = await logTimeFromReport(issue.reportIssueId, true, dateLabel, true);
-            const currentPlan = planReportSync(fresh, issue.selectedEntryIds);
+            const fresh = await logTimeFromReport(
+              issue.reportIssueId,
+              true,
+              dateLabel,
+              true,
+              null,
+              settings
+            );
+            const currentPlan = planReportSync(
+              fresh,
+              issue.selectedEntryIds,
+              settings.logTimeRules
+            );
             if (
               fresh.existingEntriesSnapshot !== issue.existingEntriesSnapshot ||
               JSON.stringify(currentPlan.operations) !== JSON.stringify(issue.operations)
@@ -373,7 +420,8 @@ async function logTimeForMonth() {
               true,
               dateLabel,
               false,
-              approvedPlan
+              approvedPlan,
+              settings
             );
 
             if (logResult.taskIds.length > 0) {
@@ -482,6 +530,67 @@ async function logTimeForMonth() {
         modalInstance.deleteButton.disabled = false;
       }
     },
+  });
+}
+
+function chooseReportProject(projects, preferredId = "") {
+  if (projects.length === 1) return Promise.resolve(projects[0]);
+  return new Promise((resolve) => {
+    const overlay = document.createElement("div");
+    overlay.className = "tb-modal-overlay";
+    overlay.style.display = "flex";
+    const dialog = document.createElement("section");
+    dialog.className = "tb-modal-container";
+    dialog.setAttribute("role", "dialog");
+    dialog.setAttribute("aria-modal", "true");
+    const title = document.createElement("h2");
+    title.textContent = reportMessage("report_choose_project");
+    const select = document.createElement("select");
+    select.className = "tb-report-project-select";
+    for (const project of projects) {
+      const key = project.profileKey
+        ? `${project.id}:${project.profileKey}`
+        : project.globalProfile
+          ? `${project.id}:global`
+          : String(project.id);
+      select.add(new Option(project.name || `#${project.id}`, key));
+    }
+    const preferred = projects.find(
+      (project) => String(project.id) === String(preferredId) && project.globalProfile
+    );
+    if (preferred) {
+      select.value = preferred.profileKey
+        ? `${preferred.id}:${preferred.profileKey}`
+        : String(preferred.id);
+    }
+    const cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.className = "secondary";
+    cancel.textContent = reportMessage("report_cancel");
+    const confirm = document.createElement("button");
+    confirm.type = "button";
+    confirm.className = "primary";
+    confirm.textContent = reportMessage("report_continue");
+    const finish = (value) => {
+      overlay.remove();
+      resolve(value);
+    };
+    cancel.addEventListener("click", () => finish(""));
+    confirm.addEventListener("click", () => {
+      const [id, selection] = select.value.split(":", 2);
+      finish({
+        id,
+        ...(selection && selection !== "global" ? { profileKey: selection } : {}),
+        ...(selection === "global" ? { globalProfile: true } : {}),
+      });
+    });
+    overlay.addEventListener("click", (event) => {
+      if (event.target === overlay) finish("");
+    });
+    dialog.append(title, select, cancel, confirm);
+    overlay.append(dialog);
+    document.body.append(overlay);
+    select.focus();
   });
 }
 
@@ -786,13 +895,42 @@ async function injectLogTimeButton() {
       button.innerText = reportMessage("report_processing");
       button.classList.add("disabled");
       try {
-        const initialPreview = await logTimeFromReport(issueId, true, null, true);
-        const preview = await confirmReportSync(initialPreview);
+        const baseSettings = await getSettings();
+        const reportIssue = await getIssueDetails(baseSettings.redmineDomain, "", issueId);
+        const projectId = String(reportIssue.project?.id || "");
+        const candidates = baseSettings.reportProjects.filter(
+          (project) => String(project.id) === projectId
+        );
+        const selection = await chooseReportProject(
+          candidates.length
+            ? candidates
+            : [{ id: projectId, name: `#${projectId}`, globalProfile: true }],
+          baseSettings.reportProjectId
+        );
+        if (!selection) {
+          button.innerText = reportMessage("report_log_8h");
+          return;
+        }
+        const reportSettings = await getReportSettingsForProject(selection.id, selection);
+        const initialPreview = await logTimeFromReport(
+          issueId,
+          true,
+          null,
+          true,
+          null,
+          reportSettings
+        );
+        const preview = await confirmReportSync(
+          initialPreview,
+          [],
+          false,
+          reportSettings.logTimeRules
+        );
         if (!preview) {
           button.innerText = reportMessage("report_log_8h");
           return;
         }
-        await logTimeFromReport(issueId, false, preview.date, false, preview);
+        await logTimeFromReport(issueId, false, preview.date, false, preview, reportSettings);
         button.innerText = reportMessage("report_success");
       } catch (error) {
         button.innerText = reportMessage("report_error_check_console");
@@ -819,7 +957,8 @@ function reportSyncSummary(preview) {
 function confirmReportSync(
   initialPreview,
   initialSelectedIds = [],
-  deferDeletionConfirmation = false
+  deferDeletionConfirmation = false,
+  logTimeRules = {}
 ) {
   if (!initialPreview.tasks.length) return Promise.resolve(initialPreview);
   return new Promise((resolve) => {
@@ -849,7 +988,7 @@ function confirmReportSync(
     const operations = document.createElement("pre");
     operations.style.whiteSpace = "pre-wrap";
     const render = () => {
-      preview = planReportSync(initialPreview, [...selected]);
+      preview = planReportSync(initialPreview, [...selected], logTimeRules);
       summary.textContent = reportSyncSummary(preview);
       operations.textContent =
         preview.operations
@@ -994,6 +1133,7 @@ async function handleExtractAndOpenModal(actionsEl, button) {
     const result = await sendRuntimeMessage({
       type: "EXTRACT_JAPANESE_CONTENT",
       commentText: rawText,
+      backlogIssueKey,
     });
     openBacklogModal({
       backlogIssueKey,

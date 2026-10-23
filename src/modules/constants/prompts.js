@@ -45,9 +45,75 @@ ${text}
 [KẾT THÚC]`;
   }
 
+  const supportedLanguages = new Set(Object.keys(LANGUAGE_NAMES));
+  const ENGLISH_LANGUAGE_NAMES = Object.freeze({
+    auto: "the detected language",
+    ja: "Japanese",
+    vi: "Vietnamese",
+    en: "English",
+    ko: "Korean",
+    "zh-CN": "Simplified Chinese",
+    "zh-TW": "Traditional Chinese",
+    th: "Thai",
+    id: "Indonesian",
+    fr: "French",
+    de: "German",
+    es: "Spanish",
+    pt: "Portuguese",
+  });
+  const translationDefaults = Object.freeze({
+    source: "ja",
+    target: "vi",
+    reverseMode: "extract",
+    reverseSource: "vi",
+    reverseTarget: "ja",
+  });
+  function normalizeTranslationRules(value = {}) {
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+      throw new TypeError("Invalid translation rules.");
+    }
+    const rules = { ...translationDefaults, ...value };
+    for (const key of ["source", "target", "reverseSource", "reverseTarget"]) {
+      if (!supportedLanguages.has(rules[key]) || (key !== "source" && rules[key] === "auto")) {
+        throw new TypeError("Invalid translation language.");
+      }
+    }
+    if (!["extract", "translate", "original"].includes(rules.reverseMode)) {
+      throw new TypeError("Invalid translation mode.");
+    }
+    return rules;
+  }
+  function translationRulesPrompt(value, reverse = false, attribution = false) {
+    const rules = normalizeTranslationRules(value);
+    const source = reverse ? rules.reverseSource : rules.source;
+    const target = reverse ? rules.reverseTarget : rules.target;
+    const instruction =
+      reverse && rules.reverseMode === "extract"
+        ? `Extract only original ${ENGLISH_LANGUAGE_NAMES[target]} passages from the input. Do not translate or paraphrase.`
+        : `Translate from ${ENGLISH_LANGUAGE_NAMES[source]} into ${ENGLISH_LANGUAGE_NAMES[target]}.`;
+    const builder = (text = "") => `${instruction}\n[BẮT ĐẦU]\n${text}\n[KẾT THÚC]`;
+    builder.system = `Translate from ${ENGLISH_LANGUAGE_NAMES[source]} into ${ENGLISH_LANGUAGE_NAMES[target]}. Preserve markup, URLs, identifiers and placeholders exactly. Return only the translated content.`;
+    if (reverse && rules.reverseMode === "extract") {
+      builder.system = `Extract only original ${ENGLISH_LANGUAGE_NAMES[target]} passages from the input. Do not translate or paraphrase. Preserve markup and placeholders.`;
+      builder.extract = true;
+    }
+    builder.attribution = attribution;
+    builder.translationLabel = target.toUpperCase();
+    builder.reverseMode = reverse ? rules.reverseMode : "translate";
+    return builder;
+  }
+
   global.TB_PROMPTS = {
     LANGUAGE_NAMES,
     resolveLanguagePair,
+    TRANSLATION: Object.freeze({
+      normalize: normalizeTranslationRules,
+      prompt: translationRulesPrompt,
+      defaults: translationDefaults,
+      languages: LANGUAGE_NAMES,
+    }),
+    GLOSSARY: (entries, prompt) =>
+      `<project-terminology>${JSON.stringify(entries).replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026")}</project-terminology>\n${prompt}`,
     SYSTEM: `Thực hiện yêu cầu dịch hoặc trích xuất theo ngôn ngữ trong lời nhắc. Chỉ trả về <result>...</result>. Không giải thích/chào hỏi.
 
 Giữ nguyên 100%: @mention (không bọc link Markdown/HTML), URL, số, markdown/HTML (<u>, <span style>, <mark>), code (\`\`\`/\`), [[TB_IMG:id]], [[TB_FILE:id:name]], !file.ext!, placeholder kiểu <flow_guide_id> / <id> (giữ nguyên ký tự <>, tuyệt đối không HTML-escape thành &lt; &gt;).

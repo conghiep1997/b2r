@@ -1,4 +1,187 @@
 {
+  "options_profiles_report_project": {
+    "message": "Report project ID (optional; uses destination if blank)"
+  },
+  "options_configuration_project_required": {
+    "message": "Choose a default Redmine project before restricting global searches."
+  },
+  "options_configuration_activity_required": {
+    "message": "Choose a default activity for each configuration that uses one activity for all tasks."
+  },
+  "options_profiles_add": {
+    "message": "Add project profile"
+  },
+  "options_profiles_global": {
+    "message": "Global defaults"
+  },
+  "options_profiles_manager": {
+    "message": "Project profiles"
+  },
+  "options_profiles_new": {
+    "message": "New profile"
+  },
+  "options_profiles_destination_pending": {
+    "message": "Choose a Redmine project"
+  },
+  "options_profiles_server_pair": {
+    "message": "Applies to Backlog and Redmine"
+  },
+  "options_profiles_editing": {
+    "message": "Editing rules for"
+  },
+  "options_profiles_inherit": {
+    "message": "Use global rules for this project"
+  },
+  "options_profiles_inherit_help": {
+    "message": "Uncheck to configure rules for this project."
+  },
+  "options_profiles_name": {
+    "message": "Profile name"
+  },
+  "options_profiles_source": {
+    "message": "Backlog project key"
+  },
+  "options_profiles_destination": {
+    "message": "Redmine project ID"
+  },
+  "options_mapping_add": {
+    "message": "Add rule"
+  },
+  "options_mapping_remove": {
+    "message": "Remove"
+  },
+  "options_mapping_source_type": {
+    "message": "Backlog issue type"
+  },
+  "options_mapping_tracker_names": {
+    "message": "Preferred Redmine trackers, in order (comma-separated; blank disables preference)"
+  },
+  "options_mapping_tracker": {
+    "message": "Redmine tracker name"
+  },
+  "options_mapping_required": {
+    "message": "Required"
+  },
+  "options_mapping_working_days": {
+    "message": "Default due date: working days from today (0 = no default)"
+  },
+  "options_mapping_field_name": {
+    "message": "Field label"
+  },
+  "options_mapping_field_id": {
+    "message": "Redmine custom-field ID"
+  },
+  "options_mapping_field_type": {
+    "message": "Field type"
+  },
+  "options_mapping_text": {
+    "message": "Text"
+  },
+  "options_mapping_select": {
+    "message": "Select"
+  },
+  "options_mapping_field_options": {
+    "message": "Exact API values (one per line, for select fields)"
+  },
+  "options_mapping_field_trackers": {
+    "message": "Show for trackers (comma-separated; blank = all)"
+  },
+  "options_mapping_default_value": {
+    "message": "Default value (optional)"
+  },
+  "options_mapping_duplicate_type": {
+    "message": "Every mapping needs a unique Backlog issue type."
+  },
+  "options_mapping_duplicate_tracker": {
+    "message": "Every date rule needs a unique tracker name."
+  },
+  "options_due_date_title": {
+    "message": "Migration due-date rules"
+  },
+  "options_due_date_help": {
+    "message": "Set required dates and default working days by tracker. Zero disables automatic dates."
+  },
+  "options_profiles_title": {
+    "message": "Project profiles"
+  },
+  "options_profiles_help": {
+    "message": "Map each Backlog project to a Redmine project and its rules. Projects without a profile use global settings. Profiles apply to the current Backlog and Redmine addresses."
+  },
+  "options_log_time_title": {
+    "message": "Report time logging"
+  },
+  "options_log_time_help": {
+    "message": "Set daily hours, allocation and Redmine activities."
+  },
+  "options_log_daily_hours": {
+    "message": "Hours per day"
+  },
+  "options_log_allocation": {
+    "message": "Hour allocation"
+  },
+  "options_log_equal": {
+    "message": "Equal shares"
+  },
+  "options_log_estimate": {
+    "message": "By estimated hours (missing estimate = weight 1)"
+  },
+  "options_log_activity_mode": {
+    "message": "Activity selection"
+  },
+  "options_log_activity_default": {
+    "message": "One activity for all tasks"
+  },
+  "options_log_activity_legacy": {
+    "message": "Coding / testing by task title and tracker"
+  },
+  "options_log_load_activities": {
+    "message": "Load activities from Redmine"
+  },
+  "options_log_default_activity": {
+    "message": "Default / coding activity"
+  },
+  "options_log_testing_activity": {
+    "message": "Testing activity"
+  },
+  "report_log_configured": {
+    "message": "Log time from Report"
+  },
+  "options_translation_title": {
+    "message": "Translation directions"
+  },
+  "options_translation_help": {
+    "message": "Set the Backlog to Redmine translation direction. Choose Auto detect if you do not know the source language."
+  },
+  "options_translation_source": {
+    "message": "Backlog language"
+  },
+  "options_translation_target": {
+    "message": "Redmine language"
+  },
+  "options_translation_same_language": {
+    "message": "Choose different source and target languages."
+  },
+  "options_translation_project_required": {
+    "message": "Select a Redmine project to activate translation to Redmine."
+  },
+  "options_translation_reverse_mode": {
+    "message": "Redmine → Backlog action"
+  },
+  "options_translation_extract": {
+    "message": "Extract passages in the Backlog language"
+  },
+  "options_translation_translate": {
+    "message": "Translate"
+  },
+  "options_translation_original": {
+    "message": "Keep all content unchanged"
+  },
+  "options_translation_reverse_source": {
+    "message": "Redmine source language (translation)"
+  },
+  "options_translation_reverse_target": {
+    "message": "Backlog language"
+  },
   "extension_name": {
     "message": "Backlog to Redmine Translator"
   },
@@ -30,19 +213,19 @@
     "message": "Could not read issueKey from Backlog."
   },
   "toast_send_success": {
-    "message": "Comment sent to Redmine successfully."
+    "message": "Sent to Redmine."
   },
   "toast_send_backlog_success": {
-    "message": "Comment sent to Backlog successfully."
+    "message": "Sent to Backlog."
   },
   "toast_rate_limit_retry": {
-    "message": "⚠️ Primary model rate limited, retrying with fallback..."
+    "message": "Primary model busy. Trying fallback..."
   },
   "toast_rate_limit_failed": {
     "message": "❌ Both models rate limited. Please wait or check API key."
   },
   "toast_cross_provider_retry": {
-    "message": "⚠️ $provider$ rate limited, switching to Gemini Flash Lite...",
+    "message": "$provider$ busy. Trying fallback...",
     "placeholders": {
       "provider": {
         "content": "$1"
@@ -308,7 +491,7 @@
     "message": "Target"
   },
   "popup_default_project": {
-    "message": "Default project"
+    "message": "Redmine project"
   },
   "popup_open_settings": {
     "message": "Open full settings"
@@ -349,6 +532,10 @@
   "popup_not_ready": {
     "message": "Not ready"
   },
+  "popup_missing_redmine_key": { "message": "Redmine key needed" },
+  "popup_missing_backlog_key": { "message": "Backlog key needed" },
+  "popup_missing_both_keys": { "message": "Keys needed" },
+  "popup_missing_ai_provider": { "message": "AI provider needed" },
   "popup_ready": {
     "message": "READY"
   },
@@ -365,10 +552,10 @@
     "message": "Loading project name..."
   },
   "popup_project_summary": {
-    "message": "Project used for Redmine actions"
+    "message": "Used for issue migration and monthly reports"
   },
   "popup_project_summary_empty": {
-    "message": "Select a project in full settings to get started"
+    "message": "Choose a Redmine project in Options to get started"
   },
   "popup_project_load_failed": {
     "message": "Unable to load project name"
@@ -412,11 +599,14 @@
   "report_log_month": {
     "message": "Log Time This Month"
   },
+  "report_choose_project": { "message": "Choose a report project" },
+  "report_cancel": { "message": "Cancel" },
+  "report_continue": { "message": "Continue" },
   "report_settings_required": {
     "message": "Error: Please configure the Redmine domain, API key, and report project ID in the extension Options."
   },
   "report_confirm_delete": {
-    "message": "Scan this month for your B2R-marked logs? Manual and unmarked logs are preserved. You will review the exact deletion list before confirming."
+    "message": "Delete your spent time for this month? Only your entries dated this month will be deleted."
   },
   "report_deleting": {
     "message": "Deleting this month's spent time..."
@@ -461,7 +651,7 @@
     "message": "Status"
   },
   "report_delete_spent_time": {
-    "message": "Delete this month’s B2R logs"
+    "message": "Delete this month's spent time"
   },
   "report_copy_table": {
     "message": "Copy table"
@@ -630,10 +820,10 @@
     "message": "Get started"
   },
   "options_onboarding_intro": {
-    "message": "Complete these steps once to connect Backlog, Redmine, and your translation provider."
+    "message": "Connect your services, then save settings."
   },
   "options_onboarding_redmine": {
-    "message": "Add your Redmine API key and load projects"
+    "message": "Add a Redmine API key, load projects and choose a default project"
   },
   "options_onboarding_backlog": {
     "message": "Add and verify your Backlog API key"
@@ -645,7 +835,7 @@
     "message": "Test Backlog connection"
   },
   "options_test_ai": {
-    "message": "Test selected AI model"
+    "message": "Test AI connection"
   },
   "options_screenshot_too_large": {
     "message": "The image exceeds the 5 MB limit."
@@ -698,7 +888,7 @@
     "message": "Not checked"
   },
   "options_onboarding_status_done": {
-    "message": "Complete"
+    "message": "Connected and saved"
   },
   "options_ai_status_start": {
     "message": "Translating with $provider$ ($model$)…",
@@ -712,7 +902,7 @@
     }
   },
   "options_ai_status_retry": {
-    "message": "$provider$ is busy or rate limited. This model cools down for $seconds$s; trying another now (attempt $attempt$).",
+    "message": "$provider$ busy. Trying model $attempt$; this model cools down for $seconds$s.",
     "placeholders": {
       "provider": {
         "content": "$1"
@@ -910,57 +1100,6 @@
   "options_language_en": {
     "message": "English"
   },
-  "options_translation_source": {
-    "message": "Source language"
-  },
-  "options_translation_target": {
-    "message": "Target language"
-  },
-  "options_translation_auto": {
-    "message": "Auto detect"
-  },
-  "options_translation_ja": {
-    "message": "Japanese"
-  },
-  "options_translation_vi": {
-    "message": "Vietnamese"
-  },
-  "options_translation_en": {
-    "message": "English"
-  },
-  "options_translation_ko": {
-    "message": "Korean"
-  },
-  "options_translation_zh_cn": {
-    "message": "Chinese (Simplified)"
-  },
-  "options_translation_zh_tw": {
-    "message": "Chinese (Traditional)"
-  },
-  "options_translation_th": {
-    "message": "Thai"
-  },
-  "options_translation_id": {
-    "message": "Indonesian"
-  },
-  "options_translation_fr": {
-    "message": "French"
-  },
-  "options_translation_de": {
-    "message": "German"
-  },
-  "options_translation_es": {
-    "message": "Spanish"
-  },
-  "options_translation_pt": {
-    "message": "Portuguese"
-  },
-  "options_translation_help": {
-    "message": "Default: Japanese → Vietnamese. Applies to Backlog → Redmine translation and issue migration."
-  },
-  "options_translation_same_language": {
-    "message": "Choose different source and target languages."
-  },
   "options_theme_label": {
     "message": "Theme"
   },
@@ -974,7 +1113,10 @@
     "message": "Dark"
   },
   "options_redmine_section": {
-    "message": "💎 Redmine settings"
+    "message": "Redmine settings"
+  },
+  "options_redmine_optional": {
+    "message": "More Redmine settings"
   },
   "options_ui_section": {
     "message": "Interface options"
@@ -986,10 +1128,10 @@
     "message": "🐞 Report a bug"
   },
   "options_document_title": {
-    "message": "Backlog Comment Translation Settings"
+    "message": "Backlog & Redmine Settings"
   },
   "options_subtitle": {
-    "message": "Configure Redmine, Backlog, and AI so the extension can translate and sync comments between both systems."
+    "message": "Connect Redmine, Backlog and AI to translate and sync comments."
   },
   "options_redmine_domain": {
     "message": "Redmine Domain"
@@ -1004,10 +1146,10 @@
     "message": "Personal account"
   },
   "options_save_api_first": {
-    "message": "-- Save the API key first --"
+    "message": "Add an API key to load projects"
   },
   "options_report_project": {
-    "message": "Project for Reports (Monthly Time Log)"
+    "message": "Redmine project for monthly reports"
   },
   "options_backlog_domain": {
     "message": "Backlog Domain"
@@ -1016,7 +1158,10 @@
     "message": "Backlog API Key"
   },
   "options_backlog_key_placeholder": {
-    "message": "Enter Backlog API key"
+    "message": "Backlog API key (Account > API)"
+  },
+  "options_redmine_key_placeholder": {
+    "message": "Redmine API key (My account > API access key)"
   },
   "options_provider": {
     "message": "Provider"
@@ -1034,19 +1179,19 @@
     "message": "Added:"
   },
   "options_key_quick_add": {
-    "message": "Enter a key, then Save or press Enter to add quickly"
+    "message": "API key (press Enter to add)"
   },
   "options_loading": {
     "message": "Loading..."
   },
   "options_load_error": {
-    "message": "Load failed (check key)"
+    "message": "Unable to load projects — retry"
   },
   "options_choose_project": {
-    "message": "-- Choose project --"
+    "message": "Choose a project"
   },
   "options_bug_description": {
-    "message": "Create a structured report with a screenshot and environment details. Data is only downloaded or opened in GitHub after you confirm."
+    "message": "Describe the problem. Download or copy the report, or review a GitHub draft before submitting. Attach screenshots separately."
   },
   "options_bug_subject": {
     "message": "Bug title"
@@ -1070,7 +1215,7 @@
     "message": "Page URL where the bug occurred (optional)"
   },
   "options_screenshot": {
-    "message": "Screenshot (PNG/JPEG, max 5 MB)"
+    "message": "Screenshot (optional)"
   },
   "options_screenshot_preview_failed": {
     "message": "Unable to preview this image."
@@ -1079,10 +1224,10 @@
     "message": "📥 Download report"
   },
   "options_copy_report": {
-    "message": "📋 Copy"
+    "message": "Copy report"
   },
   "options_open_github": {
-    "message": "Open GitHub Issue"
+    "message": "Open draft on GitHub"
   },
   "options_logs_title": {
     "message": "Error logs"
@@ -1106,10 +1251,10 @@
     "message": "🔍 Check for updates"
   },
   "options_download_page": {
-    "message": "📦 Download page"
+    "message": "Download page"
   },
   "options_redmine_help": {
-    "message": "💡 The Redmine domain is preconfigured."
+    "message": "Enter your Redmine server address."
   },
   "options_api_account_help": {
     "message": "🔑 Get the API key from:"
@@ -1118,16 +1263,16 @@
     "message": "🔑 Get it from Account > API in your Backlog. Required to send comments and sync data."
   },
   "options_gemini_provider": {
-    "message": "Google Gemini AI Studio (Free / strong translation)"
+    "message": "Google Gemini AI Studio"
   },
   "options_groq_provider": {
-    "message": "Groq Cloud (Very fast - Llama 3)"
+    "message": "Groq Cloud"
   },
   "options_cerebras_provider": {
-    "message": "Cerebras (High performance)"
+    "message": "Cerebras"
   },
   "options_openrouter_provider": {
-    "message": "OpenRouter (Many free models)"
+    "message": "OpenRouter"
   },
   "options_gemini_fallback": {
     "message": "Google Gemini AI Studio"
@@ -1142,16 +1287,16 @@
     "message": "OpenRouter"
   },
   "options_success_modal": {
-    "message": "Show a success modal when translating/sending a comment to Redmine"
+    "message": "Show a confirmation after sending a comment to Redmine"
   },
   "options_success_modal_help": {
-    "message": "Only applies to comment translation. Issue migration always shows a modal with the Redmine link. Enable this again if you previously hid success notifications."
+    "message": "Applies to comment sync. Issue migration always shows a confirmation with the Redmine link."
   },
   "options_support_note": {
-    "message": "Two-way sync: Backlog → Redmine (translate using the selected language pair) and Redmine → Backlog (extract Japanese content)."
+    "message": "Translation and sync use the rules in Advanced settings. Review the preview before sending."
   },
   "options_disclaimer": {
-    "message": "This extension only does what you ask... if something breaks, you probably clicked the wrong thing 👀"
+    "message": "Having trouble? Use Report a bug to get help."
   },
   "options_checking_server": {
     "message": "Connecting to server..."
@@ -1169,16 +1314,16 @@
     "message": "Current version:"
   },
   "options_models_help": {
-    "message": "Models (click to select/deselect, uses round-robin)"
+    "message": "Models"
   },
   "options_keys_help": {
-    "message": "Keys (enter then Save, press Enter to add quickly, click to remove)"
+    "message": "Enter an API key, then save or press Enter to add it. Use × to remove a key; save to apply changes."
   },
   "options_enter_provider_key": {
-    "message": "Enter the provider key first"
+    "message": "Add an API key for this provider first."
   },
   "options_enter_gemini_key": {
-    "message": "Enter the Gemini key first"
+    "message": "Add a Gemini API key first."
   },
   "options_no_logs": {
     "message": "No error logs to export."
@@ -1196,7 +1341,13 @@
     "message": "Clear all error log history?"
   },
   "options_sync_projects": {
-    "message": "🔄 Sync projects"
+    "message": "Reload projects"
+  },
+  "options_projects_reloaded": {
+    "message": "Projects reloaded"
+  },
+  "options_projects_reload_failed": {
+    "message": "Could not reload projects"
   },
   "options_test_provider_key": {
     "message": "Enter the provider key first"
@@ -1236,7 +1387,7 @@
     "message": "Unknown error"
   },
   "options_bug_downloaded": {
-    "message": "Report and attached screenshot downloaded."
+    "message": "Report and screenshot downloaded as separate files."
   },
   "options_bug_copied": {
     "message": "Report content copied."
@@ -1245,7 +1396,7 @@
     "message": "Automatic copy failed. Use Download report instead."
   },
   "options_custom_fields_section": {
-    "message": "Custom fields (JSON mapping)"
+    "message": "Migration custom fields"
   },
   "options_backlog_section": {
     "message": "📝 Backlog settings"
@@ -1287,10 +1438,10 @@
     "message": "(Click \"Show\" next to \"API access key\")."
   },
   "options_default_project": {
-    "message": "Default project (used for migration)"
+    "message": "Redmine project (issue migration and monthly reports)"
   },
   "options_report_help": {
-    "message": "💡 Select the Redmine project used for monthly time logging."
+    "message": "Choose the project used for monthly time reports."
   },
   "modal_backlog_issue_title_label": {
     "message": "Backlog Issue Title"
@@ -1366,7 +1517,7 @@
     "message": "Failed to translate comment."
   },
   "options_custom_fields_help": {
-    "message": "💡 Enter the IDs of required fields. Example: Severity: 46, Role: 11."
+    "message": "Use field IDs and values from your Redmine instance."
   },
   "options_openrouter_suffix": {
     "message": " 💡 Many free models (suffix :free)."
@@ -1401,7 +1552,7 @@
     "message": "Review the dates, tasks, and hours. Confirm when everything looks correct."
   },
   "report_preview_review_warning": {
-    "message": "Some dates need their existing spent time reviewed before logging. Resolve existing entries, then scan again."
+    "message": "Review existing spent time on flagged dates, then scan again."
   },
   "report_preview_replace_warning": {
     "message": "This day already has $hours$ hours. Logging could replace existing entries; review spent time first.",
@@ -1442,46 +1593,360 @@
   "report_logged_button": {
     "message": "Logged"
   },
-  "report_sync_title": {
-    "message": "Sync time with Report"
+  "sync_attachment_partial": {
+    "message": "Comment sent; upload failed for: $files$. Attach files from the Backlog comment without resending it.",
+    "placeholders": {
+      "files": {
+        "content": "$1"
+      }
+    }
   },
-  "report_sync_hint": {
-    "message": "Only this Report's marked logs and the old logs you select below may be changed or deleted. Other logs are preserved and deducted from the 8-hour daily budget. Review every operation before accepting. An empty Report cannot be synchronized."
+  "recovery_title": {
+    "message": "Migration recovery and issue mappings"
   },
-  "report_sync_legacy": {
-    "message": "Old logs to include in synchronization (optional)"
+  "recovery_help": {
+    "message": "Resume a saved migration. Completed comments are skipped."
   },
-  "report_sync_summary": {
-    "message": "Preserve $preserved$h · Add $create$ · Update $update$ · Delete $delete$"
+  "recovery_source": {
+    "message": "Backlog issue key"
   },
-  "report_sync_create": {
-    "message": "Add"
+  "recovery_destination": {
+    "message": "Redmine issue ID"
   },
-  "report_sync_update": {
-    "message": "Update"
+  "recovery_save_mapping": {
+    "message": "Save mapping"
   },
-  "report_sync_delete": {
-    "message": "Delete"
+  "recovery_refresh": {
+    "message": "Refresh"
   },
-  "report_sync_no_changes": {
-    "message": "No changes."
+  "recovery_request_failed": {
+    "message": "Request failed."
   },
-  "report_sync_accept": {
-    "message": "Accept this plan"
+  "recovery_working": {
+    "message": "Processing…"
   },
-  "report_sync_cancel": {
-    "message": "Cancel"
+  "recovery_updated": {
+    "message": "Recovery records updated."
   },
-  "report_sync_cancelled": {
-    "message": "Synchronization cancelled. Preview again to continue."
+  "recovery_empty": {
+    "message": "No saved migrations or mappings in this workspace."
   },
-  "report_delete_typed": {
-    "message": "Delete $count$ listed time entries? A local recovery copy is saved before each deletion. This cannot be undone automatically. Type $phrase$ to confirm."
+  "recovery_remove_mapping": {
+    "message": "Remove mapping"
   },
-  "report_delete_busy": {
-    "message": "Another Log Time operation is running. Wait until it finishes."
+  "recovery_resume": {
+    "message": "Resume / recheck"
   },
-  "report_export_backups": {
-    "message": "Export recovery copies"
+  "recovery_partial": {
+    "message": "$count$ comments remain. Check the destination and resume again.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "recovery_uncertain_help": {
+    "message": "The server may have received the operation. Check the destination or link its issue before allowing a retry."
+  },
+  "recovery_confirm_absent": {
+    "message": " I checked the destination and the uncertain operation was not received."
+  },
+  "recovery_resolve": {
+    "message": "Unlock retry after checking"
+  },
+  "recovery_confirmation_required": {
+    "message": "Check the destination and select the confirmation first."
+  },
+  "recovery_adopt": {
+    "message": "Link existing destination issue"
+  },
+  "recovery_state_ready": {
+    "message": "Ready"
+  },
+  "recovery_state_creating": {
+    "message": "Creation uncertain"
+  },
+  "recovery_state_sending": {
+    "message": "Sending"
+  },
+  "recovery_state_partial": {
+    "message": "Incomplete"
+  },
+  "recovery_state_complete": {
+    "message": "Complete"
+  },
+  "recovery_state_mapped": {
+    "message": "Mapped"
+  },
+  "options_advanced_title": {
+    "message": "Advanced settings"
+  },
+  "options_advanced_help": {
+    "message": "Set global or project-specific rules for issue titles, matching and migration."
+  },
+  "options_policy_matching": {
+    "message": "Issue matching and migration"
+  },
+  "options_policy_translation": {
+    "message": "Translation"
+  },
+  "options_policy_log_time": {
+    "message": "Report time logging"
+  },
+  "options_policy_fields": {
+    "message": "Field and tracker mappings"
+  },
+  "options_advanced_tools": {
+    "message": "Glossary, activity, recovery and support tools"
+  },
+  "options_subject_template": {
+    "message": "Migration title template"
+  },
+  "options_subject_template_help": {
+    "message": "Use {issueKey}, {summary} and {translatedSummary}."
+  },
+  "options_title_delimiter": {
+    "message": "Original / translated title separator"
+  },
+  "options_title_delimiter_help": {
+    "message": "Enter the exact separator, including spaces. Leave empty for the default."
+  },
+  "options_search_mode": {
+    "message": "Find Redmine issues by"
+  },
+  "options_search_key_title": {
+    "message": "Issue key, then original title"
+  },
+  "options_search_key": {
+    "message": "Issue key only"
+  },
+  "options_search_title": {
+    "message": "Original title only"
+  },
+  "options_restrict_project": {
+    "message": "Search only the default Redmine project (choose a project first)"
+  },
+  "options_tracker_aliases": {
+    "message": "Tracker mapping by Backlog issue type"
+  },
+  "options_tracker_aliases_help": {
+    "message": "Set preferred Redmine trackers by source issue type and order. The first available tracker is used during migration."
+  },
+  "glossary_load_required": {
+    "message": "Load the project glossary before editing or saving."
+  },
+  "glossary_discard_confirm": {
+    "message": "Discard unsaved glossary changes?"
+  },
+  "glossary_clear_confirm": {
+    "message": "Remove all saved terms for this project?"
+  },
+  "glossary_title": {
+    "message": "Project glossary"
+  },
+  "glossary_help": {
+    "message": "Enter a Backlog project key or redmine:project. Terms are encrypted and scoped to this workspace."
+  },
+  "glossary_project": {
+    "message": "Project key"
+  },
+  "glossary_load": {
+    "message": "Load"
+  },
+  "glossary_add": {
+    "message": "Add term"
+  },
+  "glossary_save": {
+    "message": "Save glossary"
+  },
+  "glossary_source": {
+    "message": "Original term"
+  },
+  "glossary_target": {
+    "message": "Translation"
+  },
+  "glossary_keep": {
+    "message": "Keep unchanged"
+  },
+  "glossary_remove": {
+    "message": "Remove term"
+  },
+  "glossary_error": {
+    "message": "Glossary request failed."
+  },
+  "glossary_working": {
+    "message": "Processing…"
+  },
+  "glossary_loaded": {
+    "message": "Glossary loaded."
+  },
+  "glossary_saved": {
+    "message": "Glossary saved."
+  },
+  "migration_include_comment": {
+    "message": "Include comment $count$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "migration_selection_count": {
+    "message": "Selected: $comments$ comments and $files$ files. Excluded files will be removed from the submitted content.",
+    "placeholders": {
+      "comments": {
+        "content": "$1"
+      },
+      "files": {
+        "content": "$2"
+      }
+    }
+  },
+  "report_project_select": {
+    "message": "Report project"
+  },
+  "options_migration_rules_title": {
+    "message": "Issue migration and matching"
+  },
+  "options_backlog_domain_placeholder": {
+    "message": "https://your-space.backlog.com"
+  },
+  "options_backlog_help_prefix": {
+    "message": "Get an API key from:"
+  },
+  "options_backlog_account_api": {
+    "message": "Personal settings > API"
+  },
+  "options_backlog_help_suffix": {
+    "message": "Required to send comments to Backlog."
+  },
+  "options_groq_key_placeholder": {
+    "message": "Enter a Groq API key"
+  },
+  "options_cerebras_key_placeholder": {
+    "message": "Enter a Cerebras API key"
+  },
+  "options_openrouter_key_placeholder": {
+    "message": "Enter an OpenRouter API key"
+  },
+  "options_bug_url_placeholder": {
+    "message": "https://…"
+  },
+  "options_screenshot_help": {
+    "message": "PNG, JPEG or WebP, up to 5 MB. Screenshots are attached manually on GitHub."
+  },
+  "options_screenshot_preview_alt": {
+    "message": "Screenshot preview"
+  },
+  "options_bug_report_downloaded": {
+    "message": "Report downloaded."
+  },
+  "options_update_idle": {
+    "message": "Current version: v$version$. Check for updates when needed.",
+    "placeholders": {
+      "version": {
+        "content": "$1"
+      }
+    }
+  },
+  "options_backlog_key_missing": {
+    "message": "Enter a Backlog API key, then test the connection again."
+  },
+  "options_ai_key_missing": {
+    "message": "Add an API key for the selected AI provider, then test again."
+  },
+  "options_test_ai_success": {
+    "message": "AI connection successful ($model$).",
+    "placeholders": {
+      "model": {
+        "content": "$1"
+      }
+    }
+  },
+  "options_projects_failed": {
+    "message": "Unable to load projects. Check the server address, connection and API access, then retry."
+  },
+  "options_projects_empty": {
+    "message": "Connected to Redmine, but no accessible projects were found. Check your account permissions."
+  },
+  "options_onboarding_not_configured": {
+    "message": "Not configured"
+  },
+  "options_onboarding_choose_project": {
+    "message": "Connected — choose a default project"
+  },
+  "options_onboarding_unsaved": {
+    "message": "Connected — save settings to apply"
+  },
+  "options_restrict_profile_project": {
+    "message": "Search only this profile's destination Redmine project"
+  },
+  "options_activity_unselected": {
+    "message": "No activity selected"
+  },
+  "options_activities_failed": {
+    "message": "Unable to load activities. Check the Redmine connection and retry."
+  },
+  "options_test_model_label": {
+    "message": "Test model $model$",
+    "placeholders": {
+      "model": {
+        "content": "$1"
+      }
+    }
+  },
+  "options_remove_key": {
+    "message": "Remove API key"
+  },
+  "options_key_duplicate": {
+    "message": "This API key is already in the list. Use another key or clear the input."
+  },
+  "options_key_limit": {
+    "message": "You can add up to 10 API keys. Remove a key before adding another."
+  },
+  "options_pending_key_failed": {
+    "message": "An API key could not be added. Check for duplicates or the 10-key limit, then save again."
+  },
+  "options_content_language_auto": {
+    "message": "Auto-detect"
+  },
+  "options_content_language_ja": {
+    "message": "Japanese"
+  },
+  "options_content_language_en": {
+    "message": "English"
+  },
+  "options_content_language_vi": {
+    "message": "Vietnamese"
+  },
+  "options_content_language_ko": {
+    "message": "Korean"
+  },
+  "options_content_language_zh": {
+    "message": "Chinese"
+  },
+  "options_content_language_fr": {
+    "message": "French"
+  },
+  "options_content_language_de": {
+    "message": "German"
+  },
+  "options_content_language_es": {
+    "message": "Spanish"
+  },
+  "options_content_language_pt": {
+    "message": "Portuguese"
+  },
+  "options_content_language_th": {
+    "message": "Thai"
+  },
+  "options_content_language_id": {
+    "message": "Indonesian"
+  },
+  "options_redmine_key_missing": {
+    "message": "Enter a Redmine API key, then reload projects."
+  },
+  "options_projects_empty_select": {
+    "message": "No accessible projects"
   }
 }

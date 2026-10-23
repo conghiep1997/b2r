@@ -90,8 +90,16 @@ async function getBacklogIssueInfo(issueKey) {
   };
 }
 
-async function handleSendToBacklog({ backlogIssueKey, content, notifiedUserId, attachments = [] }) {
-  const settings = await getSettings();
+async function handleSendToBacklog({
+  backlogIssueKey,
+  content,
+  notifiedUserId,
+  attachments = [],
+  settingsOverride,
+  syncMarker,
+  onBeforeSubmit,
+}) {
+  const settings = settingsOverride || (await getSettings());
   if (!settings.backlogApiKey) {
     throw new Error(TB.MESSAGES.SETTINGS.BACKLOG_API_KEY_REQUIRED);
   }
@@ -103,7 +111,7 @@ async function handleSendToBacklog({ backlogIssueKey, content, notifiedUserId, a
   // Upload first so a failed attachment does not leave a posted comment that a retry duplicates.
   const attachmentIds = await uploadAttachmentsToBacklog(domain, settings, attachments);
   const body = new URLSearchParams();
-  body.append("content", content);
+  body.append("content", syncMarker ? `${content}\n\n${syncMarker}` : content);
   attachmentIds.forEach((id) => body.append("attachmentId[]", id));
   if (Array.isArray(notifiedUserId)) {
     notifiedUserId.forEach((id) => body.append("notifiedUserId[]", id));
@@ -111,20 +119,30 @@ async function handleSendToBacklog({ backlogIssueKey, content, notifiedUserId, a
     notifiedUserId.split(",").forEach((id) => body.append("notifiedUserId[]", id.trim()));
   }
 
-  const response = await fetch(url.toString(), {
-    method: "POST",
-    redirect: "error",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: body.toString(),
-  });
+  await onBeforeSubmit?.();
+  let response;
+  try {
+    response = await fetch(url.toString(), {
+      method: "POST",
+      redirect: "error",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: body.toString(),
+    });
+  } catch (error) {
+    error.definitelyNotSent = false;
+    throw error;
+  }
 
   if (!response.ok) {
     const errorMsg = await readErrorMessage(response);
-    throw new Error(
+    const submitError = new Error(
       `${TB.MESSAGES.BACKLOG.POST_FAILED}: ${sanitizeErrorMessage(errorMsg, response.status)}`
     );
+    submitError.status = response.status;
+    submitError.definitelyNotSent = response.status >= 400 && response.status < 500;
+    throw submitError;
   }
 
   const result = await response.json();

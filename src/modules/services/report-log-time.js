@@ -42,10 +42,12 @@ async function executeReportTimeSync(
   isBatchOperation = false,
   spentOn = null,
   previewOnly = false,
-  expectedPreview = null
+  expectedPreview = null,
+  scopedReportSettings = null
 ) {
   try {
-    const settings = await getSettings();
+    const settings = scopedReportSettings || (await getSettings());
+    const logTimeRules = globalThis.TB_LOG_TIME_RULES.normalize(settings.logTimeRules);
     const { redmineDomain, hasRedmineApiKey } = settings;
     if (!redmineDomain || !hasRedmineApiKey) {
       throw new Error("Redmine domain or API key is not configured.");
@@ -85,14 +87,20 @@ async function executeReportTimeSync(
       throw new Error(globalThis.TB_GET_MESSAGE("report_preview_stale"));
     }
 
-    const taskIssueDetails = previewOnly
-      ? await Promise.all(
-          taskIds.map((taskId) => getIssueDetails(redmineDomain, redmineApiKey, taskId))
-        )
-      : [];
+    const taskIssueDetails = await Promise.all(
+      taskIds.map((taskId) => getIssueDetails(redmineDomain, redmineApiKey, taskId))
+    );
+    const activities = await getTimeEntryActivities(redmineDomain, redmineApiKey);
     const tasks = taskIds.map((taskId, index) => ({
       id: taskId,
       subject: taskIssueDetails[index]?.subject || "",
+      estimatedHours: Number(taskIssueDetails[index]?.estimated_hours) || 0,
+      activityId: resolveTimeEntryActivityId(
+        taskIssueDetails[index],
+        currentUser,
+        activities,
+        logTimeRules
+      ),
     }));
 
     const existingDailyEntries = await findTimeEntries(redmineDomain, redmineApiKey, {
@@ -117,7 +125,8 @@ async function executeReportTimeSync(
         entries: existingDailyEntries,
         existingEntriesSnapshot: snapshotTimeEntries(existingDailyEntries),
       },
-      expectedPreview?.selectedEntryIds || []
+      expectedPreview?.selectedEntryIds || [],
+      logTimeRules
     );
     if (previewOnly) return preview;
     if (
@@ -133,14 +142,14 @@ async function executeReportTimeSync(
       throw new Error(globalThis.TB_GET_MESSAGE("report_preview_stale"));
     }
     if (!taskIds.length) throw new Error(globalThis.TB_GET_MESSAGE("report_no_tasks"));
-    const activities = await getTimeEntryActivities(redmineDomain, redmineApiKey);
     const desiredEntries = await buildDesiredTimeEntries(
       redmineDomain,
       redmineApiKey,
       taskIds,
       preview.tasks.map((task) => task.hours),
       currentUser,
-      activities
+      activities,
+      logTimeRules
     );
     const loggedTaskIds = [];
     // Reductions precede increases. Stop on the first failure; a fresh preview
@@ -161,9 +170,7 @@ async function executeReportTimeSync(
             (entry) => entry.id === operation.entryId
           );
           const activity =
-            originalEntry?.activity?.id ||
-            originalEntry?.activity_id ||
-            desiredEntries[taskIds.indexOf(operation.taskId)]?.activityId;
+            operation.activityId || desiredEntries[taskIds.indexOf(operation.taskId)]?.activityId;
           if (operation.type === "update") {
             await updateTimeEntry(
               redmineDomain,
@@ -532,7 +539,8 @@ function distributeHours(totalHours, taskCount) {
   });
 }
 
-function planReportSync(preview, selectedEntryIds = []) {
+function planReportSync(preview, selectedEntryIds = [], rules = {}) {
+  const logTimeRules = globalThis.TB_LOG_TIME_RULES.normalize(rules);
   const marker = `[B2R report:${preview.reportIssueId}]`;
   const selected = new Set(selectedEntryIds.map(String));
   const entries = preview.entries;
@@ -549,21 +557,33 @@ function planReportSync(preview, selectedEntryIds = []) {
     (entry) => entry.comments === marker || selected.has(String(entry.id))
   );
   const preservedHours = sumTimeEntryHours(entries.filter((entry) => !managed.includes(entry)));
-  const budget = Math.floor(Math.max(0, 8 - preservedHours) * 100 + 1e-8) / 100;
-  const hours = distributeHours(budget, preview.tasks.length);
+  const budget =
+    Math.floor(Math.max(0, logTimeRules.dailyHours - preservedHours) * 100 + 1e-8) / 100;
+  const weights =
+    logTimeRules.allocation === "estimate"
+      ? preview.tasks.map((task) => task.estimatedHours)
+      : preview.tasks.map(() => 1);
+  const hours = preview.tasks.length ? globalThis.TB_LOG_TIME_RULES.allocate(budget, weights) : [];
   const available = [...managed];
   const operations = [];
   const tasks = preview.tasks.map((task, index) => {
     const match = available.findIndex((entry) => getTimeEntryIssueId(entry) === String(task.id));
     const entry = match < 0 ? null : available.splice(match, 1)[0];
+    const existingActivityId = entry?.activity?.id ?? entry?.activity_id;
     if (hours[index] > 0) {
-      if (!entry || Number(entry.hours) !== hours[index] || entry.comments !== marker) {
+      if (
+        !entry ||
+        Number(entry.hours) !== hours[index] ||
+        entry.comments !== marker ||
+        Number(existingActivityId) !== Number(task.activityId)
+      ) {
         operations.push({
           type: entry ? "update" : "create",
           entryId: entry?.id || null,
           taskId: String(task.id),
           hours: hours[index],
           oldHours: Number(entry?.hours || 0),
+          activityId: task.activityId,
         });
       }
     } else if (entry) available.push(entry);
@@ -589,10 +609,12 @@ function planReportSync(preview, selectedEntryIds = []) {
     candidates,
     selectedEntryIds: [...selected],
     operations,
+    totalHours: hours.reduce((total, value) => total + value, 0),
     preservedHours,
     existingDailyHours: sumTimeEntryHours(entries),
     willReplaceDailyEntries: false,
-    dayAlreadyFull: false,
+    dayAlreadyFull: preservedHours >= logTimeRules.dailyHours,
+    dailyHours: logTimeRules.dailyHours,
   };
 }
 
@@ -602,8 +624,10 @@ async function buildDesiredTimeEntries(
   taskIds,
   hoursByTask,
   currentUser,
-  activities
+  activities,
+  rules = {}
 ) {
+  const logTimeRules = globalThis.TB_LOG_TIME_RULES.normalize(rules);
   const entries = [];
 
   for (const [index, taskId] of taskIds.entries()) {
@@ -615,7 +639,7 @@ async function buildDesiredTimeEntries(
     entries.push({
       taskId,
       hours: hoursByTask[index],
-      activityId: resolveTimeEntryActivityId(taskIssue, currentUser, activities),
+      activityId: resolveTimeEntryActivityId(taskIssue, currentUser, activities, logTimeRules),
     });
   }
 
@@ -637,7 +661,21 @@ function getTimeEntryIssueId(entry) {
   return String(entry?.issue?.id || entry?.issue_id || "");
 }
 
-function resolveTimeEntryActivityId(taskIssue, currentUser, activities) {
+function resolveTimeEntryActivityId(taskIssue, currentUser, activities, rules = {}) {
+  const logTimeRules = globalThis.TB_LOG_TIME_RULES.normalize(rules);
+  if (logTimeRules.activityMode === "default") {
+    const isTesting =
+      /bug/i.test(taskIssue?.tracker?.name || "") && isIssueAuthor(taskIssue, currentUser);
+    const configuredId = isTesting
+      ? logTimeRules.testingActivityId || logTimeRules.defaultActivityId
+      : logTimeRules.defaultActivityId;
+    if (!configuredId) throw new Error("Configure a default time-entry activity.");
+    const activity = activities.find(
+      (item) => Number(item.id) === Number(configuredId) && item.active !== false
+    );
+    if (!activity) throw new Error("Configured time-entry activity is unavailable.");
+    return Number(configuredId);
+  }
   const subject = taskIssue?.subject || "";
   const trackerName = taskIssue?.tracker?.name || "";
   let activityName = "03_Coding";
@@ -654,16 +692,8 @@ function resolveTimeEntryActivityId(taskIssue, currentUser, activities) {
 }
 
 function getActivityIdByName(activities, activityName) {
-  const activity = activities.find((item) => item.name === activityName);
-
-  if (!activity?.id) {
-    const fallbackIds = {
-      "03_Coding": 10,
-      "04_Unit Test": 9,
-    };
-    return fallbackIds[activityName];
-  }
-
+  const activity = activities.find((item) => item.name === activityName && item.active !== false);
+  if (!activity?.id) throw new Error(`Configure activities: ${activityName} is unavailable.`);
   return activity.id;
 }
 

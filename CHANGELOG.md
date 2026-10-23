@@ -1,27 +1,40 @@
 # Changelog - Backlog2Redmine
 
-## [1.8.18] - 2026-09-27
+## [1.8.19] - 2026-10-22
+- **✨ Added**: One Redmine project selector for issue migration and monthly reports.
+- **🔧 Fixed**: Popup setup status now reflects the required API key and AI provider for each sync direction; overall setup accepts either Redmine or Backlog key when an AI provider is selected.
+- **🔧 Fixed**: Apply project-specific issue lookup mode, title delimiter, tracker aliases, and Redmine project restriction; avoid selecting unrelated search results.
+- **🔧 Fixed**: Use the selected log-time rules consistently in previews, confirmations, and pre-write checks.
+- **📝 Docs**: Simplified Options guidance and removed redundant API key and workspace-domain explanations.
+
+
+## [1.8.18] - 2026-10-02
 
 ### Added
-- Synchronize Report time entries through a required preview: add/update/remove logs marked for that Report, explicitly select legacy logs to include, preserve other logs and subtract their hours from the daily budget.
-- Select source and target translation languages; Japanese to Vietnamese remains the default, with automatic source detection available.
-- Label translated comments with the selected target language.
+- Configure independent source/target languages for Backlog → Redmine and extraction, translation, or original-content modes for Redmine → Backlog.
+- Configure daily log-time hours, equal or estimate-based allocation in quarter-hour increments, and API-backed default/testing activities.
+- Select workspace-scoped profile Report projects in the monthly log-time dialog.
 
 ### Fixed
-- Re-read each time entry and save a recovery copy before PUT as well as DELETE; reject updates when the approved issue, date, hours, or entry snapshot no longer matches.
-- Refresh monthly Report previews before each day's write and ask for deletion confirmation immediately before that write, so a long monthly scan does not consume the five-minute approval window.
-- Export recovery copies only for the Redmine origin currently configured in the monthly dialog.
-- Guard time-entry deletion with an exact preview snapshot, current-user/date/origin checks, a five-minute confirmation lifetime, typed deletion confirmation and a local recovery copy before each DELETE. Revalidate in the service worker; stop if backup storage fails. Monthly deletion now includes only B2R-marked entries, and recovery copies can be exported from the monthly dialog.
-- Serialize report synchronization and monthly deletion across tabs on the same Redmine origin using Web Locks; reject overlapping operations.
-- Preserve manual/unselected time entries during Report synchronization; reject stale previews and incomplete time-entry pages. Stop on the first failed write and require a fresh preview before retrying.
-- Upload Backlog attachments before posting comments and retain attachment caches only after successful Redmine writes.
-- Restrict authenticated requests to configured origins and reject redirects.
-- Reserve concurrent AI key slots, fall back during provider cooldowns, and reject truncated translations.
-- Serialize encryption-key initialization and log writes; handle malformed version responses and synchronous message errors.
-- Refresh reverse-sync users correctly, load Redmine markdown previews, and use configured popup links.
+- Resolve Redmine destinations using complete, paginated API results instead of first-page HTML hits; match complete Backlog keys and reject ambiguous matches.
+- Preserve explicitly empty model selections.
+- Distinguish migration attachments by source ID.
+- Accept corrected payloads after confirmed failures while preserving completed work and manually corrected issue mappings.
+- Restore credentials together with domains when content-script registration fails.
+- Remove legacy checkpoints only after successfully storing their replacements.
+- Discard monthly report previews when the selected project changes and block log-time writes if the hours/activity plan changes before confirmation.
+- Remove fixed time-entry activity-ID fallbacks.
 
-### Documentation
-- Refresh cross-platform API guidance and record the four-repository review.
+### Improved
+- Keep the chosen translation language across provider fallback and glossary prompts; use the target language for translated comment collapse labels while preserving existing default directions.
+- Support issue titles without Backlog keys through saved mappings.
+- Compact completed checkpoints and scope operation locks and record decryption to the current workspace.
+- Require loading a glossary before saving, protect unsaved edits and explicit clearing, and disable editing during requests.
+
+### Verification
+- 134 unit tests and 24 browser tests passed, including a real unpacked MV3 extension smoke test.
+- Lint, formatting, version synchronization, and build passed.
+- Live Backlog/Redmine writes were not exercised.
 
 ## [1.8.17] - 2026-09-24
 

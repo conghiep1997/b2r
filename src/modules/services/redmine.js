@@ -1,4 +1,4 @@
-/* global downloadBacklogFile, TB_LOGGER, markdownToTextile */
+/* global downloadBacklogFile, TB_LOGGER, markdownToTextile, TB_SYNC_RULES */
 /**
  * Redmine API Service for Backlog2Redmine Extension.
  * Handles operations with Redmine API: finding issues, sending notes, and uploading files.
@@ -18,38 +18,43 @@ async function findRedmineIssue(
   apiKey,
   issueKey,
   issueSummary = "",
-  backlogIssueType = ""
+  backlogIssueType = "",
+  syncRules = {},
+  projectId = ""
 ) {
-  const normalizedIssueKey = normalizeLoose(issueKey);
-  // Backlog summary is JP; Redmine often appends " / (VN translation)" — match JP only.
-  const normalizedIssueSummary = normalizeLoose(extractJapaneseTitlePart(issueSummary));
-  const preferredTrackers = getPreferredRedmineTrackerNames(backlogIssueType);
-  // Search key and JP title separately. Combining them AND-fails when subject has no key
-  // or when VN translation differs from what was indexed with the JP title.
-  const searchQueries = [issueKey, extractJapaneseTitlePart(issueSummary)].filter(Boolean);
+  const rules = TB_SYNC_RULES.normalize(syncRules);
+  if (rules.restrictToProject && !projectId) {
+    throw new Error("Select a default Redmine project before restricting issue lookup.");
+  }
+  const searchQueries = TB_SYNC_RULES.queries(issueKey, issueSummary, rules);
+  const normalizedIssueKey = rules.searchMode === "title" ? "" : normalizeLoose(issueKey);
+  const normalizedIssueSummary =
+    rules.searchMode === "key" ? "" : normalizeLoose(TB_SYNC_RULES.title(issueSummary, rules));
+  const preferredTrackers = getPreferredRedmineTrackerNames(backlogIssueType, rules);
 
-  try {
-    for (const searchQuery of searchQueries) {
-      const searchUrl = buildRedmineUrl(
-        redmineDomain,
-        `/search?${new URLSearchParams({
-          q: searchQuery,
-          scope: "all",
-          titles_only: "1",
-          issues: "1",
-          commit: "Search",
-        }).toString()}`
-      );
-      const html = await fetchRedmineSearchHtml(searchUrl);
-      const searchResults = extractRedmineSearchResults(html);
-      const bestMatch = pickBestRedmineSearchResult(
-        searchResults,
-        normalizedIssueKey,
-        normalizedIssueSummary,
-        preferredTrackers
-      );
-
-      if (bestMatch) {
+  // HTML search does not reliably expose project IDs, so restricted lookup uses the API.
+  if (!rules.restrictToProject) {
+    try {
+      for (const searchQuery of searchQueries) {
+        const searchUrl = buildRedmineUrl(
+          redmineDomain,
+          `/search?${new URLSearchParams({
+            q: searchQuery,
+            scope: "all",
+            titles_only: "1",
+            issues: "1",
+            commit: "Search",
+          }).toString()}`
+        );
+        const html = await fetchRedmineSearchHtml(searchUrl);
+        const searchResults = extractRedmineSearchResults(html);
+        const bestMatch = pickBestRedmineSearchResult(
+          searchResults,
+          normalizedIssueKey,
+          normalizedIssueSummary,
+          preferredTrackers
+        );
+        if (!bestMatch) continue;
         const matchedTracker = normalizeLoose(
           bestMatch.tracker || extractTrackerFromSearchSubject(bestMatch.subject)
         );
@@ -62,22 +67,24 @@ async function findRedmineIssue(
           normalizedIssueKey,
           normalizedIssueSummary
         );
-
-        // Accept HTML hit when tracker matches, is unknown, or text match is strong enough.
         if (!hasPreference || trackerMatchesPreference || strongTextMatch) {
           return { id: String(bestMatch.id), title: bestMatch.subject };
         }
-        if (!matchedTracker) {
-          // Fall through to next query / API for tracker-aware confirmation
-        }
       }
+    } catch (error) {
+      console.warn("[RedmineService] Search HTML failed, falling back to API:", error.message);
     }
-  } catch (error) {
-    console.warn("[RedmineService] Search HTML failed, falling back to API:", error.message);
   }
 
-  // Fallback to API if HTML search failed
-  return findRedmineIssueViaApi(redmineDomain, apiKey, issueKey, issueSummary, preferredTrackers);
+  return findRedmineIssueViaApi(
+    redmineDomain,
+    apiKey,
+    issueKey,
+    issueSummary,
+    preferredTrackers,
+    rules,
+    rules.restrictToProject ? projectId : ""
+  );
 }
 
 /**
@@ -160,18 +167,28 @@ async function findRedmineIssueViaApi(
   apiKey,
   issueKey,
   issueSummary = "",
-  preferredTrackers = []
+  preferredTrackers = [],
+  syncRules = {},
+  projectId = ""
 ) {
-  const normalizedIssueKey = normalizeLoose(issueKey);
-  const normalizedIssueSummary = normalizeLoose(extractJapaneseTitlePart(issueSummary));
-  const subjectQueries = [issueKey, extractJapaneseTitlePart(issueSummary)].filter(Boolean);
+  const rules = TB_SYNC_RULES.normalize(syncRules);
+  if (rules.restrictToProject && !projectId) {
+    throw new Error("Select a default Redmine project before restricting issue lookup.");
+  }
+  const normalizedIssueKey = rules.searchMode === "title" ? "" : normalizeLoose(issueKey);
+  const normalizedIssueSummary =
+    rules.searchMode === "key" ? "" : normalizeLoose(TB_SYNC_RULES.title(issueSummary, rules));
+  const subjectQueries = TB_SYNC_RULES.queries(issueKey, issueSummary, rules);
   const seenIds = new Set();
   const issues = [];
 
   for (const subjectQuery of subjectQueries) {
-    const batch = await fetchIssuesBySubjectQuery(redmineDomain, apiKey, subjectQuery);
+    const batch = await fetchIssuesBySubjectQuery(redmineDomain, apiKey, subjectQuery, projectId);
     for (const issue of batch) {
-      if (!seenIds.has(issue.id)) {
+      if (
+        (!rules.restrictToProject || String(issue.project?.id) === String(projectId)) &&
+        !seenIds.has(issue.id)
+      ) {
         seenIds.add(issue.id);
         issues.push(issue);
       }
@@ -185,66 +202,73 @@ async function findRedmineIssueViaApi(
     }
   }
 
-  if (issues.length === 0) {
-    return null;
-  }
-
+  if (!issues.length) return null;
   const bestMatch = pickBestRedmineSearchResult(
-    issues.map((i) => ({
-      id: i.id,
-      subject: i.subject,
-      tracker: i.tracker?.name || "",
+    issues.map((issue) => ({
+      id: issue.id,
+      subject: issue.subject,
+      tracker: issue.tracker?.name || "",
     })),
     normalizedIssueKey,
     normalizedIssueSummary,
     preferredTrackers
   );
-
-  if (!bestMatch) {
-    return null;
-  }
-  return { id: String(bestMatch.id), title: bestMatch.subject };
+  return bestMatch ? { id: String(bestMatch.id), title: bestMatch.subject } : null;
 }
 
-async function fetchIssuesBySubjectQuery(redmineDomain, apiKey, subjectQuery) {
-  // Use contains (~) and all statuses — same pattern as report-log-time lookup.
+async function fetchIssuesBySubjectQuery(redmineDomain, apiKey, subjectQuery, projectId = "") {
+  const params = { subject: `~${subjectQuery}`, status_id: "*", limit: "25" };
+  if (projectId) params.project_id = String(projectId);
   const url = buildRedmineUrl(
     redmineDomain,
-    `/issues.json?${new URLSearchParams({
-      subject: `~${subjectQuery}`,
-      status_id: "*",
-      limit: "25",
-    }).toString()}`
+    `/issues.json?${new URLSearchParams(params).toString()}`
   );
-  const response = await fetch(url, {
-    redirect: "error",
-    headers: { "X-Redmine-API-Key": apiKey, Accept: "application/json" },
-  });
-
+  const response = await timeoutFetch(
+    url,
+    {
+      redirect: "error",
+      headers: { "X-Redmine-API-Key": apiKey, Accept: "application/json" },
+    },
+    15000
+  );
   if (!response.ok) {
     throw new Error(`${TB.MESSAGES.REDMINE.LOOKUP_FAILED}: ${response.status}`);
   }
-
   const data = await safeReadJson(response);
   return Array.isArray(data?.issues) ? data.issues : [];
 }
 
 async function handleSendToRedmine(
-  { redmineIssueId, notes, backlogIssueKey, processedAttachments = null },
+  {
+    redmineIssueId,
+    notes,
+    backlogIssueKey,
+    processedAttachments = null,
+    settingsOverride,
+    syncMarker,
+    onBeforeSubmit,
+  },
   sender
 ) {
   // Send note to Redmine issue, including image processing
-  const settings = await getSettings();
+  const settings = settingsOverride || (await getSettings());
   const backlogDomain = sender?.tab?.url ? new URL(sender.tab.url).hostname : null;
   const stagedAttachments = processedAttachments ? new Map(processedAttachments) : null;
   // Process attachments: download from Backlog, upload to Redmine
-  const { updatedNotes, uploads } = await processNotesAttachments(
-    notes,
-    backlogDomain,
-    settings,
-    backlogIssueKey,
-    stagedAttachments
-  );
+  let processedNotes;
+  try {
+    processedNotes = await processNotesAttachments(
+      syncMarker ? `${notes}\n\n${syncMarker}` : notes,
+      backlogDomain,
+      settings,
+      backlogIssueKey,
+      stagedAttachments
+    );
+  } catch (error) {
+    error.definitelyNotSent = true;
+    throw error;
+  }
+  const { updatedNotes, uploads } = processedNotes;
 
   // Modal edits/preview use Markdown; Redmine notes use Textile.
   const textileNotes =
@@ -258,16 +282,23 @@ async function handleSendToRedmine(
     },
   };
 
-  const response = await fetch(endpoint, {
-    method: "PUT",
-    redirect: "error",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Redmine-API-Key": settings.redmineApiKey,
-      Accept: "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
+  await onBeforeSubmit?.();
+  let response;
+  try {
+    response = await fetch(endpoint, {
+      method: "PUT",
+      redirect: "error",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Redmine-API-Key": settings.redmineApiKey,
+        Accept: "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+  } catch (error) {
+    error.definitelyNotSent = false;
+    throw error;
+  }
 
   if (!response.ok) {
     const errorMsg = await readErrorMessage(response);
@@ -277,9 +308,11 @@ async function handleSendToRedmine(
         redmineResponse: errorMsg,
       });
     }
-    throw new Error(
+    const submitError = new Error(
       `${TB.MESSAGES.REDMINE.SEARCH_PAGE_ERROR}: ${sanitizeErrorMessage(errorMsg, response.status)}`
     );
+    submitError.status = response.status;
+    throw submitError;
   }
 
   const responseData = await safeReadJson(response);
@@ -296,17 +329,32 @@ async function handleSendToRedmine(
   };
 }
 
-async function handleCreateRedmineIssue({ issueData, comments }) {
-  const settings = await getSettings();
-  const processedAttachments = new Map();
-
-  const { updatedNotes: updatedDescription, uploads: descUploads } = await processNotesAttachments(
-    issueData.description || "",
-    null, // Pass null, let the function grab from settings
-    settings,
-    issueData.backlogIssueKey,
-    processedAttachments
-  );
+async function handleCreateRedmineIssue({
+  issueData,
+  comments,
+  settingsOverride,
+  migrationMarker,
+  processedAttachments: sharedAttachments = null,
+  onBeforeSubmit,
+}) {
+  const settings = settingsOverride || (await getSettings());
+  const processedAttachments = sharedAttachments || new Map();
+  let descriptionAttachments;
+  try {
+    descriptionAttachments = await processNotesAttachments(
+      migrationMarker
+        ? `${issueData.description || ""}\n\n${migrationMarker}`
+        : issueData.description || "",
+      null, // Pass null, let the function grab from settings
+      settings,
+      issueData.backlogIssueKey,
+      processedAttachments
+    );
+  } catch (error) {
+    error.definitelyNotSent = true;
+    throw error;
+  }
+  const { updatedNotes: updatedDescription, uploads: descUploads } = descriptionAttachments;
 
   const textileDescription =
     typeof markdownToTextile === "function"
@@ -330,6 +378,7 @@ async function handleCreateRedmineIssue({ issueData, comments }) {
   };
 
   try {
+    await onBeforeSubmit?.();
     const response = await fetch(createUrl, {
       method: "POST",
       redirect: "error",
@@ -345,6 +394,7 @@ async function handleCreateRedmineIssue({ issueData, comments }) {
       const errorMsg = await readErrorMessage(response);
       const createError = new Error(errorMsg);
       createError.status = response.status;
+      createError.definitelyNotSent = response.status >= 400 && response.status < 500;
       throw createError;
     }
 
@@ -401,12 +451,15 @@ async function handleCreateRedmineIssue({ issueData, comments }) {
       });
     }
     // Rethrow a user-friendly error
-    throw new Error(
+    const userError = new Error(
       `${TB.MESSAGES.REDMINE.API_REQUEST_FAILED}: ${sanitizeErrorMessage(
         error.message,
         error.status || 500
       )}`
     );
+    userError.status = error.status;
+    userError.definitelyNotSent = error.definitelyNotSent;
+    throw userError;
   }
 }
 
@@ -433,10 +486,13 @@ async function fetchRedmineSearchHtml(searchUrl) {
  * Map Backlog issue type to preferred Redmine tracker name aliases.
  * QA → Q/A; Bug/CR/Task when known; 要望* → Task; empty/unknown → no preference.
  */
-function getPreferredRedmineTrackerNames(backlogIssueType = "") {
+function getPreferredRedmineTrackerNames(backlogIssueType = "", syncRules = {}) {
   const type = String(backlogIssueType || "")
     .trim()
     .toLowerCase();
+  if (Object.hasOwn(syncRules.trackerAliases || {}, type)) {
+    return syncRules.trackerAliases[type];
+  }
   if (!type) {
     return [];
   }
@@ -609,7 +665,7 @@ function pickBestRedmineSearchResult(
     }
   }
 
-  return scored[0]?.score > 0 ? scored[0].item : results[0];
+  return scored[0]?.score > 0 ? scored[0].item : null;
 }
 
 /**
@@ -646,11 +702,20 @@ async function processNotesAttachments(
   const imagePattern = /\[\[TB_IMG:\s*(\d+)\s*\]\]/g;
   const filePattern = /\[\[TB_FILE:\s*(\d+)\s*:\s*([^\]]+?)\s*\]\]/g;
 
+  const prefix = settings.attachmentIdentityPrefix;
+  const stableFilename = (filename, attachmentId) => {
+    if (!prefix) return filename;
+    const dot = filename.lastIndexOf(".");
+    const stem = dot > 0 ? filename.slice(0, dot) : filename;
+    const extension = dot > 0 ? filename.slice(dot) : "";
+    return `${stem}__b2r_${prefix}_${attachmentId}${extension}`;
+  };
+
   for (const match of notes.matchAll(imagePattern)) {
     const attachmentId = match[1];
     if (!attachmentRegistry.has(attachmentId)) {
       attachmentRegistry.set(attachmentId, {
-        filename: `image_${attachmentId}.png`,
+        filename: stableFilename(`image_${attachmentId}.png`, attachmentId),
         isImageOnly: true,
       });
     }
@@ -658,7 +723,7 @@ async function processNotesAttachments(
 
   for (const match of notes.matchAll(filePattern)) {
     const attachmentId = match[1];
-    const filename = match[2].trim();
+    const filename = stableFilename(match[2].trim(), attachmentId);
     if (!attachmentRegistry.has(attachmentId)) {
       attachmentRegistry.set(attachmentId, { filename, isImageOnly: false });
     }
