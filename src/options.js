@@ -688,26 +688,34 @@ document.addEventListener("DOMContentLoaded", async () => {
     settings.projectProfiles = await encryptData(JSON.stringify(projectProfiles));
 
     try {
-      const globalPolicy = TB_OPTIONS_PROJECT_PROFILES.readGlobal();
-      if (globalPolicy) {
-        if (globalPolicy.syncRules) settings.syncRules = globalPolicy.syncRules;
-        if (globalPolicy.translationRules) {
-          settings.translationRules = globalPolicy.translationRules;
-          settings.translationSourceLanguage = globalPolicy.translationRules.source;
-          settings.translationTargetLanguage = globalPolicy.translationRules.target;
+      const validatedGlobalPolicy = TB_OPTIONS_PROJECT_PROFILES.readGlobal();
+      if (validatedGlobalPolicy) {
+        if (validatedGlobalPolicy.syncRules) {
+          settings.syncRules = validatedGlobalPolicy.syncRules;
         }
-        if (globalPolicy.logTimeRules) settings.logTimeRules = globalPolicy.logTimeRules;
-        if (globalPolicy.customFields) settings.customFields = globalPolicy.customFields;
-        if (globalPolicy.manualFields) settings.manualFields = globalPolicy.manualFields;
+        if (validatedGlobalPolicy.translationRules) {
+          settings.translationRules = validatedGlobalPolicy.translationRules;
+          settings.translationSourceLanguage = validatedGlobalPolicy.translationRules.source;
+          settings.translationTargetLanguage = validatedGlobalPolicy.translationRules.target;
+        }
+        if (validatedGlobalPolicy.logTimeRules) {
+          settings.logTimeRules = validatedGlobalPolicy.logTimeRules;
+        }
+        if (validatedGlobalPolicy.customFields) {
+          settings.customFields = validatedGlobalPolicy.customFields;
+        }
+        if (validatedGlobalPolicy.manualFields) {
+          settings.manualFields = validatedGlobalPolicy.manualFields;
+        }
       }
     } catch (policyError) {
       console.warn("[OPTIONS] Error reading global policy:", policyError);
     }
 
     try {
-      const projectProfiles = TB_OPTIONS_PROJECT_PROFILES.readProfiles();
-      if (projectProfiles) {
-        settings.projectProfiles = await encryptData(JSON.stringify(projectProfiles));
+      const validatedProjectProfiles = TB_OPTIONS_PROJECT_PROFILES.readProfiles();
+      if (validatedProjectProfiles) {
+        settings.projectProfiles = await encryptData(JSON.stringify(validatedProjectProfiles));
       }
     } catch (profileError) {
       console.warn("[OPTIONS] Error reading project profiles:", profileError);
