@@ -7,7 +7,12 @@ let toastElement = null;
 
 function showToast(message, type = "info") {
   ensureToastShell();
-  toastElement.textContent = message;
+  const text = String(message ?? "")
+    .replace(/\s+/g, " ")
+    .trim();
+  const characters = Array.from(text);
+  toastElement.textContent =
+    characters.length > 220 ? `${characters.slice(0, 217).join("")}…` : text;
   toastElement.dataset.type = type;
   toastElement.hidden = false;
   requestAnimationFrame(() => toastElement.classList.add("tb-toast--visible"));

@@ -1,3 +1,8 @@
+---
+name: ai-integration
+description: Maintain B2R translation providers, language prompts, encrypted settings, retries and cooldowns.
+---
+
 # name
 ai-integration
 
@@ -25,3 +30,10 @@ Guidance for Backlog2Redmine AI translation providers, model selection, prompts,
 - Options page masking and encrypted persistence still work.
 - New provider endpoints are covered by manifest host permissions if needed.
 - User-facing errors are sanitized and actionable.
+
+## Review invariants
+
+- Keep Japanese to Vietnamese as the migration default when stored language settings are missing.
+- Apply selected languages to forward translation while preserving the separate reverse Japanese-extraction contract.
+- Reserve key/model rotation slots before awaiting network calls. A primary provider with all slots cooling down must still permit fallback.
+- Treat provider length-limit finish reasons as failures, not complete translations. Sanitize structured error payloads before displaying them.

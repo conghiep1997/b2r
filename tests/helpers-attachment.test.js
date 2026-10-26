@@ -62,3 +62,23 @@ test("buildRedmineUploadUrl includes encoded filename query param", () => {
   assert.equal(parsed.pathname.endsWith("/uploads.json"), true);
   assert.equal(parsed.searchParams.get("filename"), "3653_API呼び出しあり.mp4");
 });
+
+test("Redmine URLs preserve same-origin paths and reject credential leaks", () => {
+  const { buildRedmineUrl } = loadHelpers();
+  assert.equal(
+    buildRedmineUrl("https://redmine.example.test", "/issues/1.json"),
+    "https://redmine.example.test/issues/1.json"
+  );
+  for (const target of [
+    "https://foreign.example.test/issues.json",
+    "///foreign.example.test/issues.json",
+    "\\\\foreign.example.test/issues.json",
+    "https://user:pass@redmine.example.test/issues.json",
+    "javascript:alert(1)",
+  ]) {
+    assert.throws(
+      () => buildRedmineUrl("https://redmine.example.test", target),
+      /configured origin/
+    );
+  }
+});

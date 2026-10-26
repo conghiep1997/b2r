@@ -245,6 +245,7 @@ function injectStyles() {
     .tb-btn-primary:disabled { background: #94a3b8; transform: none; box-shadow: none; cursor: not-allowed; }
     .tb-btn-secondary { background: #fff; color: #475569; border: 1px solid #e2e8f0; }
     .tb-btn-secondary:hover { background: #f1f5f9; }
+    .tb-btn-secondary:disabled { background: #f8fafc; color: #94a3b8; border-color: #e2e8f0; box-shadow: none; cursor: not-allowed; opacity: 0.7; }
     .tb-btn-danger {
       background: #dc2626;
       color: #ffffff;
@@ -373,8 +374,10 @@ function injectStyles() {
       backdrop-filter: blur(3px);
     }
     .tb-monthly-log-dialog {
-      width: min(1040px, 100%);
-      max-height: 88vh;
+      width: min(1340px, 96vw);
+      height: 86vh;
+      min-height: 580px;
+      max-height: 90vh;
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -442,18 +445,22 @@ function injectStyles() {
       cursor: not-allowed;
     }
     .tb-monthly-log-body {
-      padding: 18px 22px;
-      overflow: auto;
+      flex: 1;
+      min-height: 0;
+      padding: 16px 20px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
     .tb-monthly-log-stats {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 10px;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
     .tb-monthly-log-stats div {
-      min-height: 70px;
-      padding: 12px 14px;
+      min-height: 64px;
+      padding: 10px 12px;
       background: #f8fafc;
       border: 1px solid #e2e8f0;
       border-radius: 8px;
@@ -461,22 +468,24 @@ function injectStyles() {
     .tb-monthly-log-stats span {
       display: block;
       color: #0f172a;
-      font-size: 24px;
+      font-size: 22px;
       font-weight: 700;
       line-height: 1.1;
     }
     .tb-monthly-log-stats small {
       display: block;
-      margin-top: 6px;
+      margin-top: 4px;
       color: #64748b;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 600;
     }
     .tb-monthly-log-grid {
       display: grid;
-      grid-template-columns: minmax(260px, 0.9fr) minmax(380px, 1.1fr);
+      grid-template-columns: 290px 1fr;
       gap: 14px;
-      min-height: 300px;
+      flex: 1;
+      min-height: 0;
+      height: 100%;
     }
     .tb-monthly-log-panel {
       min-width: 0;
@@ -484,9 +493,20 @@ function injectStyles() {
       border-radius: 8px;
       overflow: hidden;
       background: #ffffff;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-height: 0;
     }
     .tb-monthly-log-panel-title {
-      padding: 10px 12px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 7px 12px;
+      min-height: 38px;
+      box-sizing: border-box;
       background: #f8fafc;
       border-bottom: 1px solid #e2e8f0;
       color: #334155;
@@ -494,11 +514,109 @@ function injectStyles() {
       font-weight: 700;
       text-transform: uppercase;
     }
+    .tb-bulk-activity-toolbar {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      text-transform: none;
+      font-weight: 400;
+      background: #ffffff;
+      padding: 3px 4px 3px 8px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+    }
+    .tb-bulk-activity-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      height: 26px;
+      margin: 0;
+      font-size: 11px;
+      font-weight: 600;
+      color: #334155;
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+      line-height: 1;
+    }
+    .tb-bulk-activity-icon {
+      font-size: 13px;
+      line-height: 1;
+      color: #f59e0b;
+      display: inline-flex;
+      align-items: center;
+    }
+    .tb-bulk-activity-select {
+      height: 26px;
+      box-sizing: border-box;
+      padding: 0 8px;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+      color: #1e293b;
+      background: #f8fafc;
+      cursor: pointer;
+      max-width: 170px;
+      line-height: 24px;
+      transition: all 0.15s ease;
+    }
+    .tb-bulk-activity-select:hover {
+      border-color: #94a3b8;
+      background: #ffffff;
+    }
+    .tb-bulk-activity-select:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+      background: #ffffff;
+    }
+    .tb-bulk-activity-btn {
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      height: 26px !important;
+      box-sizing: border-box !important;
+      padding: 0 10px !important;
+      font-size: 11px !important;
+      font-weight: 600 !important;
+      border-radius: 4px !important;
+      background: #2563eb !important;
+      color: #ffffff !important;
+      border: 1px solid #2563eb !important;
+      cursor: pointer;
+      white-space: nowrap;
+      box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2) !important;
+      transition: all 0.15s ease;
+      line-height: 24px !important;
+    }
+    .tb-bulk-activity-btn:hover:not(:disabled) {
+      background: #1d4ed8 !important;
+      border-color: #1d4ed8 !important;
+      box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3) !important;
+    }
+    .tb-bulk-activity-btn:active:not(:disabled) {
+      transform: translateY(1px);
+    }
+    .tb-bulk-activity-btn:disabled {
+      opacity: 0.55 !important;
+      cursor: not-allowed !important;
+      box-shadow: none !important;
+    }
+    .tb-bulk-activity-btn.tb-btn-success {
+      background: #10b981 !important;
+      border-color: #10b981 !important;
+      color: #ffffff !important;
+      box-shadow: 0 1px 2px rgba(16, 185, 129, 0.2) !important;
+    }
     .tb-monthly-log-progress {
-      height: 330px;
+      flex: 1;
+      min-height: 0;
+      height: 100%;
       margin: 0;
       padding: 10px 12px;
-      overflow: auto;
+      overflow-y: auto;
       color: #334155;
       font-size: 12px;
       line-height: 1.5;
@@ -544,41 +662,174 @@ function injectStyles() {
       border-left-color: #ef4444;
     }
     .tb-monthly-log-table-wrap {
-      max-height: 52vh;
-      overflow: auto;
+      flex: 1;
+      min-height: 0;
+      height: 100%;
+      overflow-y: auto;
     }
-    .tb-monthly-log-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 12px;
+    .tb-monthly-log-table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
+    .tb-monthly-log-table col.col-date   { width: 88px; }
+    .tb-monthly-log-table col.col-report { width: 180px; }
+    .tb-monthly-log-table col.col-tasks  { width: auto; }
+    .tb-monthly-log-table col.col-status { width: 100px; }
+    .tb-monthly-log-table th, .tb-monthly-log-table td {
+      padding: 8px 10px; border-bottom: 1px solid #edf2f7; text-align: left; vertical-align: top;
     }
-    .tb-monthly-log-table th,
-    .tb-monthly-log-table td {
-      padding: 9px 10px;
-      border-bottom: 1px solid #edf2f7;
-      text-align: left;
-      vertical-align: top;
+    .tb-monthly-log-table th:last-child,
+    .tb-monthly-log-table td:last-child {
+      text-align: center;
     }
     .tb-monthly-log-table th {
-      position: sticky;
-      top: 0;
-      background: #f8fafc;
-      color: #475569;
-      font-weight: 700;
-      z-index: 1;
+      position: sticky; top: 0; background: #f8fafc; color: #475569; font-weight: 700; z-index: 1;
     }
-    .tb-monthly-log-table td:nth-child(2) {
+    .tb-monthly-log-table td:nth-child(2) { word-break: break-word; }
+    /* Task list & cards */
+    .tb-task-list { display: flex; flex-direction: column; gap: 5px; }
+    .tb-task-card {
+      padding: 6px 8px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .tb-task-name {
+      font-size: 11.5px;
+      font-weight: 500;
+      color: #0f172a;
       word-break: break-word;
+      line-height: 1.45;
     }
-    .tb-monthly-log-table td:nth-child(3) {
-      white-space: pre-line;
+    .tb-task-meta-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 2px;
     }
-    .tb-monthly-log-row-warning td {
-      color: #9a3412;
-      background: #fff7ed;
+    .tb-activity-select {
+      flex: 1;
+      max-width: 220px;
+      padding: 2px 4px;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      font-size: 11px;
+      color: #1d4ed8;
+      background: #eff6ff;
+      cursor: pointer;
     }
-    .tb-monthly-log-table tbody tr:nth-child(even):not(.tb-monthly-log-row-warning) {
+    .tb-activity-select:focus { outline: 2px solid #3b82f6; outline-offset: 1px; }
+    .tb-task-list-summary {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+      padding: 3px 6px;
       background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      border-radius: 6px;
+      margin-top: 2px;
+    }
+    .tb-task-summary-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #64748b;
+    }
+    /* Hours badges */
+    .tb-hours-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      min-width: 42px; height: 26px;
+      font-size: 12px; font-weight: 700; color: #065f46;
+      background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 6px;
+      padding: 2px 6px; text-align: center; white-space: nowrap;
+    }
+    .tb-hours-total {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 2px 7px; border-radius: 5px; font-size: 11.5px; font-weight: 700;
+      background: #f0fdf4; color: #166534; border: 1px solid #86efac;
+    }
+    /* Status badges */
+    .tb-status-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11.5px;
+      font-weight: 600;
+      line-height: 1.3;
+      white-space: nowrap;
+      text-align: center;
+      max-width: 100%;
+      box-sizing: border-box;
+      cursor: default;
+    }
+    .tb-status-badge--ready {
+      background: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+    .tb-status-badge--warning {
+      background: #fff7ed;
+      color: #9a3412;
+      border: 1px solid #fdba74;
+    }
+    .tb-status-badge--full {
+      background: #f1f5f9;
+      color: #475569;
+      border: 1px solid #cbd5e1;
+    }
+    .tb-status-badge--empty {
+      background: #f8fafc;
+      color: #94a3b8;
+      border: 1px solid #e2e8f0;
+    }
+    .tb-status-badge--error {
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fca5a5;
+    }
+    .tb-status-badge--success {
+      background: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+    /* Warning row overrides */
+    .tb-monthly-log-row-warning td { color: #9a3412; background: #fff7ed; }
+    .tb-monthly-log-row-warning .tb-task-card { background: #fef3c7; border-color: #fcd34d; }
+    .tb-monthly-log-row-warning .tb-activity-select { background: #fff7ed; border-color: #fdba74; color: #9a3412; }
+    .tb-monthly-log-row-warning .tb-hours-badge { background: #fff7ed; border-color: #fdba74; color: #9a3412; }
+    .tb-monthly-log-row-warning .tb-hours-total { background: #fff7ed; border-color: #fdba74; color: #9a3412; }
+    .tb-monthly-log-row-warning .tb-task-list-summary { background: #fef3c7; border-color: #fcd34d; }
+    /* Result row styling (after Start runs) */
+    .tb-result-row-success td { background: #f0fdf4; color: #166534; }
+    .tb-result-row-partial td { background: #fff7ed; color: #9a3412; }
+    .tb-monthly-log-table tbody tr:nth-child(even):not(.tb-monthly-log-row-warning):not(.tb-result-row-success):not(.tb-result-row-partial) { background: #f8fafc; }
+    /* Clickable issue links */
+    .tb-issue-link {
+      color: #2563eb;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.15s;
+    }
+    .tb-issue-link:hover {
+      color: #1d4ed8;
+      text-decoration: underline;
+    }
+    .tb-monthly-log-row-warning .tb-issue-link {
+      color: #b45309;
+    }
+    .tb-monthly-log-row-warning .tb-issue-link:hover {
+      color: #92400e;
+    }
+    /* Empty state */
+    .tb-table-empty-state {
+      text-align: center !important;
+      padding: 56px 20px !important;
+      color: #94a3b8;
+      font-size: 13px;
     }
     .tb-monthly-log-footer {
       display: flex;

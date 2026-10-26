@@ -10,11 +10,23 @@
     <main class="popup-shell">
       <header class="popup-header">
         <img class="brand-icon" src="../assets/icons/icon-48.png" alt="B2R" />
-        <div>
+        <div class="popup-header-info">
           <h1>Backlog to Redmine</h1>
           <p data-i18n="popup_subtitle"></p>
         </div>
-        <span id="version" class="version"></span>
+        <div class="header-right">
+          <span id="version" class="version"></span>
+          <button
+            id="donateButton"
+            type="button"
+            class="header-donate-btn"
+            title="Ủng hộ tác giả"
+            data-i18n-title="popup_donate"
+            aria-label="Donate"
+          >
+            ♥
+          </button>
+        </div>
       </header>
 
       <section class="status-card" aria-labelledby="statusTitle">
@@ -55,27 +67,14 @@
           <span class="project-icon">⌁</span>
         </div>
         <div class="project-details">
-          <div>
-            <span data-i18n="popup_source"></span
-            ><strong><i class="mini-icon">◈</i> Backlog</strong>
-          </div>
-          <div>
-            <span data-i18n="popup_target"></span
-            ><strong><i class="mini-icon">◉</i> Redmine</strong>
-          </div>
-          <div>
-            <span data-i18n="popup_default_project"></span
-            ><strong id="defaultProjectValue"></strong>
-          </div>
+          <span data-i18n="popup_default_project"></span>
+          <strong id="defaultProjectValue"></strong>
         </div>
       </section>
 
       <div class="actions">
-        <button id="openSettings" class="button button-primary">
-          <span class="button-icon">⚙</span> <span data-i18n="popup_open_settings"></span>
-        </button>
-        <button id="donateButton" class="button button-donate">
-          <span class="button-icon">♥</span> <span data-i18n="popup_donate"></span>
+        <button id="openMonthlyLog" class="button button-featured-main">
+          <span class="button-icon">⏱️</span> <span data-i18n="popup_log_time_month"></span>
         </button>
       </div>
 
@@ -84,8 +83,8 @@
         aria-label="Thao tác nhanh"
         data-i18n-aria-label="popup_quick_actions"
       >
-        <button id="openMonthlyLog" class="link-button link-button-featured">
-          <span class="link-icon">◷</span> <span data-i18n="popup_log_time_month"></span>
+        <button id="openSettings" class="link-button link-button-settings">
+          <span class="link-icon">⚙</span> <span data-i18n="popup_open_settings"></span>
         </button>
         <button id="openRedmine" class="link-button">
           <span class="link-icon">↗</span> <span data-i18n="popup_open_redmine"></span>

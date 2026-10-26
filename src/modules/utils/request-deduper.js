@@ -18,7 +18,6 @@
       return JSON.stringify([
         type,
         senderScope,
-        senderScope,
         message.backlogIssueKey,
         message.content,
         message.notifiedUserId || [],

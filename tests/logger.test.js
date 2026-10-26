@@ -41,3 +41,40 @@ test("sanitizes existing log collections", () => {
   assert.equal(logs.length, 1);
   assert.equal(logs[0].message.includes("old-secret"), false);
 });
+
+test("worker logs persist locally and concurrent writes do not lose entries", async () => {
+  let storage = {};
+  const worker = vm.createContext({
+    console,
+    chrome: {
+      runtime: {
+        sendMessage() {
+          throw new Error("Worker must not message itself");
+        },
+      },
+      storage: {
+        local: {
+          async get() {
+            return structuredClone(storage);
+          },
+          async set(values) {
+            storage = structuredClone(values);
+          },
+          async remove() {
+            storage = {};
+          },
+        },
+      },
+    },
+  });
+  vm.runInContext(source, worker);
+  await Promise.all(
+    Array.from({ length: 10 }, (_, index) =>
+      worker.TB_LOGGER.logError("Background", `failure ${index}`)
+    )
+  );
+  assert.equal(storage.errorLogs.length, 10);
+  assert.equal(new Set(storage.errorLogs.map((entry) => entry.message)).size, 10);
+  await worker.TB_LOGGER.clearLogs();
+  assert.equal((await worker.TB_LOGGER.getLogs()).length, 0);
+});

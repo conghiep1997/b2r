@@ -3,7 +3,7 @@
  * Loads modules and coordinates message handling between content scripts and external APIs.
  */
 
-/* global TB_LOGGER, TB_SYNC_ACTIVITY, getBacklogIssueInfo, getBacklogUsers, testModelAvailability */
+/* global TB_LOGGER, TB_SYNC_ACTIVITY, TB_SYNC_STATE, TB_COMMENT_SYNC, TB_MIGRATION, TB_PROJECT_PROFILES, TB_GLOSSARY, TB_SYNC_RULES, TB_LOG_TIME_RULES, TB_CUSTOM_FIELDS, getUserStorageId, getBacklogIssueInfo, getBacklogUsers, testModelAvailability, deleteTimeEntry, updateTimeEntry */
 
 importScripts(
   "modules/utils/version.js",
@@ -11,6 +11,8 @@ importScripts(
   "modules/utils/message-validation.js",
   "modules/utils/request-deduper.js",
   "modules/utils/sync-activity.js",
+  "modules/utils/sync-rules.js",
+  "modules/utils/custom-fields.js",
   "modules/utils/redmine-domain.js",
   "modules/constants/models.js",
   "modules/constants/icons.js",
@@ -18,11 +20,16 @@ importScripts(
   "constants.js",
   "modules/utils/helpers.js",
   "modules/utils/crypto.js",
+  "modules/services/sync-state.js",
+  "modules/utils/project-profiles.js",
   "modules/utils/logger.js",
   "modules/utils/markdown.js",
   "modules/services/ai.js",
   "modules/services/redmine.js",
-  "modules/services/backlog.js"
+  "modules/services/backlog.js",
+  "modules/services/migration.js",
+  "modules/services/comment-sync.js",
+  "modules/services/glossary.js"
 );
 
 const DEBUG_PREFIX = "[TB-BG]";
@@ -183,20 +190,116 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   const handlers = {
     OPEN_OPTIONS_PAGE: () => chrome.runtime.openOptionsPage(),
-    GET_UI_SETTINGS: async () => {
-      assertTrustedExtensionPageSender(sender, await getSettings());
-      return TB_SETTINGS_VIEW.forUi(await getSettings());
+    GET_UI_SETTINGS: async (msg) => {
+      const settings = await getSettings();
+      assertTrustedExtensionPageSender(sender, settings);
+      const scoped = msg.issueKey
+        ? TB_PROJECT_PROFILES.forBacklog(settings, msg.issueKey)
+        : settings;
+      return TB_SETTINGS_VIEW.forUi(scoped);
     },
-    GET_REPORT_SETTINGS: async () => {
+    GET_REPORT_SETTINGS: async (msg) => {
       const settings = await getSettings();
       assertTrustedRedmineSender(sender, settings.redmineDomain);
-      return TB_SETTINGS_VIEW.forReport(settings);
+      const reportProjectId = msg.reportProjectId || settings.reportProjectId || "";
+      if (!msg.reportProjectId && !msg.profileKey && !msg.globalProfile) {
+        return TB_SETTINGS_VIEW.forReport(settings);
+      }
+      const profiles = TB_PROJECT_PROFILES.current(settings).filter(
+        (profile) =>
+          String(profile.reportProjectId || profile.redmineProjectId) === String(reportProjectId)
+      );
+      const selectedProfile = msg.profileKey
+        ? profiles.find((profile) => profile.backlogProjectKey === msg.profileKey)
+        : null;
+      if (msg.profileKey && !selectedProfile) {
+        throw new Error("Selected report project profile is no longer available.");
+      }
+      if (!msg.profileKey && !msg.globalProfile && profiles.length > 1) {
+        const policies = new Set(
+          profiles.map((profile) =>
+            JSON.stringify(profile.overrides.logTimeRules || settings.logTimeRules)
+          )
+        );
+        if (policies.size > 1) {
+          throw new Error("Select a report profile before loading its settings.");
+        }
+      }
+      const profile = selectedProfile || profiles[0] || null;
+      const scoped =
+        !msg.globalProfile && profile
+          ? TB_PROJECT_PROFILES.forBacklog(settings, `${profile.backlogProjectKey}-1`)
+          : settings;
+      return TB_SETTINGS_VIEW.forReport({
+        ...scoped,
+        reportProjectId,
+      });
+    },
+    GET_PROJECT_GLOSSARY: async ({ projectKey }) => {
+      assertOptionsSender(sender);
+      return TB_GLOSSARY.get(await getSettings(), projectKey);
+    },
+    SAVE_PROJECT_GLOSSARY: async ({ projectKey, entries }) => {
+      assertOptionsSender(sender);
+      return TB_GLOSSARY.save(await getSettings(), projectKey, entries);
+    },
+    GET_CRYPTO_STORAGE_ID: async () => {
+      assertOptionsSender(sender);
+      return getUserStorageId();
     },
     LOG_ERROR: ({ log }) => TB_LOGGER?.saveLogToStorage(log),
     RECORD_SYNC_ACTIVITY: ({ entry }) => TB_SYNC_ACTIVITY.record(entry),
     CLEAR_SYNC_ACTIVITY: async () => {
       assertOptionsSender(sender);
       await TB_SYNC_ACTIVITY.clear();
+    },
+    LIST_SYNC_RECOVERY: async () => {
+      assertOptionsSender(sender);
+      const settings = await getSettings();
+      return (await TB_SYNC_STATE.list(settings)).map((record) => ({
+        kind: record.kind,
+        recordId: record.identity,
+        issueKey: record.kind === "comment" ? record.request?.backlogIssueKey : record.identity,
+        issueId: record.issueId || record.request?.redmineIssueId || "",
+        state: record.state || "complete",
+        completed: record.completed?.length || 0,
+        total: record.total ?? record.comments?.length ?? 0,
+        uncertain:
+          record.state === "sending" ||
+          (record.pendingComment !== null && record.pendingComment !== undefined),
+      }));
+    },
+    RESUME_COMMENT_SYNC: async ({ recordId }) => {
+      assertOptionsSender(sender);
+      return TB_COMMENT_SYNC.resume(await getSettings(), recordId);
+    },
+    RESOLVE_COMMENT_SYNC: async ({ recordId }) => {
+      assertOptionsSender(sender);
+      return TB_COMMENT_SYNC.resolve(await getSettings(), recordId);
+    },
+    RESUME_MIGRATION: async ({ issueKey }) => {
+      assertOptionsSender(sender);
+      return TB_MIGRATION.resume(await getSettings(), issueKey);
+    },
+    RESOLVE_MIGRATION: async ({ issueKey, action, redmineIssueId }) => {
+      assertOptionsSender(sender);
+      return TB_MIGRATION.resolve(await getSettings(), issueKey, action, redmineIssueId);
+    },
+    SAVE_ISSUE_MAPPING: async ({ issueKey, redmineIssueId }) => {
+      assertOptionsSender(sender);
+      if (!/^[A-Z0-9_]+-\d+$/.test(issueKey || "") || !/^[1-9]\d*$/.test(redmineIssueId || "")) {
+        throw new TypeError("Invalid issue mapping.");
+      }
+      const settings = await getSettings();
+      const issue = await TB_MIGRATION.remoteIssue(settings, redmineIssueId);
+      await TB_SYNC_STATE.write(settings, "mapping", issueKey, {
+        issueId: issue.id,
+        projectId: issue.project?.id,
+      });
+    },
+    REMOVE_ISSUE_MAPPING: async ({ issueKey }) => {
+      assertOptionsSender(sender);
+      await TB_SYNC_STATE.remove(await getSettings(), "mapping", issueKey);
     },
     GET_DEFAULT_PROJECT_SUMMARY: async () => {
       const allowedUrls = [
@@ -239,15 +342,24 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return { userName: user?.name || "" };
     },
     LOOKUP_AND_TRANSLATE_COMMENT: async (msg) => {
-      const settings = await getSettings();
-      assertTrustedBacklogSender(sender, settings.backlogDomain);
+      const baseSettings = await getSettings();
+      assertTrustedBacklogSender(sender, baseSettings.backlogDomain);
+      const settings = settingsForBacklog(baseSettings, msg.issueKey);
+      if (!settings.defaultProjectId) {
+        throw new Error(
+          chrome.i18n.getMessage("options_translation_project_required") ||
+            "Select a Redmine project to activate translation to Redmine."
+        );
+      }
       assertSettings(settings, ["redmineApiKey", "ai"]);
       const redmineIssue = await findRedmineIssueWithCache(
         settings.redmineDomain,
         settings.redmineApiKey,
         msg.issueKey,
         msg.issueSummary,
-        msg.backlogIssueType || ""
+        msg.backlogIssueType || "",
+        settings.syncRules,
+        settings.defaultProjectId
       );
       const translated = await translateText(
         msg.commentText,
@@ -268,7 +380,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         assertTrustedBacklogSender(sender, settings.backlogDomain);
         return TB_REQUEST_DEDUPER.run(
           TB_REQUEST_DEDUPER.createKey(msg.type, msg, getSenderScope(sender)),
-          () => handleSendToRedmine(msg, sender)
+          () => TB_COMMENT_SYNC.send(settings, msg, sender)
         );
       });
     },
@@ -277,19 +389,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         assertTrustedRedmineSender(sender, settings.redmineDomain);
         return TB_REQUEST_DEDUPER.run(
           TB_REQUEST_DEDUPER.createKey(msg.type, msg, getSenderScope(sender)),
-          () => handleSendToBacklog(msg)
+          () => TB_COMMENT_SYNC.send(settings, msg, sender)
         );
       });
     },
     GET_BACKLOG_ISSUE_INFO: async (msg) => {
       const settings = await getSettings();
-      assertTrustedBacklogSender(sender, settings.backlogDomain);
+      assertTrustedBacklogOrRedmineSender(sender, settings);
       assertSettings(settings, ["backlogApiKey"]);
       return getBacklogIssueInfo(msg.issueKey);
     },
     GET_BACKLOG_USERS: async (msg) => {
       const settings = await getSettings();
-      assertTrustedBacklogSender(sender, settings.backlogDomain);
+      assertTrustedBacklogOrRedmineSender(sender, settings);
       assertSettings(settings, ["backlogApiKey"]);
       return getBacklogUsers(msg.projectKey);
     },
@@ -302,11 +414,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       assertOptionsSender(sender);
       return handleFetchProjectsWithCredentials(domain, apiKey);
     },
+    FETCH_REDMINE_ACTIVITIES_WITH_KEY: ({ domain, apiKey }) => {
+      assertOptionsSender(sender);
+      return handleFetchActivitiesWithCredentials(domain, apiKey);
+    },
     CREATE_REDMINE_ISSUE: async (msg) => {
-      const settings = await getSettings();
-      assertTrustedBacklogSender(sender, settings.backlogDomain);
+      const baseSettings = await getSettings();
+      assertTrustedBacklogSender(sender, baseSettings.backlogDomain);
+      const settings = settingsForBacklog(
+        baseSettings,
+        msg.issueData?.backlogIssueKey || msg.issueData?.key || msg.issueKey
+      );
       assertSettings(settings, ["redmineApiKey", "ai"]);
-      return handleCreateRedmineIssue(msg);
+      return TB_MIGRATION.migrate(settings, msg);
     },
     REDMINE_AUTHORIZED_FETCH: async (msg) => {
       const settings = await getSettings();
@@ -315,22 +435,33 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return handleRedmineAuthorizedFetch(settings, msg);
     },
     EXTRACT_JAPANESE_CONTENT: async (msg) => {
-      const settings = await getSettings();
-      assertTrustedRedmineSender(sender, settings.redmineDomain);
+      const baseSettings = await getSettings();
+      assertTrustedRedmineSender(sender, baseSettings.redmineDomain);
+      const settings = settingsForBacklog(baseSettings, msg.backlogIssueKey);
+      const rules = TB.PROMPTS.TRANSLATION.normalize(settings.translationRules);
+      if (rules.reverseMode === "original") return { previewText: msg.commentText };
       assertSettings(settings, ["ai"]);
+      settings.isReverseTranslation = true;
       return {
         previewText: await translateText(
           msg.commentText,
           settings,
           null,
-          TB.PROMPTS.EXTRACT_JAPANESE,
+          TB.PROMPTS.USER,
           createAIStatusReporter(sender)
         ),
       };
     },
     TRANSLATE_TEXT_SIMPLE: async (msg) => {
-      const settings = await getSettings();
-      assertTrustedBacklogSender(sender, settings.backlogDomain);
+      const baseSettings = await getSettings();
+      assertTrustedBacklogSender(sender, baseSettings.backlogDomain);
+      const settings = settingsForBacklog(baseSettings, msg.issueKey);
+      if (!settings.defaultProjectId) {
+        throw new Error(
+          chrome.i18n.getMessage("options_translation_project_required") ||
+            "Select a Redmine project to activate translation to Redmine."
+        );
+      }
       assertSettings(settings, ["ai"]);
       return {
         translatedText: await translateText(
@@ -343,8 +474,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       };
     },
     TRANSLATE_COMMENT_FULL: async (msg) => {
-      const settings = await getSettings();
-      assertTrustedBacklogOrRedmineSender(sender, settings);
+      const baseSettings = await getSettings();
+      assertTrustedBacklogOrRedmineSender(sender, baseSettings);
+      const settings = msg.issueKey ? settingsForBacklog(baseSettings, msg.issueKey) : baseSettings;
+      try {
+        settings.isReverseTranslation =
+          new URL(sender.url).origin === new URL(settings.redmineDomain).origin;
+      } catch (_error) {
+        settings.isReverseTranslation = false;
+      }
+      if (!settings.isReverseTranslation && !settings.defaultProjectId) {
+        throw new Error(
+          chrome.i18n.getMessage("options_translation_project_required") ||
+            "Select a Redmine project to activate translation to Redmine."
+        );
+      }
       assertSettings(settings, ["ai"]);
       return {
         translatedText: await translateText(
@@ -360,7 +504,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   const handler = handlers[message.type];
   if (handler) {
-    Promise.resolve(handler(message))
+    Promise.resolve()
+      .then(() => handler(message))
       .then((data) => sendResponse({ ok: true, data }))
       .catch((err) => {
         const errorString = err instanceof Error ? err.message : String(err || "Unknown error");
@@ -382,6 +527,14 @@ let settingsCacheTime = 0;
 const SETTINGS_CACHE_TTL = 15000; // 15 seconds
 const issueLookupCache = new Map();
 const LOOKUP_CACHE_TTL = 60000; // 1 minute
+
+function settingsForBacklog(settings, issueKey) {
+  const scoped = TB_PROJECT_PROFILES.forBacklog(settings, issueKey || "");
+  return {
+    ...scoped,
+    currentProjectKey: String(issueKey || "").replace(/-\d+$/, ""),
+  };
+}
 
 /**
  * Loads, decrypts, and caches extension settings.
@@ -425,6 +578,13 @@ async function getSettings() {
     "primaryModel",
     "fallbackProvider",
     "fallbackModel",
+    "translationSourceLanguage",
+    "translationTargetLanguage",
+    "translationRules",
+    "syncRules",
+    "logTimeRules",
+    "customFields",
+    "projectProfiles",
     "defaultProjectId",
     "reportProjectId",
     "manualFields",
@@ -469,6 +629,15 @@ async function getSettings() {
     ? await decryptData(items.fallbackOpenrouterModels)
     : "";
 
+  const translationLanguages = TB.PROMPTS.resolveLanguagePair(items);
+  let projectProfiles = [];
+  if (items.projectProfiles) {
+    try {
+      projectProfiles = JSON.parse(await decryptData(items.projectProfiles));
+    } catch (error) {
+      console.warn(`${DEBUG_PREFIX} Ignoring invalid encrypted project profiles.`, error);
+    }
+  }
   const decryptedSettings = {
     redmineDomain: items.redmineDomain || TB.REDMINE_DOMAIN,
     redmineApiKey: await decryptData(items.redmineApiKey ?? ""),
@@ -478,6 +647,20 @@ async function getSettings() {
     primaryModel: items.primaryModel ?? TB.DEFAULT_PRIMARY_MODEL,
     fallbackProvider: items.fallbackProvider || TB.DEFAULT_FALLBACK_PROVIDER,
     fallbackModel: items.fallbackModel ?? TB.DEFAULT_FALLBACK_MODEL,
+    translationSourceLanguage: translationLanguages.source,
+    translationTargetLanguage: translationLanguages.target,
+    translationRules: TB.PROMPTS.TRANSLATION.safeNormalize(
+      items.translationRules,
+      translationLanguages.source,
+      translationLanguages.target
+    ),
+    syncRules: TB_SYNC_RULES.normalize(items.syncRules),
+    logTimeRules: TB_LOG_TIME_RULES.normalize(items.logTimeRules),
+    customFields: TB_CUSTOM_FIELDS.normalize(items.customFields),
+    projectProfiles: TB_PROJECT_PROFILES.normalize(projectProfiles, {
+      backlogDomain: items.backlogDomain || TB.BACKLOG_DOMAIN,
+      redmineDomain: items.redmineDomain || TB.REDMINE_DOMAIN,
+    }),
     geminiApiKey: await decryptData(items.geminiApiKey ?? ""), // Legacy fallback
     geminiApiKeys: geminiApiKeysStr.split("\n").filter(Boolean),
     geminiModels: geminiModelsStr.split("\n").filter(Boolean),
@@ -571,8 +754,23 @@ function assertSettings(settings, required = []) {
 // Caching & Utility Functions
 // ============================================================================
 
-async function findRedmineIssueWithCache(domain, apiKey, issueKey, summary, backlogIssueType = "") {
-  const cacheKey = JSON.stringify([domain, issueKey, summary, backlogIssueType || ""]);
+async function findRedmineIssueWithCache(
+  domain,
+  apiKey,
+  issueKey,
+  summary,
+  backlogIssueType = "",
+  syncRules = {},
+  projectId = ""
+) {
+  const cacheKey = JSON.stringify([
+    domain,
+    issueKey,
+    summary,
+    backlogIssueType || "",
+    syncRules,
+    projectId,
+  ]);
   const now = Date.now();
   const cached = issueLookupCache.get(cacheKey);
 
@@ -580,7 +778,15 @@ async function findRedmineIssueWithCache(domain, apiKey, issueKey, summary, back
     return cached.data;
   }
 
-  const result = await findRedmineIssue(domain, apiKey, issueKey, summary, backlogIssueType);
+  const result = await findRedmineIssue(
+    domain,
+    apiKey,
+    issueKey,
+    summary,
+    backlogIssueType,
+    syncRules,
+    projectId
+  );
   issueLookupCache.set(cacheKey, { data: result, time: now });
   return result;
 }
@@ -593,6 +799,7 @@ async function handleFetchMetadata(endpoint) {
   const response = await timeoutFetch(
     url,
     {
+      redirect: "error",
       headers: { "X-Redmine-API-Key": settings.redmineApiKey, Accept: "application/json" },
     },
     10000
@@ -611,19 +818,55 @@ async function handleFetchProjectsWithCredentials(domain, apiKey) {
   if (!apiKey) {
     throw new Error("Missing Redmine API key.");
   }
+  const projects = [];
+  const limit = 100;
+  for (let offset = 0; ; offset += limit) {
+    const url = new URL("/projects.json", domain);
+    url.searchParams.set("limit", String(limit));
+    url.searchParams.set("offset", String(offset));
+    const response = await timeoutFetch(
+      url.toString(),
+      {
+        redirect: "error",
+        headers: { "X-Redmine-API-Key": apiKey, Accept: "application/json" },
+      },
+      10000
+    );
+    if (!response.ok) {
+      throw new Error(`Redmine projects request failed (${response.status}).`);
+    }
+    const data = await safeReadJson(response);
+    const page = data?.projects;
+    if (!Array.isArray(page)) throw new Error("Redmine returned an invalid projects list.");
+    projects.push(...page);
+    const total = Number(data.total_count);
+    if (
+      page.length === 0 ||
+      page.length < limit ||
+      (Number.isFinite(total) && projects.length >= total)
+    ) {
+      break;
+    }
+  }
+  return projects;
+}
 
+async function handleFetchActivitiesWithCredentials(domain, apiKey) {
+  await assertRedmineHostPermission(domain);
+  if (!apiKey) throw new Error("Missing Redmine API key.");
   const response = await timeoutFetch(
-    new URL("/projects.json?limit=100", domain).toString(),
+    new URL("/enumerations/time_entry_activities.json", domain).toString(),
     {
+      redirect: "error",
       headers: { "X-Redmine-API-Key": apiKey, Accept: "application/json" },
     },
     10000
   );
   if (!response.ok) {
-    throw new Error(`Redmine projects request failed (${response.status}).`);
+    throw new Error(`Redmine activities request failed (${response.status}).`);
   }
   const data = await safeReadJson(response);
-  return data?.projects || [];
+  return data?.time_entry_activities || [];
 }
 
 async function fetchRedmineProjectById(domain, apiKey, projectId) {
@@ -632,7 +875,7 @@ async function fetchRedmineProjectById(domain, apiKey, projectId) {
   const safeProjectId = encodeURIComponent(String(projectId));
   const response = await timeoutFetch(
     new URL(`/projects/${safeProjectId}.json`, domain).toString(),
-    { headers: { "X-Redmine-API-Key": apiKey, Accept: "application/json" } },
+    { redirect: "error", headers: { "X-Redmine-API-Key": apiKey, Accept: "application/json" } },
     10000
   );
   if (!response.ok) throw new Error(`Redmine project request failed (${response.status}).`);
@@ -703,24 +946,16 @@ function assertTrustedRedmineSender(sender, redmineDomain) {
 }
 
 function assertTrustedBacklogSender(sender, backlogDomain = "") {
-  const senderUrl = sender?.tab?.url || sender?.url || "";
+  const senderUrl = sender?.url || sender?.tab?.url || "";
   try {
-    const host = new URL(senderUrl).hostname.toLowerCase();
-    if (host.endsWith(".backlog.com") || host.endsWith(".backlog.jp")) {
+    const configured = getTrustedBacklogApiOrigin(backlogDomain || TB.BACKLOG_DOMAIN);
+    if (new URL(senderUrl).origin === configured) {
       return;
-    }
-    if (backlogDomain) {
-      const configured = String(backlogDomain).includes("://")
-        ? backlogDomain
-        : `https://${backlogDomain}`;
-      if (new URL(configured).hostname.toLowerCase() === host) {
-        return;
-      }
     }
   } catch (_error) {
     // fall through
   }
-  throw new Error("This operation is only available from Backlog pages.");
+  throw new Error("This operation requires the Backlog workspace configured in settings.");
 }
 
 function assertTrustedBacklogOrRedmineSender(sender, settings) {
@@ -762,6 +997,44 @@ async function handleRedmineAuthorizedFetch(settings, msg) {
   if (!["GET", "POST", "PUT", "DELETE"].includes(method)) {
     throw new Error("Unsupported Redmine method.");
   }
+  if (method === "DELETE") {
+    const match = /^\/time_entries\/(\d+)\.json$/.exec(msg.path);
+    if (!match) throw new Error("Deletion is only allowed for an approved time entry.");
+    await deleteTimeEntry(
+      settings.redmineDomain,
+      settings.redmineApiKey,
+      match[1],
+      msg.deletionApproval
+    );
+    return { status: 204, payload: null, text: "" };
+  }
+  if (method === "PUT" && /^\/time_entries\/\d+\.json$/.test(msg.path)) {
+    const body = JSON.parse(msg.body || "null")?.time_entry;
+    const approval = msg.mutationApproval;
+    if (
+      !body ||
+      !approval ||
+      String(body.issue_id) !== String(approval.targetIssueId) ||
+      body.spent_on !== approval.date ||
+      body.comments !== `[B2R report:${approval.reportId}]` ||
+      !Number.isFinite(Number(body.hours)) ||
+      Number(body.hours) < 0
+    ) {
+      throw new Error("Time-entry update does not match the approved plan.");
+    }
+    await updateTimeEntry(
+      settings.redmineDomain,
+      settings.redmineApiKey,
+      msg.path.match(/\d+/)[0],
+      body.issue_id,
+      body.hours,
+      body.comments,
+      body.spent_on,
+      body.activity_id,
+      approval
+    );
+    return { status: 204, payload: null, text: "" };
+  }
 
   const url = buildRedmineUrl(settings.redmineDomain, msg.path);
   const headers = {
@@ -776,6 +1049,7 @@ async function handleRedmineAuthorizedFetch(settings, msg) {
     url,
     {
       method,
+      redirect: "error",
       headers,
       body: msg.body || undefined,
     },

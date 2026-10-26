@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "B2R",
-  "version": "1.8.17",
+  "version": "1.8.20",
   "description": "Dịch và đồng bộ comment từ Backlog sang Redmine (B2R).",
   "icons": {
     "16": "assets/icons/icon-16.png",
@@ -37,6 +37,9 @@
         "src/modules/utils/helpers.js",
         "src/modules/utils/logger.js",
         "src/modules/utils/markdown.js",
+        "src/modules/utils/migration-selection.js",
+        "src/modules/utils/sync-rules.js",
+        "src/modules/utils/custom-fields.js",
         "src/modules/utils/render-markdown.js",
         "src/modules/ui/styles.js",
         "src/modules/ui/toast.js",
@@ -54,11 +57,15 @@
         "src/constants.js",
         "src/modules/utils/helpers.js",
         "src/modules/utils/logger.js",
+        "src/modules/utils/markdown.js",
+        "src/modules/utils/render-markdown.js",
         "src/modules/ui/styles.js",
         "src/modules/ui/toast.js",
         "src/modules/ui/modal.js",
         "src/modules/services/redmine.js",
         "src/modules/services/report-log-time.js",
+        "src/modules/utils/custom-fields.js",
+        "src/modules/utils/sync-rules.js",
         "src/redmine_content.js"
       ],
       "run_at": "document_idle"

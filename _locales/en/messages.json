@@ -1,4 +1,187 @@
 {
+  "options_profiles_report_project": {
+    "message": "Report project ID (optional; uses destination if blank)"
+  },
+  "options_configuration_project_required": {
+    "message": "Choose a default Redmine project before restricting global searches."
+  },
+  "options_configuration_activity_required": {
+    "message": "Choose a default activity for each configuration that uses one activity for all tasks."
+  },
+  "options_profiles_add": {
+    "message": "Add project profile"
+  },
+  "options_profiles_global": {
+    "message": "Global defaults"
+  },
+  "options_profiles_manager": {
+    "message": "Project profiles"
+  },
+  "options_profiles_new": {
+    "message": "New profile"
+  },
+  "options_profiles_destination_pending": {
+    "message": "Choose a Redmine project"
+  },
+  "options_profiles_server_pair": {
+    "message": "Applies to Backlog and Redmine"
+  },
+  "options_profiles_editing": {
+    "message": "Editing rules for"
+  },
+  "options_profiles_inherit": {
+    "message": "Use global rules for this project"
+  },
+  "options_profiles_inherit_help": {
+    "message": "Uncheck to configure rules for this project."
+  },
+  "options_profiles_name": {
+    "message": "Profile name"
+  },
+  "options_profiles_source": {
+    "message": "Backlog project key"
+  },
+  "options_profiles_destination": {
+    "message": "Redmine project ID"
+  },
+  "options_mapping_add": {
+    "message": "Add rule"
+  },
+  "options_mapping_remove": {
+    "message": "Remove"
+  },
+  "options_mapping_source_type": {
+    "message": "Backlog issue type"
+  },
+  "options_mapping_tracker_names": {
+    "message": "Preferred Redmine trackers, in order (comma-separated; blank disables preference)"
+  },
+  "options_mapping_tracker": {
+    "message": "Redmine tracker name"
+  },
+  "options_mapping_required": {
+    "message": "Required"
+  },
+  "options_mapping_working_days": {
+    "message": "Default due date: working days from today (0 = no default)"
+  },
+  "options_mapping_field_name": {
+    "message": "Field label"
+  },
+  "options_mapping_field_id": {
+    "message": "Redmine custom-field ID"
+  },
+  "options_mapping_field_type": {
+    "message": "Field type"
+  },
+  "options_mapping_text": {
+    "message": "Text"
+  },
+  "options_mapping_select": {
+    "message": "Select"
+  },
+  "options_mapping_field_options": {
+    "message": "Exact API values (one per line, for select fields)"
+  },
+  "options_mapping_field_trackers": {
+    "message": "Show for trackers (comma-separated; blank = all)"
+  },
+  "options_mapping_default_value": {
+    "message": "Default value (optional)"
+  },
+  "options_mapping_duplicate_type": {
+    "message": "Every mapping needs a unique Backlog issue type."
+  },
+  "options_mapping_duplicate_tracker": {
+    "message": "Every date rule needs a unique tracker name."
+  },
+  "options_due_date_title": {
+    "message": "Migration due-date rules"
+  },
+  "options_due_date_help": {
+    "message": "Set required dates and default working days by tracker. Zero disables automatic dates."
+  },
+  "options_profiles_title": {
+    "message": "Project profiles"
+  },
+  "options_profiles_help": {
+    "message": "Map each Backlog project to a Redmine project and its rules. Projects without a profile use global settings. Profiles apply to the current Backlog and Redmine addresses."
+  },
+  "options_log_time_title": {
+    "message": "Report time logging"
+  },
+  "options_log_time_help": {
+    "message": "Set daily hours, allocation and Redmine activities."
+  },
+  "options_log_daily_hours": {
+    "message": "Hours per day"
+  },
+  "options_log_allocation": {
+    "message": "Hour allocation"
+  },
+  "options_log_equal": {
+    "message": "Equal shares"
+  },
+  "options_log_estimate": {
+    "message": "By estimated hours (missing estimate = weight 1)"
+  },
+  "options_log_activity_mode": {
+    "message": "Activity selection"
+  },
+  "options_log_activity_default": {
+    "message": "One activity for all tasks"
+  },
+  "options_log_activity_legacy": {
+    "message": "Coding / testing by task title and tracker"
+  },
+  "options_log_load_activities": {
+    "message": "Load activities from Redmine"
+  },
+  "options_log_default_activity": {
+    "message": "Default / coding activity"
+  },
+  "options_log_testing_activity": {
+    "message": "Testing activity"
+  },
+  "report_log_configured": {
+    "message": "Log time from Report"
+  },
+  "options_translation_title": {
+    "message": "Translation directions"
+  },
+  "options_translation_help": {
+    "message": "Set the Backlog to Redmine translation direction. Choose Auto detect if you do not know the source language."
+  },
+  "options_translation_source": {
+    "message": "Backlog language"
+  },
+  "options_translation_target": {
+    "message": "Redmine language"
+  },
+  "options_translation_same_language": {
+    "message": "Choose different source and target languages."
+  },
+  "options_translation_project_required": {
+    "message": "Select a Redmine project to activate translation to Redmine."
+  },
+  "options_translation_reverse_mode": {
+    "message": "Redmine → Backlog action"
+  },
+  "options_translation_extract": {
+    "message": "Extract passages in the Backlog language"
+  },
+  "options_translation_translate": {
+    "message": "Translate"
+  },
+  "options_translation_original": {
+    "message": "Keep all content unchanged"
+  },
+  "options_translation_reverse_source": {
+    "message": "Redmine source language (translation)"
+  },
+  "options_translation_reverse_target": {
+    "message": "Backlog language"
+  },
   "extension_name": {
     "message": "Backlog to Redmine Translator"
   },
@@ -30,19 +213,19 @@
     "message": "Could not read issueKey from Backlog."
   },
   "toast_send_success": {
-    "message": "Comment sent to Redmine successfully."
+    "message": "Sent to Redmine."
   },
   "toast_send_backlog_success": {
-    "message": "Comment sent to Backlog successfully."
+    "message": "Sent to Backlog."
   },
   "toast_rate_limit_retry": {
-    "message": "⚠️ Primary model rate limited, retrying with fallback..."
+    "message": "Primary model busy. Trying fallback..."
   },
   "toast_rate_limit_failed": {
     "message": "❌ Both models rate limited. Please wait or check API key."
   },
   "toast_cross_provider_retry": {
-    "message": "⚠️ $provider$ rate limited, switching to Gemini Flash Lite...",
+    "message": "$provider$ busy. Trying fallback...",
     "placeholders": {
       "provider": {
         "content": "$1"
@@ -179,9 +362,15 @@
   "modal_backlog_empty_key": {
     "message": "Please enter Backlog Issue Key."
   },
-  "modal_backlog_success_title": { "message": "Complete!" },
-  "modal_backlog_success_subtitle": { "message": "Comment sent to Backlog successfully." },
-  "modal_backlog_success_view_button": { "message": "View in Backlog" },
+  "modal_backlog_success_title": {
+    "message": "Complete!"
+  },
+  "modal_backlog_success_subtitle": {
+    "message": "Comment sent to Backlog successfully."
+  },
+  "modal_backlog_success_view_button": {
+    "message": "View in Backlog"
+  },
   "modal_batch_title_multiple": {
     "message": "✅ Sent $count$ notes successfully!",
     "placeholders": {
@@ -233,7 +422,18 @@
   "options_save_success": {
     "message": "✅ Configuration saved successfully!"
   },
+  "settings_options_save_success": {
+    "message": "✅ Configuration saved successfully!"
+  },
   "options_save_error": {
+    "message": "❌ Error saving: $error$",
+    "placeholders": {
+      "error": {
+        "content": "$1"
+      }
+    }
+  },
+  "settings_options_save_error": {
     "message": "❌ Error saving: $error$",
     "placeholders": {
       "error": {
@@ -274,329 +474,1534 @@
   "backlog_post_failed": {
     "message": "Failed to post comment to Backlog."
   },
-  "popup_subtitle": { "message": "Translation and workflow sync assistant" },
-  "popup_status_title": { "message": "Configuration status" },
-  "popup_checking": { "message": "Checking..." },
-  "popup_forward_label": { "message": "Backlog → Redmine" },
-  "popup_reverse_label": { "message": "Redmine → Backlog" },
-  "popup_ai_label": { "message": "Primary AI" },
-  "popup_project_title": { "message": "Project information" },
-  "popup_source": { "message": "Source" },
-  "popup_target": { "message": "Target" },
-  "popup_default_project": { "message": "Default project" },
-  "popup_open_settings": { "message": "Open full settings" },
-  "popup_donate": { "message": "Buy me a coffee" },
-  "popup_quick_actions": { "message": "Quick actions" },
-  "popup_open_redmine": { "message": "Open Redmine" },
-  "popup_log_time_month": { "message": "Monthly Log Time" },
-  "popup_open_backlog": { "message": "Open Backlog" },
-  "popup_footer_note": { "message": "API keys are protected and never shown in this popup." },
-  "popup_close": { "message": "Close" },
-  "popup_donate_title": { "message": "Support the author ☕" },
-  "popup_donate_intro": { "message": "If this extension is useful, a coffee helps me keep improving it." },
-  "popup_not_selected": { "message": "Not selected" },
-  "popup_active": { "message": "Active" },
-  "popup_not_ready": { "message": "Not ready" },
-  "popup_ready": { "message": "READY" },
-  "popup_needs_setup": { "message": "SETUP REQUIRED" },
-  "popup_configured": { "message": "All core components are configured." },
-  "popup_setup_required": { "message": "Complete the setup to use all features." },
-  "popup_loading_project": { "message": "Loading project name..." },
-  "popup_project_summary": { "message": "Project used for Redmine actions" },
-  "popup_project_summary_empty": { "message": "Select a project in full settings to get started" },
-  "popup_project_load_failed": { "message": "Unable to load project name" },
-  "popup_not_configured": { "message": "Not configured" },
-  "popup_open_paypal": { "message": "Open PayPal" },
-  "popup_qr_pending": { "message": "QR coming soon" },
-  "popup_donate_bank": { "message": "Bank" },
-  "popup_donate_bank_title": { "message": "Donate via bank transfer" },
-  "popup_donate_bank_description": { "message": "The bank account QR code will be updated here." },
-  "popup_donate_momo": { "message": "MoMo" },
-  "popup_donate_momo_title": { "message": "Donate via MoMo" },
-  "popup_donate_momo_description": { "message": "The MoMo QR code will be updated here." },
-  "popup_donate_paypal": { "message": "PayPal" },
-  "popup_donate_paypal_title": { "message": "Donate via PayPal" },
-  "popup_donate_paypal_description": { "message": "You can support the author through PayPal." },
-  "report_log_month": { "message": "Log Time This Month" },
+  "popup_subtitle": {
+    "message": "Translation and workflow sync assistant"
+  },
+  "popup_status_title": {
+    "message": "Configuration status"
+  },
+  "popup_checking": {
+    "message": "Checking..."
+  },
+  "popup_forward_label": {
+    "message": "Backlog → Redmine"
+  },
+  "popup_reverse_label": {
+    "message": "Redmine → Backlog"
+  },
+  "popup_ai_label": {
+    "message": "Primary AI"
+  },
+  "popup_project_title": {
+    "message": "Project information"
+  },
+  "popup_source": {
+    "message": "Source"
+  },
+  "popup_target": {
+    "message": "Target"
+  },
+  "popup_default_project": {
+    "message": "Redmine project"
+  },
+  "popup_open_settings": {
+    "message": "Open full settings"
+  },
+  "popup_donate": {
+    "message": "Buy me a coffee"
+  },
+  "popup_quick_actions": {
+    "message": "Quick actions"
+  },
+  "popup_open_redmine": {
+    "message": "Open Redmine"
+  },
+  "popup_log_time_month": {
+    "message": "Monthly Log Time"
+  },
+  "popup_open_backlog": {
+    "message": "Open Backlog"
+  },
+  "popup_footer_note": {
+    "message": "API keys are protected and never shown in this popup."
+  },
+  "popup_close": {
+    "message": "Close"
+  },
+  "popup_donate_title": {
+    "message": "Support the author ☕"
+  },
+  "popup_donate_intro": {
+    "message": "If this extension is useful, a coffee helps me keep improving it."
+  },
+  "popup_not_selected": {
+    "message": "Not selected"
+  },
+  "popup_active": {
+    "message": "Active"
+  },
+  "popup_not_ready": {
+    "message": "Not ready"
+  },
+  "popup_missing_redmine_key": {
+    "message": "Redmine key needed"
+  },
+  "popup_missing_backlog_key": {
+    "message": "Backlog key needed"
+  },
+  "popup_missing_both_keys": {
+    "message": "Keys needed"
+  },
+  "popup_missing_ai_provider": {
+    "message": "AI provider needed"
+  },
+  "popup_ready": {
+    "message": "READY"
+  },
+  "popup_needs_setup": {
+    "message": "SETUP REQUIRED"
+  },
+  "popup_configured": {
+    "message": "All core components are configured."
+  },
+  "popup_setup_required": {
+    "message": "Complete the setup to use all features."
+  },
+  "popup_loading_project": {
+    "message": "Loading project name..."
+  },
+  "popup_project_summary": {
+    "message": "Used for issue migration and monthly reports"
+  },
+  "popup_project_summary_empty": {
+    "message": "Choose a Redmine project in Options to get started"
+  },
+  "popup_project_load_failed": {
+    "message": "Unable to load project name"
+  },
+  "popup_not_configured": {
+    "message": "Not configured"
+  },
+  "popup_open_paypal": {
+    "message": "Open PayPal"
+  },
+  "popup_qr_pending": {
+    "message": "QR coming soon"
+  },
+  "popup_donate_bank": {
+    "message": "Bank"
+  },
+  "popup_donate_bank_title": {
+    "message": "Donate via bank transfer"
+  },
+  "popup_donate_bank_description": {
+    "message": "The bank account QR code will be updated here."
+  },
+  "popup_donate_momo": {
+    "message": "MoMo"
+  },
+  "popup_donate_momo_title": {
+    "message": "Donate via MoMo"
+  },
+  "popup_donate_momo_description": {
+    "message": "The MoMo QR code will be updated here."
+  },
+  "popup_donate_paypal": {
+    "message": "PayPal"
+  },
+  "popup_donate_paypal_title": {
+    "message": "Donate via PayPal"
+  },
+  "popup_donate_paypal_description": {
+    "message": "You can support the author through PayPal."
+  },
+  "report_log_month": {
+    "message": "Log Time This Month"
+  },
+  "report_choose_project": {
+    "message": "Choose a report project"
+  },
+  "report_cancel": {
+    "message": "Cancel"
+  },
+  "report_continue": {
+    "message": "Continue"
+  },
   "report_settings_required": {
     "message": "Error: Please configure the Redmine domain, API key, and report project ID in the extension Options."
   },
   "report_confirm_delete": {
-    "message": "Delete all of your spent time for the current month?\n\nOnly entries belonging to the current user and dates in this month will be deleted."
+    "message": "Delete your spent time for this month? Only your entries dated this month will be deleted."
   },
-  "report_deleting": { "message": "Deleting this month's spent time..." },
-  "report_deleted": { "message": "This month's spent time deleted" },
-  "report_delete_failed": { "message": "Delete failed" },
-  "report_delete_error": { "message": "Unable to delete" },
-  "report_processing": { "message": "Processing..." },
-  "report_scanning": { "message": "Scanning monthly reports..." },
-  "report_searching": { "message": "Searching for this month's \"Report\" issues..." },
-  "report_not_found": { "message": "No report found" },
-  "report_no_matching_issue": { "message": "No \"Report\" issue matched this month." },
-  "report_done": { "message": "Done" },
-  "report_timesheet_output": { "message": "Timesheet output" },
-  "report_date": { "message": "Date" },
-  "report_tasks": { "message": "Tasks" },
-  "report_status": { "message": "Status" },
-  "report_delete_spent_time": { "message": "Delete this month's spent time" },
-  "report_copy_table": { "message": "Copy table" },
-  "report_start_logging": { "message": "Start logging" },
-  "report_search_subject": { "message": "Find reports with subject containing" },
-  "report_log_8h": { "message": "Log 8h from Report" },
-  "report_success": { "message": "Success!" },
-  "report_error_check_console": { "message": "Error! Check Console" },
-  "report_checking_spent_time": { "message": "Checking spent time for" },
-  "report_entry_not_verified": { "message": "Entry could not be verified for the correct user/date" },
-  "report_entries_to_delete": { "message": "Found" },
-  "report_spent_time": { "message": "Redmine spent time" },
-  "report_log_time_month": { "message": "Log time this month" },
-  "report_ready_to_scan": { "message": "Ready to scan this month's reports." },
-  "report_reports": { "message": "Reports" },
-  "report_logged": { "message": "Logged" },
-  "report_skipped": { "message": "Skipped" },
-  "report_failed": { "message": "Failed" },
-  "report_progress": { "message": "Progress" },
-  "report_found": { "message": "Found" },
-  "report_logging_now": { "message": "reports, logging time..." },
-  "report_starting_logging": { "message": "Starting time logging..." },
-  "report_complete": { "message": "Complete" },
-  "report_deleted_count": { "message": "Deleted $count$ spent-time entries.", "placeholders": { "count": { "content": "$1" } } },
-  "report_missing_tracker": { "message": "The Report tracker was not found. Check Redmine settings." },
-  "report_found_issues": { "message": "Found $count$ report issues. Starting time logging...", "placeholders": { "count": { "content": "$1" } } },
-  "report_updated_spent_time": { "message": "Updated $hours$ hours of spent time from report tasks.", "placeholders": { "hours": { "content": "$1" } } },
-  "report_day_full": { "message": "Skipped: $hours$ hours have already been logged for this day.", "placeholders": { "hours": { "content": "$1" } } },
-  "report_logged_tasks": { "message": "Logged $logged$ tasks; skipped $skipped$ duplicates.", "placeholders": { "logged": { "content": "$1" }, "skipped": { "content": "$2" } } },
-  "report_no_tasks": { "message": "No tasks were logged." },
-  "report_partial_error": { "message": "Partial result: logged $logged$, skipped $skipped$, failed $failed$. $error$", "placeholders": { "logged": { "content": "$1" }, "skipped": { "content": "$2" }, "failed": { "content": "$3" }, "error": { "content": "$4" } } },
-  "report_error_detail": { "message": "Error: $error$", "placeholders": { "error": { "content": "$1" } } },
-  "report_complete_timesheet": { "message": "Done. Copy the data below into your timesheet:" },
-  "report_copied_tasks": { "message": "Copied the daily task list." },
-  "report_fatal_error": { "message": "A serious error occurred: $error$", "placeholders": { "error": { "content": "$1" } } },
-  "report_error": { "message": "Error" },
-  "report_error_short": { "message": "Error" },
-  "options_title": { "message": "Backlog & Redmine Settings" },
-  "options_language_label": { "message": "Language" },
-  "options_onboarding_title": { "message": "Get started" },
+  "report_deleting": {
+    "message": "Deleting this month's spent time..."
+  },
+  "report_deleted": {
+    "message": "This month's spent time deleted"
+  },
+  "report_delete_failed": {
+    "message": "Delete failed"
+  },
+  "report_delete_error": {
+    "message": "Unable to delete"
+  },
+  "report_processing": {
+    "message": "Processing..."
+  },
+  "report_scanning": {
+    "message": "Scanning monthly reports..."
+  },
+  "report_searching": {
+    "message": "Searching for \"Report\" issues for month $month$...",
+    "placeholders": {
+      "month": {
+        "content": "$1",
+        "example": "10/2026"
+      }
+    }
+  },
+  "report_not_found": {
+    "message": "No report found"
+  },
+  "report_no_matching_issue": {
+    "message": "No \"Report\" issue matched this month."
+  },
+  "report_done": {
+    "message": "Done"
+  },
+  "report_timesheet_output": {
+    "message": "Timesheet output"
+  },
+  "report_date": {
+    "message": "Date"
+  },
+  "report_tasks": {
+    "message": "Tasks"
+  },
+  "report_status": {
+    "message": "Status"
+  },
+  "report_delete_spent_time": {
+    "message": "Delete this month's spent time"
+  },
+  "report_copy_table": {
+    "message": "Copy table"
+  },
+  "report_start_logging": {
+    "message": "Start logging"
+  },
+  "report_search_subject": {
+    "message": "Find reports with subject containing"
+  },
+  "report_log_8h": {
+    "message": "Log 8h from Report"
+  },
+  "report_success": {
+    "message": "Success!"
+  },
+  "report_error_check_console": {
+    "message": "Error! Check Console"
+  },
+  "report_checking_spent_time": {
+    "message": "Checking spent time for"
+  },
+  "report_entry_not_verified": {
+    "message": "Entry could not be verified for the correct user/date"
+  },
+  "report_entries_to_delete": {
+    "message": "Found"
+  },
+  "report_spent_time": {
+    "message": "Redmine spent time"
+  },
+  "report_log_time_month": {
+    "message": "Log time this month"
+  },
+  "report_ready_to_scan": {
+    "message": "Ready to scan this month's reports."
+  },
+  "report_reports": {
+    "message": "Reports"
+  },
+  "report_logged": {
+    "message": "Logged"
+  },
+  "report_skipped": {
+    "message": "Skipped"
+  },
+  "report_failed": {
+    "message": "Failed"
+  },
+  "report_progress": {
+    "message": "Progress"
+  },
+  "report_found": {
+    "message": "Found"
+  },
+  "report_logging_now": {
+    "message": "reports, logging time..."
+  },
+  "report_starting_logging": {
+    "message": "Starting time logging..."
+  },
+  "report_complete": {
+    "message": "Complete"
+  },
+  "report_deleted_count": {
+    "message": "Deleted $count$ spent-time entries.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "report_missing_tracker": {
+    "message": "The Report tracker was not found. Check Redmine settings."
+  },
+  "report_found_issues": {
+    "message": "Found $count$ report issues. Starting time logging...",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "report_updated_spent_time": {
+    "message": "Updated $hours$ hours of spent time from report tasks.",
+    "placeholders": {
+      "hours": {
+        "content": "$1"
+      }
+    }
+  },
+  "report_day_full": {
+    "message": "Skipped: $hours$ hours have already been logged for this day.",
+    "placeholders": {
+      "hours": {
+        "content": "$1"
+      }
+    }
+  },
+  "report_logged_tasks": {
+    "message": "Logged $logged$ tasks; skipped $skipped$ duplicates.",
+    "placeholders": {
+      "logged": {
+        "content": "$1"
+      },
+      "skipped": {
+        "content": "$2"
+      }
+    }
+  },
+  "report_no_tasks": {
+    "message": "No tasks were logged."
+  },
+  "report_partial_error": {
+    "message": "Partial result: logged $logged$, skipped $skipped$, failed $failed$. $error$",
+    "placeholders": {
+      "logged": {
+        "content": "$1"
+      },
+      "skipped": {
+        "content": "$2"
+      },
+      "failed": {
+        "content": "$3"
+      },
+      "error": {
+        "content": "$4"
+      }
+    }
+  },
+  "report_error_detail": {
+    "message": "Error: $error$",
+    "placeholders": {
+      "error": {
+        "content": "$1"
+      }
+    }
+  },
+  "report_complete_timesheet": {
+    "message": "Done. Copy the data below into your timesheet:"
+  },
+  "report_copied_tasks": {
+    "message": "Copied the daily task list."
+  },
+  "report_fatal_error": {
+    "message": "A serious error occurred: $error$",
+    "placeholders": {
+      "error": {
+        "content": "$1"
+      }
+    }
+  },
+  "report_error": {
+    "message": "Error"
+  },
+  "report_error_short": {
+    "message": "Error"
+  },
+  "options_title": {
+    "message": "Backlog & Redmine Settings"
+  },
+  "options_language_label": {
+    "message": "Language"
+  },
+  "options_onboarding_title": {
+    "message": "Get started"
+  },
   "options_onboarding_intro": {
-    "message": "Complete these steps once to connect Backlog, Redmine, and your translation provider."
+    "message": "Connect your services, then save settings."
   },
-  "options_onboarding_redmine": { "message": "Add your Redmine API key and load projects" },
-  "options_onboarding_backlog": { "message": "Add and verify your Backlog API key" },
-  "options_onboarding_ai": { "message": "Choose a translation provider and test a model" },
-  "options_test_backlog": { "message": "Test Backlog connection" },
-  "options_test_ai": { "message": "Test selected AI model" },
-  "options_screenshot_too_large": { "message": "The image exceeds the 5 MB limit." },
-  "options_attach_screenshot_note": { "message": "Attach the downloaded screenshot if available." },
-  "options_not_provided": { "message": "Not provided" },
-  "options_environment": { "message": "Environment" },
-  "options_recent_logs": { "message": "Recent logs" },
-  "options_invalid_server_version": { "message": "The server returned an invalid version." },
-  "options_redmine_permission_required": { "message": "Grant access to the Redmine domain to use the extension." },
-  "options_model_test_failed": { "message": "Model test failed" },
-  "options_save_redmine_key_first": { "message": "Save the Redmine API key first." },
-  "modal_no_users_loaded": { "message": "No users loaded" },
-  "modal_no_user_found": { "message": "No user found" },
-  "options_test_backlog_success": { "message": "Backlog connection successful." },
-  "options_test_backlog_failed": { "message": "Backlog connection failed: $error$", "placeholders": { "error": { "content": "$1" } } },
-  "options_onboarding_done": { "message": "Setup complete. You can change these settings at any time." },
-  "options_onboarding_status_pending": { "message": "Not checked" },
-  "options_onboarding_status_done": { "message": "Complete" },
-  "options_ai_status_start": { "message": "Translating with $provider$ ($model$)…", "placeholders": { "provider": { "content": "$1" }, "model": { "content": "$2" } } },
-  "options_ai_status_retry": { "message": "$provider$ is busy or rate limited. This model cools down for $seconds$s; trying another now (attempt $attempt$).", "placeholders": { "provider": { "content": "$1" }, "seconds": { "content": "$2" }, "attempt": { "content": "$3" } } },
-  "options_ai_status_fallback": { "message": "$provider$ failed temporarily. Switching to $fallback$.", "placeholders": { "provider": { "content": "$1" }, "fallback": { "content": "$2" } } },
-  "options_ai_status_success": { "message": "Translation complete with $provider$ ($model$).", "placeholders": { "provider": { "content": "$1" }, "model": { "content": "$2" } } },
-  "options_ai_status_error": { "message": "Translation failed: $error$", "placeholders": { "error": { "content": "$1" } } },
-  "options_sync_history_title": { "message": "Recent sync activity" },
-  "options_sync_history_empty": { "message": "No sync activity yet." },
-  "options_sync_history_success": { "message": "$operation$ completed for $issue$ ($count$ item(s)).", "placeholders": { "operation": { "content": "$1" }, "issue": { "content": "$2" }, "count": { "content": "$3" } } },
-  "options_sync_history_partial": { "message": "$operation$ partially completed for $issue$ ($count$ sent).", "placeholders": { "operation": { "content": "$1" }, "issue": { "content": "$2" }, "count": { "content": "$3" } } },
-  "options_sync_history_failed": { "message": "$operation$ failed for $issue$.", "placeholders": { "operation": { "content": "$1" }, "issue": { "content": "$2" } } },
-  "options_sync_retry_remaining": { "message": "$sent$ of $total$ comments were sent. Retry to send only the remaining comments.", "placeholders": { "sent": { "content": "$1" }, "total": { "content": "$2" } } },
-  "options_sync_history_clear": { "message": "Clear activity" },
+  "options_onboarding_redmine": {
+    "message": "Add a Redmine API key, load projects and choose a default project"
+  },
+  "options_onboarding_backlog": {
+    "message": "Add and verify your Backlog API key"
+  },
+  "options_onboarding_ai": {
+    "message": "Choose a translation provider and test a model"
+  },
+  "options_test_backlog": {
+    "message": "Test Backlog connection"
+  },
+  "options_test_ai": {
+    "message": "Test AI connection"
+  },
+  "options_screenshot_too_large": {
+    "message": "The image exceeds the 5 MB limit."
+  },
+  "options_attach_screenshot_note": {
+    "message": "Attach the downloaded screenshot if available."
+  },
+  "options_not_provided": {
+    "message": "Not provided"
+  },
+  "options_environment": {
+    "message": "Environment"
+  },
+  "options_recent_logs": {
+    "message": "Recent logs"
+  },
+  "options_invalid_server_version": {
+    "message": "The server returned an invalid version."
+  },
+  "options_redmine_permission_required": {
+    "message": "Grant access to the Redmine domain to use the extension."
+  },
+  "options_model_test_failed": {
+    "message": "Model test failed"
+  },
+  "options_save_redmine_key_first": {
+    "message": "Save the Redmine API key first."
+  },
+  "modal_no_users_loaded": {
+    "message": "No users loaded"
+  },
+  "modal_no_user_found": {
+    "message": "No user found"
+  },
+  "options_test_backlog_success": {
+    "message": "Backlog connection successful."
+  },
+  "options_test_backlog_failed": {
+    "message": "Backlog connection failed: $error$",
+    "placeholders": {
+      "error": {
+        "content": "$1"
+      }
+    }
+  },
+  "options_onboarding_done": {
+    "message": "Setup complete. You can change these settings at any time."
+  },
+  "options_onboarding_status_pending": {
+    "message": "Not checked"
+  },
+  "options_onboarding_status_done": {
+    "message": "Connected and saved"
+  },
+  "options_ai_status_start": {
+    "message": "Translating with $provider$ ($model$)…",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      },
+      "model": {
+        "content": "$2"
+      }
+    }
+  },
+  "options_ai_status_retry": {
+    "message": "$provider$ busy. Trying model $attempt$; this model cools down for $seconds$s.",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      },
+      "seconds": {
+        "content": "$2"
+      },
+      "attempt": {
+        "content": "$3"
+      }
+    }
+  },
+  "options_ai_status_fallback": {
+    "message": "$provider$ failed temporarily. Switching to $fallback$.",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      },
+      "fallback": {
+        "content": "$2"
+      }
+    }
+  },
+  "options_ai_status_success": {
+    "message": "Translation complete with $provider$ ($model$).",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      },
+      "model": {
+        "content": "$2"
+      }
+    }
+  },
+  "options_ai_status_error": {
+    "message": "Translation failed: $error$",
+    "placeholders": {
+      "error": {
+        "content": "$1"
+      }
+    }
+  },
+  "options_sync_history_title": {
+    "message": "Recent sync activity"
+  },
+  "options_sync_history_empty": {
+    "message": "No sync activity yet."
+  },
+  "options_sync_history_success": {
+    "message": "$operation$ completed for $issue$ ($count$ item(s)).",
+    "placeholders": {
+      "operation": {
+        "content": "$1"
+      },
+      "issue": {
+        "content": "$2"
+      },
+      "count": {
+        "content": "$3"
+      }
+    }
+  },
+  "options_sync_history_partial": {
+    "message": "$operation$ partially completed for $issue$ ($count$ sent).",
+    "placeholders": {
+      "operation": {
+        "content": "$1"
+      },
+      "issue": {
+        "content": "$2"
+      },
+      "count": {
+        "content": "$3"
+      }
+    }
+  },
+  "options_sync_history_failed": {
+    "message": "$operation$ failed for $issue$.",
+    "placeholders": {
+      "operation": {
+        "content": "$1"
+      },
+      "issue": {
+        "content": "$2"
+      }
+    }
+  },
+  "options_sync_retry_remaining": {
+    "message": "$sent$ of $total$ comments were sent. Retry to send only the remaining comments.",
+    "placeholders": {
+      "sent": {
+        "content": "$1"
+      },
+      "total": {
+        "content": "$2"
+      }
+    }
+  },
+  "options_sync_history_clear": {
+    "message": "Clear activity"
+  },
   "options_preview_notice": {
     "message": "Review the translated content below before confirming. Nothing is sent until you choose the primary action."
   },
-  "modal_dry_run_button": { "message": "Dry run" },
-  "modal_dry_run_no_changes": { "message": "Preview only — no API changes were made." },
-  "modal_dry_run_summary": { "message": "$action$ → $target$: $count$ item(s) planned.", "placeholders": { "action": { "content": "$1" }, "target": { "content": "$2" }, "count": { "content": "$3" } } },
-  "modal_dry_run_send_comments": { "message": "Send comment(s)" },
-  "modal_dry_run_create_issue": { "message": "Create issue and comments" },
-  "modal_dry_run_skipped": { "message": "$count$ empty item(s) would be skipped.", "placeholders": { "count": { "content": "$1" } } },
-  "modal_dry_run_comments_excluded": { "message": "$count$ existing comment(s) are excluded by the current checkbox selection.", "placeholders": { "count": { "content": "$1" } } },
-  "modal_dry_run_missing_fields": { "message": "Required target or content is missing; sending would be blocked." },
-  "modal_dry_run_attachments": { "message": "$count$ attachment(s) would be included.", "placeholders": { "count": { "content": "$1" } } },
-  "options_sync_activity_translate": { "message": "Comment sync" },
-  "options_sync_activity_migrate": { "message": "Issue migration" },
-  "options_sync_activity_reverse": { "message": "Redmine to Backlog sync" },
-  "options_batch_translation_error": { "message": "Batch translation failed: $error$", "placeholders": { "error": { "content": "$1" } } },
-  "options_migration_partial_failure": { "message": "Issue created, but $failed$ of $total$ comments failed$indexes$$reason$.", "placeholders": { "failed": { "content": "$1" }, "total": { "content": "$2" }, "indexes": { "content": "$3" }, "reason": { "content": "$4" } } },
-  "options_language_vi": { "message": "Vietnamese" },
-  "options_language_en": { "message": "English" },
-  "options_theme_label": { "message": "Theme" },
-  "options_theme_system": { "message": "System" },
-  "options_theme_light": { "message": "Light" },
-  "options_theme_dark": { "message": "Dark" },
-  "options_redmine_section": { "message": "💎 Redmine settings" },
-  "options_ui_section": { "message": "Interface options" },
-  "options_save": { "message": "Save settings" },
-  "options_bug_title": { "message": "🐞 Report a bug" },
-  "options_document_title": { "message": "Backlog Comment Translation Settings" },
+  "modal_dry_run_button": {
+    "message": "Dry run"
+  },
+  "modal_dry_run_no_changes": {
+    "message": "Preview only — no API changes were made."
+  },
+  "modal_dry_run_summary": {
+    "message": "$action$ → $target$: $count$ item(s) planned.",
+    "placeholders": {
+      "action": {
+        "content": "$1"
+      },
+      "target": {
+        "content": "$2"
+      },
+      "count": {
+        "content": "$3"
+      }
+    }
+  },
+  "modal_dry_run_send_comments": {
+    "message": "Send comment(s)"
+  },
+  "modal_dry_run_create_issue": {
+    "message": "Create issue and comments"
+  },
+  "modal_dry_run_skipped": {
+    "message": "$count$ empty item(s) would be skipped.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "modal_dry_run_comments_excluded": {
+    "message": "$count$ existing comment(s) are excluded by the current checkbox selection.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "modal_dry_run_missing_fields": {
+    "message": "Required target or content is missing; sending would be blocked."
+  },
+  "modal_dry_run_attachments": {
+    "message": "$count$ attachment(s) would be included.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "options_sync_activity_translate": {
+    "message": "Comment sync"
+  },
+  "options_sync_activity_migrate": {
+    "message": "Issue migration"
+  },
+  "options_sync_activity_reverse": {
+    "message": "Redmine to Backlog sync"
+  },
+  "options_batch_translation_error": {
+    "message": "Batch translation failed: $error$",
+    "placeholders": {
+      "error": {
+        "content": "$1"
+      }
+    }
+  },
+  "options_migration_partial_failure": {
+    "message": "Issue created, but $failed$ of $total$ comments failed$indexes$$reason$.",
+    "placeholders": {
+      "failed": {
+        "content": "$1"
+      },
+      "total": {
+        "content": "$2"
+      },
+      "indexes": {
+        "content": "$3"
+      },
+      "reason": {
+        "content": "$4"
+      }
+    }
+  },
+  "options_language_vi": {
+    "message": "Vietnamese"
+  },
+  "options_language_en": {
+    "message": "English"
+  },
+  "options_theme_label": {
+    "message": "Theme"
+  },
+  "options_theme_system": {
+    "message": "System"
+  },
+  "options_theme_light": {
+    "message": "Light"
+  },
+  "options_theme_dark": {
+    "message": "Dark"
+  },
+  "options_redmine_section": {
+    "message": "Redmine settings"
+  },
+  "options_redmine_optional": {
+    "message": "More Redmine settings"
+  },
+  "options_ui_section": {
+    "message": "Interface options"
+  },
+  "options_save": {
+    "message": "Save settings"
+  },
+  "options_bug_title": {
+    "message": "🐞 Report a bug"
+  },
+  "options_document_title": {
+    "message": "Backlog & Redmine Settings"
+  },
   "options_subtitle": {
-    "message": "Configure Redmine, Backlog, and AI so the extension can translate and sync comments between both systems."
+    "message": "Connect Redmine, Backlog and AI to translate and sync comments."
   },
-  "options_redmine_domain": { "message": "Redmine Domain" },
-  "options_redmine_api_key": { "message": "Redmine API Key" },
-  "options_api_key_placeholder": { "message": "Enter API key" },
-  "options_personal_account": { "message": "Personal account" },
-  "options_save_api_first": { "message": "-- Save the API key first --" },
-  "options_report_project": { "message": "Project for Reports (Monthly Time Log)" },
-  "options_backlog_domain": { "message": "Backlog Domain" },
-  "options_backlog_api_key": { "message": "Backlog API Key" },
-  "options_backlog_key_placeholder": { "message": "Enter Backlog API key" },
-  "options_provider": { "message": "Provider" },
-  "options_fallback_provider": { "message": "Fallback provider" },
-  "options_no_fallback": { "message": "Do not use fallback" },
-  "options_selected": { "message": "Selected:" },
-  "options_added": { "message": "Added:" },
-  "options_key_quick_add": { "message": "Enter a key, then Save or press Enter to add quickly" },
-  "options_loading": { "message": "Loading..." },
-  "options_load_error": { "message": "Load failed (check key)" },
-  "options_choose_project": { "message": "-- Choose project --" },
+  "options_redmine_domain": {
+    "message": "Redmine Domain"
+  },
+  "options_redmine_api_key": {
+    "message": "Redmine API Key"
+  },
+  "options_api_key_placeholder": {
+    "message": "Enter API key"
+  },
+  "options_personal_account": {
+    "message": "Personal account"
+  },
+  "options_save_api_first": {
+    "message": "Add an API key to load projects"
+  },
+  "options_report_project": {
+    "message": "Redmine project for monthly reports"
+  },
+  "options_backlog_domain": {
+    "message": "Backlog Domain"
+  },
+  "options_backlog_api_key": {
+    "message": "Backlog API Key"
+  },
+  "options_backlog_key_placeholder": {
+    "message": "Backlog API key (Account > API)"
+  },
+  "options_redmine_key_placeholder": {
+    "message": "Redmine API key (My account > API access key)"
+  },
+  "options_provider": {
+    "message": "Provider"
+  },
+  "options_fallback_provider": {
+    "message": "Fallback provider"
+  },
+  "options_no_fallback": {
+    "message": "Do not use fallback"
+  },
+  "options_selected": {
+    "message": "Selected:"
+  },
+  "options_added": {
+    "message": "Added:"
+  },
+  "options_key_quick_add": {
+    "message": "API key (press Enter to add)"
+  },
+  "options_loading": {
+    "message": "Loading..."
+  },
+  "options_load_error": {
+    "message": "Unable to load projects — retry"
+  },
+  "options_choose_project": {
+    "message": "Choose a project"
+  },
   "options_bug_description": {
-    "message": "Create a structured report with a screenshot and environment details. Data is only downloaded or opened in GitHub after you confirm."
+    "message": "Describe the problem. Download or copy the report, or review a GitHub draft before submitting. Attach screenshots separately."
   },
-  "options_bug_subject": { "message": "Bug title" },
-  "options_bug_subject_placeholder": { "message": "Example: Unable to send a comment to Redmine" },
-  "options_bug_description_label": { "message": "Bug description" },
-  "options_bug_description_placeholder": { "message": "What happened?" },
-  "options_bug_steps": { "message": "Steps to reproduce" },
-  "options_bug_steps_placeholder": { "message": "1. ...\n2. ..." },
-  "options_bug_url": { "message": "Page URL where the bug occurred (optional)" },
-  "options_screenshot": { "message": "Screenshot (PNG/JPEG, max 5 MB)" },
-  "options_screenshot_preview_failed": { "message": "Unable to preview this image." },
-  "options_download_report": { "message": "📥 Download report" },
-  "options_copy_report": { "message": "📋 Copy" },
-  "options_open_github": { "message": "Open GitHub Issue" },
-  "options_logs_title": { "message": "Error logs" },
+  "options_bug_subject": {
+    "message": "Bug title"
+  },
+  "options_bug_subject_placeholder": {
+    "message": "Example: Unable to send a comment to Redmine"
+  },
+  "options_bug_description_label": {
+    "message": "Bug description"
+  },
+  "options_bug_description_placeholder": {
+    "message": "What happened?"
+  },
+  "options_bug_steps": {
+    "message": "Steps to reproduce"
+  },
+  "options_bug_steps_placeholder": {
+    "message": "1. ...\n2. ..."
+  },
+  "options_bug_url": {
+    "message": "Page URL where the bug occurred (optional)"
+  },
+  "options_screenshot": {
+    "message": "Screenshot (optional)"
+  },
+  "options_screenshot_preview_failed": {
+    "message": "Unable to preview this image."
+  },
+  "options_download_report": {
+    "message": "📥 Download report"
+  },
+  "options_copy_report": {
+    "message": "Copy report"
+  },
+  "options_open_github": {
+    "message": "Open draft on GitHub"
+  },
+  "options_logs_title": {
+    "message": "Error logs"
+  },
   "options_logs_description": {
     "message": "If you encounter a problem, export the error log and send it to the development team."
   },
-  "options_export_logs": { "message": "📥 Export error log" },
-  "options_clear_logs": { "message": "🗑️ Clear error history" },
-  "options_update_title": { "message": "🔔 Extension updates" },
-  "options_update_checking": { "message": "Checking for updates..." },
-  "options_check_update": { "message": "🔍 Check for updates" },
-  "options_download_page": { "message": "📦 Download page" },
-  "options_redmine_help": { "message": "💡 The Redmine domain is preconfigured." },
-  "options_api_account_help": { "message": "🔑 Get the API key from:" },
+  "options_export_logs": {
+    "message": "📥 Export error log"
+  },
+  "options_clear_logs": {
+    "message": "🗑️ Clear error history"
+  },
+  "options_update_title": {
+    "message": "🔔 Extension updates"
+  },
+  "options_update_checking": {
+    "message": "Checking for updates..."
+  },
+  "options_check_update": {
+    "message": "🔍 Check for updates"
+  },
+  "options_download_page": {
+    "message": "Download page"
+  },
+  "options_redmine_help": {
+    "message": "Enter your Redmine server address."
+  },
+  "options_api_account_help": {
+    "message": "🔑 Get the API key from:"
+  },
   "options_backlog_help": {
     "message": "🔑 Get it from Account > API in your Backlog. Required to send comments and sync data."
   },
-  "options_gemini_provider": { "message": "Google Gemini AI Studio (Free / strong translation)" },
-  "options_groq_provider": { "message": "Groq Cloud (Very fast - Llama 3)" },
-  "options_cerebras_provider": { "message": "Cerebras (High performance)" },
-  "options_openrouter_provider": { "message": "OpenRouter (Many free models)" },
-  "options_gemini_fallback": { "message": "Google Gemini AI Studio" },
-  "options_groq_fallback": { "message": "Groq Cloud" },
-  "options_cerebras_fallback": { "message": "Cerebras" },
-  "options_openrouter_fallback": { "message": "OpenRouter" },
-  "options_success_modal": { "message": "Show a success modal when translating/sending a comment to Redmine" },
+  "options_gemini_provider": {
+    "message": "Google Gemini AI Studio"
+  },
+  "options_groq_provider": {
+    "message": "Groq Cloud"
+  },
+  "options_cerebras_provider": {
+    "message": "Cerebras"
+  },
+  "options_openrouter_provider": {
+    "message": "OpenRouter"
+  },
+  "options_gemini_fallback": {
+    "message": "Google Gemini AI Studio"
+  },
+  "options_groq_fallback": {
+    "message": "Groq Cloud"
+  },
+  "options_cerebras_fallback": {
+    "message": "Cerebras"
+  },
+  "options_openrouter_fallback": {
+    "message": "OpenRouter"
+  },
+  "options_success_modal": {
+    "message": "Show a confirmation after sending a comment to Redmine"
+  },
   "options_success_modal_help": {
-    "message": "Only applies to comment translation. Issue migration always shows a modal with the Redmine link. Enable this again if you previously hid success notifications."
+    "message": "Applies to comment sync. Issue migration always shows a confirmation with the Redmine link."
   },
   "options_support_note": {
-    "message": "Two-way sync: Backlog → Redmine (translate Japanese/English to Vietnamese) and Redmine → Backlog (extract Japanese content)."
+    "message": "Translation and sync use the rules in Advanced settings. Review the preview before sending."
   },
   "options_disclaimer": {
-    "message": "This extension only does what you ask... if something breaks, you probably clicked the wrong thing 👀"
+    "message": "Having trouble? Use Report a bug to get help."
   },
-  "options_checking_server": { "message": "Connecting to server..." },
-  "options_new_version": { "message": "🚀 New version available:" },
-  "options_current_version": { "message": "You are using the latest version" },
-  "options_update_failed": { "message": "Unable to check for updates:" },
-  "options_current_version_label": { "message": "Current version:" },
-  "options_models_help": { "message": "Models (click to select/deselect, uses round-robin)" },
-  "options_keys_help": { "message": "Keys (enter then Save, press Enter to add quickly, click to remove)" },
-  "options_enter_provider_key": { "message": "Enter the provider key first" },
-  "options_enter_gemini_key": { "message": "Enter the Gemini key first" },
-  "options_no_logs": { "message": "No error logs to export." },
-  "options_logs_unavailable": { "message": "Unable to read error logs." },
-  "options_logs_exported": { "message": "Error log exported." },
-  "options_logs_deleted": { "message": "Error history cleared." },
-  "options_confirm_clear_logs": { "message": "Clear all error log history?" },
-  "options_sync_projects": { "message": "🔄 Sync projects" },
-  "options_test_provider_key": { "message": "Enter the provider key first" },
-  "options_test_gemini_key": { "message": "Enter the Gemini key first" },
-  "options_testing_model": { "message": "Testing model" },
-  "options_model_ok": { "message": "is working" },
-  "options_gemini_keys_test_ok": { "message": "Checked $count$ API keys.", "placeholders": { "count": { "content": "$1" } } },
-  "options_gemini_keys_test_failed": { "message": "$count$/$total$ API keys failed (positions $indexes$).", "placeholders": { "count": { "content": "$1" }, "total": { "content": "$2" }, "indexes": { "content": "$3" } } },
-  "options_unknown_error": { "message": "Unknown error" },
-  "options_bug_downloaded": { "message": "Report and attached screenshot downloaded." },
-  "options_bug_copied": { "message": "Report content copied." },
-  "options_bug_copy_failed": { "message": "Automatic copy failed. Use Download report instead." },
-  "options_custom_fields_section": { "message": "Custom fields (JSON mapping)" },
-  "options_backlog_section": { "message": "📝 Backlog settings" },
-  "options_primary_ai_section": { "message": "🤖 Primary AI settings" },
-  "options_fallback_ai_section": { "message": "🔄 Fallback AI settings" },
-  "options_get_key_from": { "message": "🔑 Get it from:" },
-  "options_gemini_key_prefix": { "message": "Get a Gemini API key from" },
-  "options_gemini_console": { "message": "Google AI Studio" },
-  "options_groq_console": { "message": "Groq Console" },
-  "options_cerebras_console": { "message": "Cerebras Cloud" },
-  "options_groq_get_key": { "message": "Get a key from Groq Console" },
-  "options_cerebras_get_key": { "message": "Get a key from Cerebras Cloud" },
-  "options_openrouter_get_key": { "message": "Get a key from OpenRouter" },
-  "options_openrouter_hint": { "message": "💡 Many free models (suffix :free)." },
-  "options_redmine_account_hint": { "message": "(Click \"Show\" next to \"API access key\")." },
-  "options_default_project": { "message": "Default project (used for migration)" },
-  "options_report_help": { "message": "💡 Select the Redmine project used for monthly time logging." },
-  "modal_backlog_issue_title_label": { "message": "Backlog Issue Title" },
-  "modal_batch_count_changed_warning": { "message": "⚠️ The comment count changed" },
+  "options_checking_server": {
+    "message": "Connecting to server..."
+  },
+  "options_new_version": {
+    "message": "🚀 New version available:"
+  },
+  "options_current_version": {
+    "message": "You are using the latest version"
+  },
+  "options_update_failed": {
+    "message": "Unable to check for updates:"
+  },
+  "options_current_version_label": {
+    "message": "Current version:"
+  },
+  "options_models_help": {
+    "message": "Models"
+  },
+  "options_keys_help": {
+    "message": "Enter an API key, then save or press Enter to add it. Use × to remove a key; save to apply changes."
+  },
+  "options_enter_provider_key": {
+    "message": "Add an API key for this provider first."
+  },
+  "options_enter_gemini_key": {
+    "message": "Add a Gemini API key first."
+  },
+  "options_no_logs": {
+    "message": "No error logs to export."
+  },
+  "options_logs_unavailable": {
+    "message": "Unable to read error logs."
+  },
+  "options_logs_exported": {
+    "message": "Error log exported."
+  },
+  "options_logs_deleted": {
+    "message": "Error history cleared."
+  },
+  "options_confirm_clear_logs": {
+    "message": "Clear all error log history?"
+  },
+  "options_sync_projects": {
+    "message": "Reload projects"
+  },
+  "options_projects_reloaded": {
+    "message": "Projects reloaded"
+  },
+  "options_projects_reload_failed": {
+    "message": "Could not reload projects"
+  },
+  "options_test_provider_key": {
+    "message": "Enter the provider key first"
+  },
+  "options_test_gemini_key": {
+    "message": "Enter the Gemini key first"
+  },
+  "options_testing_model": {
+    "message": "Testing model"
+  },
+  "options_model_ok": {
+    "message": "is working"
+  },
+  "options_gemini_keys_test_ok": {
+    "message": "Checked $count$ API keys.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "options_gemini_keys_test_failed": {
+    "message": "$count$/$total$ API keys failed (positions $indexes$).",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "total": {
+        "content": "$2"
+      },
+      "indexes": {
+        "content": "$3"
+      }
+    }
+  },
+  "options_unknown_error": {
+    "message": "Unknown error"
+  },
+  "options_bug_downloaded": {
+    "message": "Report and screenshot downloaded as separate files."
+  },
+  "options_bug_copied": {
+    "message": "Report content copied."
+  },
+  "options_bug_copy_failed": {
+    "message": "Automatic copy failed. Use Download report instead."
+  },
+  "options_custom_fields_section": {
+    "message": "Migration custom fields"
+  },
+  "options_backlog_section": {
+    "message": "📝 Backlog settings"
+  },
+  "options_primary_ai_section": {
+    "message": "🤖 Primary AI settings"
+  },
+  "options_fallback_ai_section": {
+    "message": "🔄 Fallback AI settings"
+  },
+  "options_get_key_from": {
+    "message": "🔑 Get it from:"
+  },
+  "options_gemini_key_prefix": {
+    "message": "Get a Gemini API key from"
+  },
+  "options_gemini_console": {
+    "message": "Google AI Studio"
+  },
+  "options_groq_console": {
+    "message": "Groq Console"
+  },
+  "options_cerebras_console": {
+    "message": "Cerebras Cloud"
+  },
+  "options_groq_get_key": {
+    "message": "Get a key from Groq Console"
+  },
+  "options_cerebras_get_key": {
+    "message": "Get a key from Cerebras Cloud"
+  },
+  "options_openrouter_get_key": {
+    "message": "Get a key from OpenRouter"
+  },
+  "options_openrouter_hint": {
+    "message": "💡 Many free models (suffix :free)."
+  },
+  "options_redmine_account_hint": {
+    "message": "(Click \"Show\" next to \"API access key\")."
+  },
+  "options_default_project": {
+    "message": "Redmine project (issue migration and monthly reports)"
+  },
+  "options_report_help": {
+    "message": "Choose the project used for monthly time reports."
+  },
+  "modal_backlog_issue_title_label": {
+    "message": "Backlog Issue Title"
+  },
+  "modal_batch_count_changed_warning": {
+    "message": "⚠️ The comment count changed"
+  },
   "modal_batch_subtitle_preparing": {
     "message": "Will translate and send $count$ comments in sequence.",
-    "placeholders": { "count": { "content": "$1" } }
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
   },
-  "modal_due_date_label": { "message": "Due date" },
-  "modal_due_date_required_label": { "message": "Due date*" },
-  "modal_issue_id_placeholder": { "message": "Example: 12345" },
+  "modal_due_date_label": {
+    "message": "Due date"
+  },
+  "modal_due_date_required_label": {
+    "message": "Due date*"
+  },
+  "modal_issue_id_placeholder": {
+    "message": "Example: 12345"
+  },
   "modal_migrate_comments_text": {
     "message": "Translate and migrate all $count$ comments",
-    "placeholders": { "count": { "content": "$1" } }
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
   },
-  "modal_preview_toggle_redmine": { "message": "Redmine" },
-  "modal_preview_toggle_redmine_title": { "message": "Redmine preview — click to edit" },
-  "modal_preview_toggle_show": { "message": "Preview" },
-  "modal_preview_toggle_show_title": { "message": "Click to preview as a Redmine note" },
-  "modal_select_placeholder": { "message": "-- Select --" },
-  "modal_version_empty": { "message": "-- Empty --" },
-  "modal_version_error": { "message": "-- Failed to load versions --" },
-  "modal_version_label": { "message": "Target version (Milestone)" },
-  "modal_version_loading": { "message": "-- Loading versions --" },
-  "settings_incomplete": { "message": "Extension configuration is incomplete." },
-  "settings_open_link": { "message": "Click here to edit." },
-  "settings_runtime_unavailable": { "message": "Extension runtime unavailable. Please reload the page." },
-  "toast_send_failed": { "message": "Failed to send comment." },
-  "toast_translation_failed": { "message": "Failed to translate comment." },
-  "options_custom_fields_help": { "message": "💡 Enter the IDs of required fields. Example: Severity: 46, Role: 11." },
-  "options_openrouter_suffix": { "message": " 💡 Many free models (suffix :free)." },
-  "options_backlog_suffix": { "message": "Required to send comments and sync data." }
-,
-  "report_preview_title": { "message": "Tasks to log" },
-  "report_issue": { "message": "Report" },
-  "report_hours": { "message": "Planned hours" },
-  "report_check_tasks": { "message": "Check this month's tasks" },
-  "report_confirm_logging": { "message": "Confirm and log time" },
-  "report_preview_complete": { "message": "Found $count$ reports. Review the list before logging time.", "placeholders": { "count": { "content": "$1" } } },
-  "report_preview_confirm_hint": { "message": "Review the dates, tasks, and hours. Confirm when everything looks correct." },
-  "report_preview_review_warning": { "message": "Some dates need their existing spent time reviewed before logging. Resolve existing entries, then scan again." },
-  "report_preview_replace_warning": { "message": "This day already has $hours$ hours. Logging could replace existing entries; review spent time first.", "placeholders": { "hours": { "content": "$1" } } },
-  "report_preview_duplicate": { "message": "One or more tasks already have a time entry for this day." },
-  "report_preview_ready": { "message": "Ready to log" },
-  "report_preview_failed": { "message": "Could not check: $error$", "placeholders": { "error": { "content": "$1" } } }
-,
-  "report_logging_complete": { "message": "🎉 Time logging is complete! You can copy the table below." },
-  "report_logging_partial": { "message": "Partially logged; $count$ reports failed. Review the details and scan again.", "placeholders": { "count": { "content": "$1" } } },
-  "report_preview_stale": { "message": "Data changed after the check. Check this month's tasks again before logging." },
-  "report_logged_button": { "message": "Logged" }
+  "modal_preview_toggle_redmine": {
+    "message": "Redmine"
+  },
+  "modal_preview_toggle_redmine_title": {
+    "message": "Redmine preview — click to edit"
+  },
+  "modal_preview_toggle_show": {
+    "message": "Preview"
+  },
+  "modal_preview_toggle_show_title": {
+    "message": "Click to preview as a Redmine note"
+  },
+  "modal_select_placeholder": {
+    "message": "-- Select --"
+  },
+  "modal_version_empty": {
+    "message": "-- Empty --"
+  },
+  "modal_version_error": {
+    "message": "-- Failed to load versions --"
+  },
+  "modal_version_label": {
+    "message": "Target version (Milestone)"
+  },
+  "modal_version_loading": {
+    "message": "-- Loading versions --"
+  },
+  "settings_incomplete": {
+    "message": "Extension configuration is incomplete."
+  },
+  "settings_open_link": {
+    "message": "Click here to edit."
+  },
+  "settings_runtime_unavailable": {
+    "message": "Extension runtime unavailable. Please reload the page."
+  },
+  "toast_send_failed": {
+    "message": "Failed to send comment."
+  },
+  "toast_translation_failed": {
+    "message": "Failed to translate comment."
+  },
+  "options_custom_fields_help": {
+    "message": "Use field IDs and values from your Redmine instance."
+  },
+  "options_openrouter_suffix": {
+    "message": " 💡 Many free models (suffix :free)."
+  },
+  "options_backlog_suffix": {
+    "message": "Required to send comments and sync data."
+  },
+  "report_preview_title": {
+    "message": "Tasks to log"
+  },
+  "report_issue": {
+    "message": "Report"
+  },
+  "report_hours": {
+    "message": "Planned hours"
+  },
+  "report_bulk_activity_label": {
+    "message": "Set all to:"
+  },
+  "report_bulk_activity_apply": {
+    "message": "Apply"
+  },
+  "report_bulk_activity_applied": {
+    "message": "✓ Applied"
+  },
+  "report_check_tasks": {
+    "message": "Check this month's tasks"
+  },
+  "report_confirm_logging": {
+    "message": "Confirm and log time"
+  },
+  "report_preview_complete": {
+    "message": "Found $count$ reports. Review the list before logging time.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "report_preview_confirm_hint": {
+    "message": "Review the dates, tasks, and hours. Confirm when everything looks correct."
+  },
+  "report_select_existing_entries": {
+    "message": "Select existing time entries to replace"
+  },
+  "report_preview_review_warning": {
+    "message": "Review existing spent time on flagged dates, then scan again."
+  },
+  "report_preview_replace_warning": {
+    "message": "This day already has $hours$ hours. Logging could replace existing entries; review spent time first.",
+    "placeholders": {
+      "hours": {
+        "content": "$1"
+      }
+    }
+  },
+  "report_preview_duplicate": {
+    "message": "One or more tasks already have a time entry for this day."
+  },
+  "report_preview_ready": {
+    "message": "Ready to log"
+  },
+  "report_preview_failed": {
+    "message": "Could not check: $error$",
+    "placeholders": {
+      "error": {
+        "content": "$1"
+      }
+    }
+  },
+  "report_logging_complete": {
+    "message": "🎉 Time logging is complete! You can copy the table below."
+  },
+  "report_logging_partial": {
+    "message": "Partially logged; $count$ reports failed. Review the details and scan again.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "report_preview_stale": {
+    "message": "Data changed after the check. Check this month's tasks again before logging."
+  },
+  "report_logged_button": {
+    "message": "Logged"
+  },
+  "sync_attachment_partial": {
+    "message": "Comment sent; upload failed for: $files$. Attach files from the Backlog comment without resending it.",
+    "placeholders": {
+      "files": {
+        "content": "$1"
+      }
+    }
+  },
+  "recovery_title": {
+    "message": "Migration recovery and issue mappings"
+  },
+  "recovery_help": {
+    "message": "Resume a saved migration. Completed comments are skipped."
+  },
+  "recovery_source": {
+    "message": "Backlog issue key"
+  },
+  "recovery_destination": {
+    "message": "Redmine issue ID"
+  },
+  "recovery_save_mapping": {
+    "message": "Save mapping"
+  },
+  "recovery_refresh": {
+    "message": "Refresh"
+  },
+  "recovery_request_failed": {
+    "message": "Request failed."
+  },
+  "recovery_working": {
+    "message": "Processing…"
+  },
+  "recovery_updated": {
+    "message": "Recovery records updated."
+  },
+  "recovery_empty": {
+    "message": "No saved migrations or mappings in this workspace."
+  },
+  "recovery_remove_mapping": {
+    "message": "Remove mapping"
+  },
+  "recovery_resume": {
+    "message": "Resume / recheck"
+  },
+  "recovery_partial": {
+    "message": "$count$ comments remain. Check the destination and resume again.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "recovery_uncertain_help": {
+    "message": "The server may have received the operation. Check the destination or link its issue before allowing a retry."
+  },
+  "recovery_confirm_absent": {
+    "message": " I checked the destination and the uncertain operation was not received."
+  },
+  "recovery_resolve": {
+    "message": "Unlock retry after checking"
+  },
+  "recovery_confirmation_required": {
+    "message": "Check the destination and select the confirmation first."
+  },
+  "recovery_adopt": {
+    "message": "Link existing destination issue"
+  },
+  "recovery_state_ready": {
+    "message": "Ready"
+  },
+  "recovery_state_creating": {
+    "message": "Creation uncertain"
+  },
+  "recovery_state_sending": {
+    "message": "Sending"
+  },
+  "recovery_state_partial": {
+    "message": "Incomplete"
+  },
+  "recovery_state_complete": {
+    "message": "Complete"
+  },
+  "recovery_state_mapped": {
+    "message": "Mapped"
+  },
+  "options_advanced_title": {
+    "message": "Advanced settings"
+  },
+  "options_advanced_help": {
+    "message": "Set global or project-specific rules for issue titles, matching and migration."
+  },
+  "options_policy_matching": {
+    "message": "Issue matching and migration"
+  },
+  "options_policy_translation": {
+    "message": "Translation"
+  },
+  "options_policy_log_time": {
+    "message": "Report time logging"
+  },
+  "options_policy_fields": {
+    "message": "Field and tracker mappings"
+  },
+  "options_advanced_tools": {
+    "message": "Glossary, activity, recovery and support tools"
+  },
+  "options_subject_template": {
+    "message": "Migration title template"
+  },
+  "options_subject_template_help": {
+    "message": "Use {issueKey}, {summary} and {translatedSummary}."
+  },
+  "options_title_delimiter": {
+    "message": "Original / translated title separator"
+  },
+  "options_title_delimiter_help": {
+    "message": "Enter the exact separator, including spaces. Leave empty for the default."
+  },
+  "options_search_mode": {
+    "message": "Find Redmine issues by"
+  },
+  "options_search_key_title": {
+    "message": "Issue key, then original title"
+  },
+  "options_search_key": {
+    "message": "Issue key only"
+  },
+  "options_search_title": {
+    "message": "Original title only"
+  },
+  "options_restrict_project": {
+    "message": "Search only the default Redmine project (choose a project first)"
+  },
+  "options_tracker_aliases": {
+    "message": "Tracker mapping by Backlog issue type"
+  },
+  "options_tracker_aliases_help": {
+    "message": "Set preferred Redmine trackers by source issue type and order. The first available tracker is used during migration."
+  },
+  "glossary_load_required": {
+    "message": "Load the project glossary before editing or saving."
+  },
+  "glossary_discard_confirm": {
+    "message": "Discard unsaved glossary changes?"
+  },
+  "glossary_clear_confirm": {
+    "message": "Remove all saved terms for this project?"
+  },
+  "glossary_title": {
+    "message": "Project glossary"
+  },
+  "glossary_help": {
+    "message": "Enter a Backlog project key or redmine:project. Terms are encrypted and scoped to this workspace."
+  },
+  "glossary_project": {
+    "message": "Project key"
+  },
+  "glossary_load": {
+    "message": "Load"
+  },
+  "glossary_add": {
+    "message": "Add term"
+  },
+  "glossary_save": {
+    "message": "Save glossary"
+  },
+  "glossary_source": {
+    "message": "Original term"
+  },
+  "glossary_target": {
+    "message": "Translation"
+  },
+  "glossary_keep": {
+    "message": "Keep unchanged"
+  },
+  "glossary_remove": {
+    "message": "Remove term"
+  },
+  "glossary_error": {
+    "message": "Glossary request failed."
+  },
+  "glossary_working": {
+    "message": "Processing…"
+  },
+  "glossary_loaded": {
+    "message": "Glossary loaded."
+  },
+  "glossary_saved": {
+    "message": "Glossary saved."
+  },
+  "migration_include_comment": {
+    "message": "Include comment $count$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "migration_selection_count": {
+    "message": "Selected: $comments$ comments and $files$ files. Excluded files will be removed from the submitted content.",
+    "placeholders": {
+      "comments": {
+        "content": "$1"
+      },
+      "files": {
+        "content": "$2"
+      }
+    }
+  },
+  "report_project_select": {
+    "message": "Report project"
+  },
+  "options_migration_rules_title": {
+    "message": "Issue migration and matching"
+  },
+  "options_backlog_domain_placeholder": {
+    "message": "https://your-space.backlog.com"
+  },
+  "options_backlog_help_prefix": {
+    "message": "Get an API key from:"
+  },
+  "options_backlog_account_api": {
+    "message": "Personal settings > API"
+  },
+  "options_backlog_help_suffix": {
+    "message": "Required to send comments to Backlog."
+  },
+  "options_groq_key_placeholder": {
+    "message": "Enter a Groq API key"
+  },
+  "options_cerebras_key_placeholder": {
+    "message": "Enter a Cerebras API key"
+  },
+  "options_openrouter_key_placeholder": {
+    "message": "Enter an OpenRouter API key"
+  },
+  "options_bug_url_placeholder": {
+    "message": "https://…"
+  },
+  "options_screenshot_help": {
+    "message": "PNG, JPEG or WebP, up to 5 MB. Screenshots are attached manually on GitHub."
+  },
+  "options_screenshot_preview_alt": {
+    "message": "Screenshot preview"
+  },
+  "options_bug_report_downloaded": {
+    "message": "Report downloaded."
+  },
+  "options_update_idle": {
+    "message": "Current version: v$version$. Check for updates when needed.",
+    "placeholders": {
+      "version": {
+        "content": "$1"
+      }
+    }
+  },
+  "options_backlog_key_missing": {
+    "message": "Enter a Backlog API key, then test the connection again."
+  },
+  "options_ai_key_missing": {
+    "message": "Add an API key for the selected AI provider, then test again."
+  },
+  "options_test_ai_success": {
+    "message": "AI connection successful ($model$).",
+    "placeholders": {
+      "model": {
+        "content": "$1"
+      }
+    }
+  },
+  "options_projects_failed": {
+    "message": "Unable to load projects. Check the server address, connection and API access, then retry."
+  },
+  "options_projects_empty": {
+    "message": "Connected to Redmine, but no accessible projects were found. Check your account permissions."
+  },
+  "options_onboarding_not_configured": {
+    "message": "Not configured"
+  },
+  "options_onboarding_choose_project": {
+    "message": "Connected — choose a default project"
+  },
+  "options_onboarding_unsaved": {
+    "message": "Connected — save settings to apply"
+  },
+  "options_restrict_profile_project": {
+    "message": "Search only this profile's destination Redmine project"
+  },
+  "options_activity_unselected": {
+    "message": "No activity selected"
+  },
+  "options_activities_failed": {
+    "message": "Unable to load activities. Check the Redmine connection and retry."
+  },
+  "options_test_model_label": {
+    "message": "Test model $model$",
+    "placeholders": {
+      "model": {
+        "content": "$1"
+      }
+    }
+  },
+  "options_remove_key": {
+    "message": "Remove API key"
+  },
+  "options_key_duplicate": {
+    "message": "This API key is already in the list. Use another key or clear the input."
+  },
+  "options_key_limit": {
+    "message": "You can add up to 10 API keys. Remove a key before adding another."
+  },
+  "options_pending_key_failed": {
+    "message": "An API key could not be added. Check for duplicates or the 10-key limit, then save again."
+  },
+  "options_content_language_auto": {
+    "message": "Auto-detect"
+  },
+  "options_content_language_ja": {
+    "message": "Japanese"
+  },
+  "options_content_language_en": {
+    "message": "English"
+  },
+  "options_content_language_vi": {
+    "message": "Vietnamese"
+  },
+  "options_content_language_ko": {
+    "message": "Korean"
+  },
+  "options_content_language_zh": {
+    "message": "Chinese"
+  },
+  "options_content_language_fr": {
+    "message": "French"
+  },
+  "options_content_language_de": {
+    "message": "German"
+  },
+  "options_content_language_es": {
+    "message": "Spanish"
+  },
+  "options_content_language_pt": {
+    "message": "Portuguese"
+  },
+  "options_content_language_th": {
+    "message": "Thai"
+  },
+  "options_content_language_id": {
+    "message": "Indonesian"
+  },
+  "options_redmine_key_missing": {
+    "message": "Enter a Redmine API key, then reload projects."
+  },
+  "options_projects_empty_select": {
+    "message": "No accessible projects"
+  },
+  "options_onboarding_dismiss": {
+    "message": "Dismiss guide"
+  },
+  "options_onboarding_reopen": {
+    "message": "Show setup guide"
+  },
+  "options_onboarding_help_btn": {
+    "message": "Guide"
+  },
+  "options_onboarding_help_title": {
+    "message": "Open initial setup guide"
+  }
 }

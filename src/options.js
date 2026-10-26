@@ -1,3 +1,4 @@
+/* global TB_SYNC_RULES, TB_LOG_TIME_RULES, TB_CUSTOM_FIELDS, TB_OPTIONS_PROJECT_PROFILES */
 document.addEventListener("DOMContentLoaded", async () => {
   if (typeof TB === "undefined") {
     console.error("[OPTIONS] TB is not defined! constants.js may not have loaded.");
@@ -40,18 +41,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     return optionsMessages[key]?.message || fallback;
   }
 
-  function setFirstTextNode(element, key, fallback = "") {
-    if (!element) return;
-    const textNode = [...element.childNodes].find((node) => node.nodeType === Node.TEXT_NODE);
-    if (textNode) textNode.nodeValue = om(key, fallback);
+  function escapeHtml(value) {
+    const entities = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+    return String(value).replace(/[&<>"']/g, (character) => entities[character]);
   }
 
   function localizeOptionsDetails() {
     document.title = om("options_document_title", document.title);
-    const heroSubtitle = document.querySelector(".hero > p");
+    const heroSubtitle = document.querySelector(".hero p");
     if (heroSubtitle) heroSubtitle.textContent = om("options_subtitle", heroSubtitle.textContent);
     const placeholders = {
-      redmineApiKey: "options_api_key_placeholder",
+      redmineApiKey: "options_redmine_key_placeholder",
       backlogApiKey: "options_backlog_key_placeholder",
       bugTitle: "options_bug_subject_placeholder",
       bugDescription: "options_bug_description_placeholder",
@@ -75,23 +75,16 @@ document.addEventListener("DOMContentLoaded", async () => {
         om(element.dataset.i18nAriaLabel, element.getAttribute("aria-label"))
       );
     });
-    const redmineHelp = document.querySelector("#redmineApiKey")?.parentElement?.querySelector("p");
-    setFirstTextNode(redmineHelp, "options_api_account_help", "🔑 Get the API key from:");
-    if (redmineHelp?.lastChild?.nodeType === Node.TEXT_NODE) {
-      redmineHelp.lastChild.nodeValue = ` ${om("options_redmine_account_hint", "(See your API access key.)")}`;
-    }
-    setFirstTextNode(
-      document.querySelector("#defaultProjectId")?.parentElement?.querySelector("label"),
-      "options_default_project",
-      "Project mặc định (Dùng cho Migrate)"
-    );
-    ["defaultProjectId", "reportProjectId"].forEach((id) => {
-      const element = document.getElementById(id);
-      const option = element?.querySelector("option[value='']");
-      if (option) {
-        option.textContent = om("options_save_api_first", option.textContent);
-      }
+    document.querySelectorAll("[data-i18n-title]").forEach((element) => {
+      element.title = om(element.dataset.i18nTitle, element.title);
     });
+    const defaultProjectOption = document.querySelector("#defaultProjectId option[value='']");
+    if (defaultProjectOption) {
+      defaultProjectOption.textContent = om(
+        "options_save_api_first",
+        defaultProjectOption.textContent
+      );
+    }
     const primaryFallback = document.querySelector("#fallbackProvider option[value='none']");
     if (primaryFallback) {
       primaryFallback.textContent = om("options_no_fallback", primaryFallback.textContent);
@@ -143,7 +136,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       clearLogsBtn: "options_clear_logs",
       checkUpdateBtn: "options_check_update",
       goToDashboardBtn: "options_download_page",
-      syncProjectsBtn: "options_sync_projects",
     };
     Object.entries(actionText).forEach(([id, key]) => {
       const element = document.getElementById(id);
@@ -176,6 +168,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   localizeOptionsDetails();
+  document.dispatchEvent(new CustomEvent("options-localized", { detail: optionsMessages }));
 
   chrome.storage.local.get("syncActivity").then(({ syncActivity = [] }) => {
     renderSyncActivity(syncActivity);
@@ -293,13 +286,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   initProviderMultiControls();
+  renderGeminiModelsTags(
+    (TB.GEMINI_MODELS || []).filter((model) => model.default).map((model) => model.value)
+  );
   loadOptions();
 
   if (location.hash === "#reportProjectId") {
     requestAnimationFrame(() => {
-      const reportProject = document.getElementById("reportProjectId");
-      reportProject?.scrollIntoView({ behavior: "smooth", block: "center" });
-      reportProject?.focus({ preventScroll: true });
+      const project = document.getElementById("defaultProjectId");
+      project?.scrollIntoView({ behavior: "smooth", block: "center" });
+      project?.focus({ preventScroll: true });
     });
   }
 
@@ -322,13 +318,98 @@ document.addEventListener("DOMContentLoaded", async () => {
       setStatus(error.message, true);
     }
   });
-  document.querySelectorAll("#onboardingCard a[href^='#']").forEach((link) => {
-    link.addEventListener("click", () => {
-      const section = document.querySelector(link.getAttribute("href"));
-      if (section instanceof HTMLDetailsElement) section.open = true;
+  function switchTab(panelId) {
+    const tabButtons = document.querySelectorAll(".tab-btn");
+    const tabPanels = document.querySelectorAll(".tab-panel");
+    const stickyBar = document.querySelector(".form-sticky-bar");
+
+    tabButtons.forEach((btn) => {
+      const isSelected = btn.getAttribute("data-panel") === panelId;
+      btn.setAttribute("aria-selected", isSelected ? "true" : "false");
+    });
+
+    tabPanels.forEach((panel) => {
+      panel.hidden = panel.id !== `tab-panel-${panelId}`;
+    });
+
+    if (stickyBar) {
+      stickyBar.hidden = panelId === "advanced";
+    }
+
+    chrome.storage.local.set({ b2r_active_tab: panelId }).catch(() => {});
+  }
+
+  document.querySelectorAll(".tab-btn[data-panel]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      switchTab(btn.getAttribute("data-panel"));
     });
   });
-  updateOnboardingStatuses();
+
+  // Restore last active tab
+  chrome.storage.local.get("b2r_active_tab", (result) => {
+    switchTab(result.b2r_active_tab || "redmine");
+  });
+
+  // Onboarding card persistence & toggle
+  chrome.storage.local.get("b2r_onboarding_dismissed", (result) => {
+    const card = document.getElementById("onboardingCard");
+    if (card && result.b2r_onboarding_dismissed) {
+      card.hidden = true;
+    }
+  });
+
+  document.getElementById("dismissOnboardingBtn")?.addEventListener("click", () => {
+    const card = document.getElementById("onboardingCard");
+    if (card) {
+      card.hidden = true;
+    }
+    chrome.storage.local.set({ b2r_onboarding_dismissed: true });
+  });
+
+  function showOnboardingGuide() {
+    const card = document.getElementById("onboardingCard");
+    if (card) {
+      card.hidden = false;
+      card.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    chrome.storage.local.set({ b2r_onboarding_dismissed: false });
+  }
+
+  document.getElementById("topBarHelpBtn")?.addEventListener("click", showOnboardingGuide);
+  document.getElementById("reopenOnboardingBtn")?.addEventListener("click", showOnboardingGuide);
+
+  document.querySelectorAll("#onboardingCard a[href^='#']").forEach((link) => {
+    link.addEventListener("click", () => {
+      const targetId = link.getAttribute("href").slice(1);
+      const sectionToTab = {
+        redmineSettings: "redmine",
+        backlogSettings: "backlog",
+        primaryAiSettings: "ai",
+        fallbackAiSettings: "ai",
+        uiSettings: "ui",
+        projectProfilesSettings: "profiles",
+        advancedSettings: "advanced",
+      };
+      const tabId = sectionToTab[targetId];
+      if (tabId) {
+        switchTab(tabId);
+      }
+      const section = document.getElementById(targetId);
+      if (section instanceof HTMLDetailsElement) {
+        section.open = true;
+      }
+    });
+  });
+  document.getElementById("swapTranslationLanguages")?.addEventListener("click", () => {
+    const sourceSelect = document.getElementById("translation_source");
+    const targetSelect = document.getElementById("translation_target");
+    if (!sourceSelect || !targetSelect) return;
+    const temp = sourceSelect.value;
+    sourceSelect.value = targetSelect.value;
+    targetSelect.value = temp;
+    sourceSelect.dispatchEvent(new Event("change"));
+    targetSelect.dispatchEvent(new Event("change"));
+  });
 
   document.getElementById("geminiApiKeys")?.addEventListener("keydown", handleGeminiKeyInput);
   fallbackGeminiApiKeysInput?.addEventListener("keydown", handleFallbackGeminiKeyInput);
@@ -394,7 +475,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         viewport: `${window.innerWidth}x${window.innerHeight}`,
         timestamp: new Date().toISOString(),
       },
-      logs: logs.slice(-50),
+      logs: logs.slice(0, 50),
       screenshot: file ? { name: file.name, type: file.type, size: file.size } : null,
     };
   }
@@ -524,7 +605,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       console.error("[OPTIONS] Update check failed:", error);
       statusDiv.innerHTML = `
         <p style="margin: 0; color: #ef4444; font-weight: 600;">
-          ❌ ${om("options_update_failed", "Lỗi kiểm tra:")} ${error.message}
+          ❌ ${om("options_update_failed", "Lỗi kiểm tra:")} ${escapeHtml(error.message)}
         </p>
       `;
     } finally {
@@ -536,9 +617,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     try {
-      const domainChange = await prepareRedmineDomain(
-        document.getElementById("redmineDomain").value.trim() || TB.REDMINE_DOMAIN
-      );
+      let domainChange;
+      try {
+        domainChange = await prepareRedmineDomain(
+          document.getElementById("redmineDomain").value.trim() || TB.REDMINE_DOMAIN
+        );
+      } catch (error) {
+        throw new Error(
+          `${om("options_redmine_permission_required", "Redmine host permission required")}: ${error.message}`
+        );
+      }
       const settings = await gatherSettings();
       settings.redmineDomain = domainChange.currentDomain;
       await chrome.storage.local.set(settings);
@@ -554,12 +642,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         domainChange.previousDomain,
         domainChange.currentDomain
       );
-      setStatus(TB.MESSAGES.SETTINGS.OPTIONS_SAVE_SUCCESS);
+      setStatus(om("options_save_success", "✅ Đã lưu cấu hình thành công!"));
       updateOnboardingStatuses();
       setTimeout(loadOptions, 200);
     } catch (error) {
       console.error("[OPTIONS] Save failed:", error);
-      setStatus(TB.MESSAGES.SETTINGS.OPTIONS_SAVE_ERROR(error.message));
+      const message = error?.message || String(error) || "Unknown error";
+      const errorTemplate = om("options_save_error", "❌ Lỗi khi lưu: $error$");
+      setStatus(errorTemplate.replace("$error$", message), true);
     }
   });
 
@@ -575,17 +665,43 @@ document.addEventListener("DOMContentLoaded", async () => {
       primaryModel: primaryModels[0] || getDefaultModel(primaryProviderSelect.value),
       fallbackProvider: fallbackProviderSelect.value,
       fallbackModel: fallbackModels[0] || getDefaultModel(fallbackProviderSelect.value),
-      defaultProjectId: document.getElementById("defaultProjectId").value,
+      defaultProjectId: document.getElementById("defaultProjectId")?.value || "",
       defaultProjectName: (() => {
         const projectSelect = document.getElementById("defaultProjectId");
-        return projectSelect.value
+        return projectSelect?.value
           ? projectSelect.selectedOptions[0]?.textContent?.trim() || ""
           : "";
       })(),
-      reportProjectId: document.getElementById("reportProjectId").value,
-      manualFields: document.getElementById("manualFields").value.trim(),
+      reportProjectId: document.getElementById("defaultProjectId")?.value || "",
+      manualFields: document.getElementById("manualFields")?.value?.trim() || "",
       showRedmineSuccessModal: showRedmineSuccessModalInput?.checked !== false,
     };
+
+    try {
+      const globalPolicy = TB_OPTIONS_PROJECT_PROFILES.readGlobal();
+      if (globalPolicy) {
+        if (globalPolicy.syncRules) settings.syncRules = globalPolicy.syncRules;
+        if (globalPolicy.translationRules) {
+          settings.translationRules = globalPolicy.translationRules;
+          settings.translationSourceLanguage = globalPolicy.translationRules.source;
+          settings.translationTargetLanguage = globalPolicy.translationRules.target;
+        }
+        if (globalPolicy.logTimeRules) settings.logTimeRules = globalPolicy.logTimeRules;
+        if (globalPolicy.customFields) settings.customFields = globalPolicy.customFields;
+        if (globalPolicy.manualFields) settings.manualFields = globalPolicy.manualFields;
+      }
+    } catch (policyError) {
+      console.warn("[OPTIONS] Error reading global policy:", policyError);
+    }
+
+    try {
+      const projectProfiles = TB_OPTIONS_PROJECT_PROFILES.readProfiles();
+      if (projectProfiles) {
+        settings.projectProfiles = await encryptData(JSON.stringify(projectProfiles));
+      }
+    } catch (profileError) {
+      console.warn("[OPTIONS] Error reading project profiles:", profileError);
+    }
 
     await Promise.all([
       handleApiKeyUpdate(settings, "redmineApiKey", redmineApiKeyInput),
@@ -610,7 +726,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (selectedFallbackGeminiKeys.length > 0) {
       settings.fallbackGeminiApiKeys = await encryptData(selectedFallbackGeminiKeys.join("\n"));
     } else {
-      settings.fallbackGeminiApiKeys = "";
+      // Preserve stored fallback Gemini keys if list hasn't rendered yet
+      const storedFbGemini = await chrome.storage.local.get(["fallbackGeminiApiKeys"]);
+      settings.fallbackGeminiApiKeys = storedFbGemini.fallbackGeminiApiKeys || "";
     }
 
     for (const config of PRIMARY_PROVIDER_CONFIGS) {
@@ -622,7 +740,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (selectedKeys.length > 0) {
         settings[config.keysStorage] = await encryptData(selectedKeys.join("\n"));
         settings[`${config.provider}ApiKey`] = await encryptData(selectedKeys[0]);
-      } else if (!config.keyInput?.value.trim() || config.keyInput.value.trim() === "**********") {
+      } else if (config.keyInput?.value?.trim() === "**********") {
+        // Key unchanged — preserve existing encrypted value from storage
+        const stored = await chrome.storage.local.get([config.keysStorage]);
+        if (stored[config.keysStorage]) settings[config.keysStorage] = stored[config.keysStorage];
+      } else {
+        // Input is empty — intentionally cleared
         settings[config.keysStorage] = "";
       }
     }
@@ -637,7 +760,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (selectedKeys.length > 0) {
         settings[config.keysStorage] = await encryptData(selectedKeys.join("\n"));
         settings[legacyKeyName] = await encryptData(selectedKeys[0]);
-      } else if (!config.keyInput?.value.trim() || config.keyInput.value.trim() === "**********") {
+      } else if (config.keyInput?.value?.trim() === "**********") {
+        // Key unchanged — preserve existing encrypted value from storage
+        const stored = await chrome.storage.local.get([config.keysStorage]);
+        if (stored[config.keysStorage]) settings[config.keysStorage] = stored[config.keysStorage];
+      } else {
+        // Input is empty — intentionally cleared
         settings[config.keysStorage] = "";
       }
     }
@@ -656,8 +784,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       settings.geminiApiKeys = await encryptData(selectedGeminiKeys.join("\n"));
       settings.geminiApiKey = await encryptData(selectedGeminiKeys[0]);
     } else {
-      settings.geminiApiKeys = "";
-      settings.geminiApiKey = "";
+      // Preserve stored Gemini keys if list hasn't rendered yet
+      const storedGemini = await chrome.storage.local.get(["geminiApiKeys", "geminiApiKey"]);
+      settings.geminiApiKeys = storedGemini.geminiApiKeys || "";
+      settings.geminiApiKey = storedGemini.geminiApiKey || "";
     }
 
     return settings;
@@ -683,9 +813,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (!TB_REDMINE_DOMAIN.isDefault(normalizedDomain, TB.REDMINE_DOMAIN)) {
       const originPattern = TB_REDMINE_DOMAIN.toMatchPattern(normalizedDomain);
-      const granted = await chrome.permissions.request({ origins: [originPattern] });
-      if (!granted) {
-        throw new Error(om("options_redmine_permission_required"));
+      const alreadyGranted = await chrome.permissions.contains({ origins: [originPattern] });
+      if (!alreadyGranted) {
+        const granted = await chrome.permissions.request({ origins: [originPattern] });
+        if (!granted) {
+          throw new Error(om("options_redmine_permission_required"));
+        }
       }
     }
 
@@ -771,10 +904,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     const value = inputElement.value.trim();
     if (value === "") {
       settings[keyName] = "";
-    } else if (value !== "**********") {
+    } else if (value === "**********") {
+      // Key unchanged — read existing encrypted value from storage to include it explicitly
+      const stored = await chrome.storage.local.get(keyName);
+      if (stored[keyName]) settings[keyName] = stored[keyName];
+    } else {
       settings[keyName] = await encryptData(value);
     }
-    // If value is "**********", don't modify settings[keyName] - keep existing value
   }
 
   function loadOptions() {
@@ -810,6 +946,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       "primaryModel",
       "fallbackProvider",
       "fallbackModel",
+      "translationSourceLanguage",
+      "translationTargetLanguage",
+      "syncRules",
+      "translationRules",
+      "logTimeRules",
+      "customFields",
+      "projectProfiles",
       "defaultProjectId",
       "reportProjectId",
       "manualFields",
@@ -817,9 +960,29 @@ document.addEventListener("DOMContentLoaded", async () => {
     ];
 
     chrome.storage.local.get(keys, async (items) => {
+      const languagePair = TB.PROMPTS.resolveLanguagePair(items);
+      const translationRules = TB.PROMPTS.TRANSLATION.normalize(
+        items.translationRules || { source: languagePair.source, target: languagePair.target }
+      );
       document.getElementById("redmineDomain").value = items.redmineDomain || TB.REDMINE_DOMAIN;
       document.getElementById("backlogDomain").value = items.backlogDomain || TB.BACKLOG_DOMAIN;
       document.getElementById("manualFields").value = normalizeManualFields(items.manualFields);
+      const policy = {
+        syncRules: TB_SYNC_RULES.normalize(items.syncRules),
+        translationRules,
+        logTimeRules: TB_LOG_TIME_RULES.normalize(items.logTimeRules),
+        manualFields: normalizeManualFields(items.manualFields),
+        customFields: TB_CUSTOM_FIELDS.normalize(items.customFields),
+      };
+      let projectProfiles = [];
+      if (items.projectProfiles) {
+        try {
+          projectProfiles = JSON.parse(await decryptData(items.projectProfiles));
+        } catch (error) {
+          console.warn("[OPTIONS] Saved project profiles could not be loaded:", error.message);
+        }
+      }
+      TB_OPTIONS_PROJECT_PROFILES.load(projectProfiles, policy);
       if (showRedmineSuccessModalInput) {
         showRedmineSuccessModalInput.checked = items.showRedmineSuccessModal !== false;
       }
@@ -860,7 +1023,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         try {
           const decryptedKey = await decryptData(items.redmineApiKey);
           if (decryptedKey) {
-            fetchProjects(decryptedKey, items.defaultProjectId, items.reportProjectId);
+            fetchProjects(decryptedKey, items.defaultProjectId || items.reportProjectId || "");
           } else {
             console.warn("[OPTIONS] Failed to decrypt redmineApiKey");
           }
@@ -869,16 +1032,20 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
       }
 
+      const defaultGeminiModels = (TB.GEMINI_MODELS || [])
+        .filter((model) => model.default)
+        .map((model) => model.value);
       if (items.geminiModels) {
         try {
           const modelsStr = await decryptData(items.geminiModels);
-          renderGeminiModelsTags(modelsStr ? modelsStr.split("\n").filter(Boolean) : []);
+          const modelsList = modelsStr ? modelsStr.split("\n").filter(Boolean) : [];
+          renderGeminiModelsTags(modelsList.length > 0 ? modelsList : defaultGeminiModels);
         } catch (e) {
           console.error("[OPTIONS] Error decrypting geminiModels:", e);
-          renderGeminiModelsTags([]);
+          renderGeminiModelsTags(defaultGeminiModels);
         }
       } else {
-        renderGeminiModelsTags([]);
+        renderGeminiModelsTags(defaultGeminiModels);
       }
 
       if (items.geminiApiKeys) {
@@ -916,7 +1083,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       const keysBlock = document.createElement("div");
       keysBlock.style.margin = "8px 0 0";
       keysBlock.innerHTML = `
-        <p style="margin: 0 0 6px; font-size: 11px; color: #166534; font-weight: 500">${om("options_keys_help", "Keys (enter then Save, press Enter to add quickly, click to remove)")}</p>
         <div id="${scope}${capitalize(provider)}KeysList" class="provider-keys-list" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px"></div>
         <p style="margin: 4px 0 0; font-size: 11px; color: var(--muted)">${om("options_added", "Added:")} <span id="${scope}${capitalize(provider)}SelectedKeyCount">0</span>/10</p>
       `;
@@ -937,7 +1103,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  async function fetchProjects(apiKey, selectedId = "", selectedReportId = "") {
+  async function fetchProjects(apiKey, selectedId = "", forceRefresh = false) {
+    if (typeof selectedId === "boolean") {
+      forceRefresh = selectedId;
+      selectedId = "";
+    }
     if (!apiKey) return false;
     const redmineDomain =
       document.getElementById("redmineDomain").value.trim() || TB.REDMINE_DOMAIN;
@@ -948,24 +1118,27 @@ document.addEventListener("DOMContentLoaded", async () => {
     const now = Date.now();
     if (
       cachedProjects &&
+      !forceRefresh &&
       cachedProjectsFingerprint === fingerprint &&
       now - cacheTimestamp < CACHE_DURATION
     ) {
-      renderProjectOptions(cachedProjects, selectedId, selectedReportId);
+      renderProjectOptions(cachedProjects, selectedId);
+      TB_OPTIONS_PROJECT_PROFILES.refresh();
       await chrome.storage.local.set({ redmineConnectionVerified: fingerprint });
       updateOnboardingStatuses();
       return true;
     }
     const syncBtn = document.getElementById("syncProjectsBtn");
     const defaultProjectSelect = document.getElementById("defaultProjectId");
-    const reportProjectSelect = document.getElementById("reportProjectId");
     try {
       if (syncBtn) {
         syncBtn.disabled = true;
-        syncBtn.textContent = `⌛ ${om("options_loading", "Đang tải...")}`;
+        syncBtn.classList.add("is-loading");
+        syncBtn.setAttribute("aria-busy", "true");
       }
-      defaultProjectSelect.innerHTML = `<option value="">${om("options_loading", "Đang tải...")}</option>`;
-      reportProjectSelect.innerHTML = `<option value="">${om("options_loading", "Đang tải...")}</option>`;
+      if (defaultProjectSelect) {
+        defaultProjectSelect.innerHTML = `<option value="">${om("options_loading", "Đang tải...")}</option>`;
+      }
       const projects = await sendBackgroundRequest({
         type: "FETCH_REDMINE_PROJECTS_WITH_KEY",
         domain: redmineDomain,
@@ -974,20 +1147,27 @@ document.addEventListener("DOMContentLoaded", async () => {
       cachedProjects = projects;
       cachedProjectsFingerprint = fingerprint;
       cacheTimestamp = now;
-      renderProjectOptions(projects, selectedId, selectedReportId);
+      renderProjectOptions(projects, selectedId);
+      TB_OPTIONS_PROJECT_PROFILES.refresh();
       await chrome.storage.local.set({ redmineConnectionVerified: fingerprint });
       updateOnboardingStatuses();
       return true;
-    } catch (_e) {
-      defaultProjectSelect.innerHTML = `<option value="">${om("options_load_error", "Lỗi tải (Kiểm tra Key)")}</option>`;
-      reportProjectSelect.innerHTML = `<option value="">${om("options_load_error", "Lỗi tải (Kiểm tra Key)")}</option>`;
+    } catch (error) {
+      if (defaultProjectSelect) {
+        defaultProjectSelect.innerHTML = `<option value="">${om("options_load_error", "Không tải được project")}</option>`;
+      }
       await chrome.storage.local.remove("redmineConnectionVerified");
+      const status = document.getElementById("onboardingStatus");
+      if (status) {
+        status.textContent = `${om("options_load_error", "Không tải được project")}: ${error.message}`;
+      }
       updateOnboardingStatuses();
       return false;
     } finally {
       if (syncBtn) {
         syncBtn.disabled = false;
-        syncBtn.textContent = om("options_sync_projects", "🔄 Đồng bộ Project");
+        syncBtn.classList.remove("is-loading");
+        syncBtn.removeAttribute("aria-busy");
       }
     }
   }
@@ -1200,18 +1380,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  function renderProjectOptions(projects, selectedId, selectedReportId) {
+  function renderProjectOptions(projects, selectedId) {
     const defaultSelect = document.getElementById("defaultProjectId");
-    const reportSelect = document.getElementById("reportProjectId");
-    defaultSelect.innerHTML = `<option value="">${om("options_choose_project", "-- Chọn project --")}</option>`;
-    reportSelect.innerHTML = `<option value="">${om("options_choose_project", "-- Chọn project --")}</option>`;
-    projects.forEach((p) => {
-      const opt = new Option(p.name, p.id);
-      defaultSelect.add(opt);
-      reportSelect.add(opt.cloneNode(true));
-    });
-    if (selectedId) defaultSelect.value = selectedId;
-    if (selectedReportId) reportSelect.value = selectedReportId;
+    if (defaultSelect) {
+      defaultSelect.innerHTML = `<option value="">${om("options_choose_project", "-- Chọn project --")}</option>`;
+      projects.forEach((p) => {
+        defaultSelect.add(new Option(p.name, p.id));
+      });
+      if (selectedId) defaultSelect.value = selectedId;
+    }
   }
 
   function handleProviderChange(selectElement, selectedModel = null) {
@@ -1234,7 +1411,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       openrouter: document.getElementById("primaryOpenrouterConfig"),
     };
     Object.entries(sections).forEach(([key, el]) => {
-      if (el) el.style.display = provider === key ? "block" : "none";
+      if (el) {
+        const visible = provider === key;
+        el.hidden = !visible;
+        el.style.display = visible ? (key === "gemini" ? "block" : "") : "none";
+      }
     });
   }
 
@@ -1445,8 +1626,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     keys.forEach((key) => {
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.title = key;
-      btn.textContent = `${key.slice(0, 8)}...`;
+      btn.dataset.apiKey = key;
+      btn.title = om("options_remove_key", "Remove API key");
+      btn.setAttribute("aria-label", btn.title);
+      btn.textContent = `${key.slice(0, 8)}... ×`;
       Object.assign(btn.style, {
         background: "#dbeafe",
         color: "#1e40af",
@@ -1508,7 +1691,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   function getProviderKeys(scope, provider, inputElement = null) {
     const idPrefix = `${scope}${capitalize(provider)}`;
     const keys = Array.from(document.querySelectorAll(`#${idPrefix}KeysList button`)).map(
-      (button) => button.title
+      (button) => button.dataset.apiKey
     );
     const inputValue = inputElement?.value?.trim();
     if (inputValue && inputValue !== "**********" && !keys.includes(inputValue)) {
@@ -1593,8 +1776,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     keys.forEach((key) => {
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.title = key;
-      btn.textContent = `${key.slice(0, 8)}...`;
+      btn.dataset.apiKey = key;
+      btn.title = om("options_remove_key", "Remove API key");
+      btn.setAttribute("aria-label", btn.title);
+      btn.textContent = `${key.slice(0, 8)}... ×`;
       btn.onclick = () => {
         btn.remove();
         document.getElementById("selectedKeyCount").textContent = listEl.children.length;
@@ -1634,8 +1819,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     keys.forEach((key) => {
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.title = key;
-      btn.textContent = `${key.slice(0, 8)}...`;
+      btn.dataset.apiKey = key;
+      btn.title = om("options_remove_key", "Remove API key");
+      btn.setAttribute("aria-label", btn.title);
+      btn.textContent = `${key.slice(0, 8)}... ×`;
       Object.assign(btn.style, getProviderChipStyle(false), { fontFamily: "monospace" });
       btn.onclick = () => {
         btn.remove();
@@ -1656,7 +1843,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const key = input?.value?.trim();
     if (!key || key === "**********") return;
     const currentKeys = Array.from(document.querySelectorAll("#fallbackGeminiKeysList button")).map(
-      (button) => button.title
+      (button) => button.dataset.apiKey
     );
     if (currentKeys.length < 10 && !currentKeys.includes(key)) {
       renderFallbackGeminiKeysButtons([...currentKeys, key]);
@@ -1677,20 +1864,25 @@ document.addEventListener("DOMContentLoaded", async () => {
       key &&
       key !== "**********" &&
       listEl.children.length < 10 &&
-      !Array.from(listEl.children).some((b) => b.title === key)
+      !Array.from(listEl.children).some((button) => button.dataset.apiKey === key)
     ) {
-      renderGeminiKeysButtons([...Array.from(listEl.children).map((b) => b.title), key]);
+      renderGeminiKeysButtons([
+        ...Array.from(listEl.children).map((button) => button.dataset.apiKey),
+        key,
+      ]);
       input.value = "";
     }
   }
 
   function getGeminiKeys() {
-    return Array.from(document.querySelectorAll("#geminiKeysList button")).map((b) => b.title);
+    return Array.from(document.querySelectorAll("#geminiKeysList button")).map(
+      (button) => button.dataset.apiKey
+    );
   }
 
   function getFallbackGeminiKeys() {
     return Array.from(document.querySelectorAll("#fallbackGeminiKeysList button")).map(
-      (button) => button.title
+      (button) => button.dataset.apiKey
     );
   }
 
@@ -1703,23 +1895,50 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function handleRedmineKeyBlur() {
     const key = redmineApiKeyInput.value.trim();
     if (key && key !== "**********") {
-      const defaultId = document.getElementById("defaultProjectId").value;
-      const reportId = document.getElementById("reportProjectId").value;
-      setTimeout(() => fetchProjects(key, defaultId, reportId), 500);
+      const defaultId = document.getElementById("defaultProjectId")?.value;
+      setTimeout(() => fetchProjects(key, defaultId), 500);
     }
   }
 
   async function handleSyncProjects() {
+    const button = document.getElementById("syncProjectsBtn");
     const stored = await chrome.storage.local.get("redmineApiKey");
     const key = stored.redmineApiKey ? await decryptData(stored.redmineApiKey) : null;
     if (key) {
-      fetchProjects(
-        key,
-        document.getElementById("defaultProjectId").value,
-        document.getElementById("reportProjectId").value
-      );
+      const defaultId = document.getElementById("defaultProjectId")?.value;
+      const loaded = await fetchProjects(key, defaultId, true);
+      showProjectReloadResult(button, loaded);
     } else {
       alert(om("options_save_redmine_key_first"));
+      showProjectReloadResult(button, false);
     }
+  }
+
+  function showProjectReloadResult(button, success) {
+    if (!button) return;
+    const icon = button.querySelector("svg");
+    if (!icon) return;
+    clearTimeout(Number(button.dataset.resultTimer));
+    button.classList.remove("is-success", "is-error");
+    button.classList.add(success ? "is-success" : "is-error");
+    const message = om(
+      success ? "options_projects_reloaded" : "options_projects_reload_failed",
+      success ? "Projects reloaded" : "Could not reload projects"
+    );
+    button.title = message;
+    button.setAttribute("aria-label", message);
+    icon.innerHTML = success
+      ? '<path d="m5 12 4 4L19 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />'
+      : '<path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />';
+    button.dataset.resultTimer = String(
+      setTimeout(() => {
+        button.classList.remove("is-success", "is-error");
+        button.title = om("options_sync_projects", "Reload projects");
+        button.setAttribute("aria-label", button.title);
+        icon.innerHTML =
+          '<path d="M20 7v5h-5M4 17v-5h5m10.2-1A7.5 7.5 0 0 0 6.3 6.3L4 8m16 8-2.3 1.7A7.5 7.5 0 0 1 4.8 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />';
+        delete button.dataset.resultTimer;
+      }, 1600)
+    );
   }
 });

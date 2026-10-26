@@ -1,16 +1,18 @@
-# name
-code-review
+---
+name: code-review
+description: Focused review guidance for Backlog2Redmine changes, emphasizing changed files, extension architecture,
+  security, and project rules.
+---
 
-# description
-Focused review guidance for Backlog2Redmine changes, emphasizing changed files, extension architecture, security, and project rules.
+# code-review
 
-# when to use
-- Always use before finalizing repository guidance or code changes.
+## When to use
+- Use for requested code/guidance reviews or when a substantive change needs a focused review; do not force this workflow for every small edit.
 - Reviewing a PR, diff, refactor, or generated change.
 - Validating edits against `AGENTS.md`, relevant skills, source patterns, and security constraints.
 
-# concise rules
-- Start with `git status --short` and changed-file diffs before broader scans.
+## Rules
+- Start with `git status --short`; include staged and unstaged diffs (`git diff HEAD`) and relevant untracked files unless the user supplied a different review base.
 - Load `AGENTS.md` and only the skill files relevant to changed areas.
 - If `.rules/` exists, load only relevant rule files.
 - Avoid full repo scans unless changed files reveal a cross-cutting risk.
@@ -19,7 +21,7 @@ Focused review guidance for Backlog2Redmine changes, emphasizing changed files, 
 - Check for plaintext secrets, unsafe logging, widened permissions, and insecure DOM injection.
 - Validate against module boundaries: background for privileged work, content scripts for DOM, services for APIs, utils for shared helpers.
 
-# validation checklist
+## Validation
 - Changed files follow existing naming, globals, formatting, and module patterns.
 - Manifest load order and permissions still match code needs.
 - Storage schema changes remain backward compatible or clearly migrated.

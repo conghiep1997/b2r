@@ -5,6 +5,7 @@
 
 // Cached key material to avoid re-deriving on every operation
 let cachedKeyMaterial = null;
+let pendingKeyDerivation = null;
 
 /**
  * Encrypts sensitive data using AES-GCM-256.
@@ -69,6 +70,16 @@ async function deriveKey() {
     return cachedKeyMaterial;
   }
 
+  // Options saves several credentials concurrently. They must share one storage ID and key.
+  if (!pendingKeyDerivation) {
+    pendingKeyDerivation = deriveStorageKey().finally(() => {
+      pendingKeyDerivation = null;
+    });
+  }
+  return pendingKeyDerivation;
+}
+
+async function deriveStorageKey() {
   const encoder = new TextEncoder();
 
   // Generate user-specific salt component from chrome.storage ID

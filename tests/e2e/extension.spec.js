@@ -250,8 +250,29 @@ test("Popup and Options render the selected locale and onboarding", async () => 
   const options = await openPage("src/options.html");
   await expect(options.locator("#onboardingCard")).toBeVisible();
   await expect(options.locator("label[for='languagePreference']")).toHaveText("Language");
+  await expect(options.locator("#translationSourceLanguage")).toHaveValue("ja");
+  await expect(options.locator("#translationTargetLanguage")).toHaveValue("vi");
+  await options.locator("#translationSourceLanguage").selectOption("fr");
+  await options.locator("#translationTargetLanguage").selectOption("en");
+  await options.locator("#optionsForm button[type='submit']").click();
+  await expect
+    .poll(() =>
+      options.evaluate(async () => {
+        const settings = await chrome.storage.local.get([
+          "translationSourceLanguage",
+          "translationTargetLanguage",
+        ]);
+        return [settings.translationSourceLanguage, settings.translationTargetLanguage];
+      })
+    )
+    .toEqual(["fr", "en"]);
+  await options.reload();
+  await expect(options.locator("#translationSourceLanguage")).toHaveValue("fr");
+  await expect(options.locator("#translationTargetLanguage")).toHaveValue("en");
   await expect(options.locator("#testBacklogConnectionBtn")).toBeVisible();
-  await options.locator("#backlogSettings > summary").click();
+  if (!(await options.locator("#backlogSettings").evaluate((details) => details.open))) {
+    await options.locator("#backlogSettings > summary").click();
+  }
   await options.locator("#backlogApiKey").fill("demo-backlog-key");
   await options.locator("#testBacklogConnectionBtn").click();
   await expect(options.locator("#onboardingStatus")).toContainText("Backlog connection successful");

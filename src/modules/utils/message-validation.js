@@ -5,6 +5,9 @@
   const MAX_PAYLOAD_LENGTH = 1000000;
   const FIELD_LIMITS = Object.freeze({
     apiKey: 10000,
+    backlogIssueKey: 100,
+    content: 100000,
+    notes: 200000,
     commentText: 100000,
     commentUrl: 2000,
     domain: 2000,
@@ -12,6 +15,9 @@
     issueKey: 100,
     issueSummary: 1000,
     backlogIssueType: 50,
+    recordId: 64,
+    redmineIssueId: 30,
+    action: 30,
     modelId: 300,
     path: 2000,
     method: 10,
@@ -25,17 +31,28 @@
     "CREATE_REDMINE_ISSUE",
     "EXTRACT_JAPANESE_CONTENT",
     "FETCH_REDMINE_METADATA",
+    "FETCH_REDMINE_ACTIVITIES_WITH_KEY",
     "FETCH_REDMINE_PROJECTS_WITH_KEY",
     "GET_BACKLOG_ISSUE_INFO",
     "GET_BACKLOG_USERS",
+    "GET_CRYPTO_STORAGE_ID",
     "GET_DEFAULT_PROJECT_SUMMARY",
+    "GET_PROJECT_GLOSSARY",
     "GET_REPORT_SETTINGS",
     "GET_UI_SETTINGS",
+    "LIST_SYNC_RECOVERY",
     "LOG_ERROR",
     "LOOKUP_AND_TRANSLATE_COMMENT",
     "OPEN_OPTIONS_PAGE",
     "REDMINE_AUTHORIZED_FETCH",
     "RECORD_SYNC_ACTIVITY",
+    "REMOVE_ISSUE_MAPPING",
+    "RESOLVE_COMMENT_SYNC",
+    "RESOLVE_MIGRATION",
+    "RESUME_COMMENT_SYNC",
+    "RESUME_MIGRATION",
+    "SAVE_ISSUE_MAPPING",
+    "SAVE_PROJECT_GLOSSARY",
     "SEND_TO_BACKLOG",
     "SEND_TO_REDMINE",
     "TEST_MODEL_WITH_KEY",
@@ -45,9 +62,23 @@
   ]);
   const REQUIRED_FIELDS = Object.freeze({
     FETCH_REDMINE_PROJECTS_WITH_KEY: ["domain", "apiKey"],
+    FETCH_REDMINE_ACTIVITIES_WITH_KEY: ["domain", "apiKey"],
     REDMINE_AUTHORIZED_FETCH: ["path"],
     TEST_MODEL_WITH_KEY: ["provider", "modelId", "apiKey"],
     TEST_BACKLOG_CONNECTION: ["domain", "apiKey"],
+    GET_BACKLOG_ISSUE_INFO: ["issueKey"],
+    GET_BACKLOG_USERS: ["projectKey"],
+    GET_REPORT_SETTINGS: [],
+    SEND_TO_BACKLOG: ["backlogIssueKey", "content"],
+    SEND_TO_REDMINE: ["notes"],
+    RESOLVE_COMMENT_SYNC: ["recordId"],
+    RESUME_COMMENT_SYNC: ["recordId"],
+    RESOLVE_MIGRATION: ["issueKey", "action"],
+    RESUME_MIGRATION: ["issueKey"],
+    SAVE_ISSUE_MAPPING: ["issueKey", "redmineIssueId"],
+    REMOVE_ISSUE_MAPPING: ["issueKey"],
+    GET_PROJECT_GLOSSARY: ["projectKey"],
+    SAVE_PROJECT_GLOSSARY: ["projectKey", "entries"],
   });
 
   function assertMessage(message) {
@@ -67,6 +98,36 @@
     if (serialized.length > MAX_PAYLOAD_LENGTH) {
       throw new RangeError("Extension message payload is too large.");
     }
+    if (
+      ["GET_PROJECT_GLOSSARY", "SAVE_PROJECT_GLOSSARY"].includes(message.type) &&
+      (typeof message.projectKey !== "string" || message.projectKey.length > 100)
+    ) {
+      throw new TypeError("Invalid glossary project key.");
+    }
+    if (
+      message.type === "GET_REPORT_SETTINGS" &&
+      message.reportProjectId !== undefined &&
+      !/^[1-9]\d*$/.test(message.reportProjectId)
+    ) {
+      throw new TypeError("Invalid report project ID.");
+    }
+    if (
+      message.type === "GET_REPORT_SETTINGS" &&
+      message.profileKey !== undefined &&
+      !/^[A-Z0-9_]{1,100}$/.test(message.profileKey)
+    ) {
+      throw new TypeError("Invalid report profile key.");
+    }
+    if (
+      message.type === "GET_REPORT_SETTINGS" &&
+      message.globalProfile !== undefined &&
+      typeof message.globalProfile !== "boolean"
+    ) {
+      throw new TypeError("Invalid global report profile selection.");
+    }
+    if (message.type === "SAVE_PROJECT_GLOSSARY" && !Array.isArray(message.entries)) {
+      throw new TypeError("Glossary entries must be a list.");
+    }
 
     for (const [field, limit] of Object.entries(FIELD_LIMITS)) {
       if (message[field] !== undefined && typeof message[field] !== "string") {
@@ -80,6 +141,61 @@
     for (const field of REQUIRED_FIELDS[message.type] || []) {
       if (!message[field]) {
         throw new TypeError(`Message field '${field}' is required.`);
+      }
+    }
+    if (
+      message.type === "SEND_TO_REDMINE" &&
+      !/^[1-9]\d*$/.test(String(message.redmineIssueId ?? ""))
+    ) {
+      throw new TypeError("Invalid Redmine issue ID.");
+    }
+    if (
+      (message.type === "SEND_TO_BACKLOG" && !/^[A-Z0-9_]+-\d+$/.test(message.backlogIssueKey)) ||
+      (message.type === "GET_BACKLOG_ISSUE_INFO" && !/^[A-Z0-9_]+-\d+$/.test(message.issueKey)) ||
+      (message.type === "GET_BACKLOG_USERS" && !/^[A-Z0-9_]+(?:-\d+)?$/.test(message.projectKey)) ||
+      ([
+        "RESUME_MIGRATION",
+        "RESOLVE_MIGRATION",
+        "SAVE_ISSUE_MAPPING",
+        "REMOVE_ISSUE_MAPPING",
+      ].includes(message.type) &&
+        !/^[A-Z0-9_]+-\d+$/.test(message.issueKey || ""))
+    ) {
+      throw new TypeError("Invalid Backlog issue or project key.");
+    }
+    if (
+      ["RESUME_COMMENT_SYNC", "RESOLVE_COMMENT_SYNC"].includes(message.type) &&
+      !/^[a-f0-9]{64}$/.test(message.recordId || "")
+    ) {
+      throw new TypeError("Invalid comment recovery ID.");
+    }
+    if (
+      message.type === "RESOLVE_MIGRATION" &&
+      (!["adopt", "confirm-not-sent"].includes(message.action) ||
+        (message.action === "adopt" && !/^[1-9]\d*$/.test(message.redmineIssueId || "")))
+    ) {
+      throw new TypeError("Invalid migration recovery action.");
+    }
+    if (message.type === "SAVE_ISSUE_MAPPING" && !/^[1-9]\d*$/.test(message.redmineIssueId || "")) {
+      throw new TypeError("Invalid Redmine issue ID.");
+    }
+    if (message.type === "SEND_TO_BACKLOG") {
+      const attachments = message.attachments ?? [];
+      if (
+        !Array.isArray(attachments) ||
+        attachments.length > 100 ||
+        attachments.some(
+          (attachment) =>
+            !attachment ||
+            typeof attachment.url !== "string" ||
+            !attachment.url ||
+            attachment.url.length > 2000 ||
+            typeof attachment.filename !== "string" ||
+            !attachment.filename ||
+            attachment.filename.length > 255
+        )
+      ) {
+        throw new TypeError("Invalid Backlog attachments.");
       }
     }
     if (message.type === "RECORD_SYNC_ACTIVITY") {

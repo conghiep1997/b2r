@@ -7,6 +7,13 @@ const MAX_LOGS = 100;
 const MAX_LOG_FIELD_LENGTH = 10000;
 const MAX_CONTEXT_DEPTH = 4;
 const MAX_CONTEXT_ENTRIES = 50;
+let pendingLogWrite = Promise.resolve();
+
+function enqueueLogWrite(operation) {
+  const result = pendingLogWrite.then(operation);
+  pendingLogWrite = result.catch(() => {});
+  return result;
+}
 
 function redactSensitiveText(value) {
   return String(value ?? "")
@@ -55,11 +62,11 @@ function sanitizeLogEntries(logs) {
 }
 
 async function sanitizeStoredLogs() {
-  return new Promise((resolve) => {
-    chrome.storage.local.get(["errorLogs"], (result) => {
-      const logs = sanitizeLogEntries(result.errorLogs);
-      chrome.storage.local.set({ errorLogs: logs }, () => resolve(logs));
-    });
+  return enqueueLogWrite(async () => {
+    const { errorLogs } = await chrome.storage.local.get("errorLogs");
+    const logs = sanitizeLogEntries(errorLogs);
+    await chrome.storage.local.set({ errorLogs: logs });
+    return logs;
   });
 }
 
@@ -83,8 +90,8 @@ async function logError(source, error, context = {}) {
   });
 
   try {
-    if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.sendMessage) {
-      chrome.runtime.sendMessage({ type: "LOG_ERROR", log: newLog });
+    if (typeof document !== "undefined" && globalThis.chrome?.runtime?.sendMessage) {
+      await chrome.runtime.sendMessage({ type: "LOG_ERROR", log: newLog });
     } else {
       await saveLogToStorage(newLog);
     }
@@ -99,19 +106,10 @@ async function logError(source, error, context = {}) {
  */
 async function saveLogToStorage(logEntry) {
   const sanitizedLogEntry = sanitizeLogEntry(logEntry);
-  return new Promise((resolve) => {
-    chrome.storage.local.get(["errorLogs"], (result) => {
-      let logs = result.errorLogs || [];
-      logs.unshift(sanitizedLogEntry); // Add to beginning
-
-      if (logs.length > MAX_LOGS) {
-        logs = logs.slice(0, MAX_LOGS);
-      }
-
-      chrome.storage.local.set({ errorLogs: logs }, () => {
-        resolve();
-      });
-    });
+  return enqueueLogWrite(async () => {
+    const { errorLogs } = await chrome.storage.local.get("errorLogs");
+    const logs = [sanitizedLogEntry, ...sanitizeLogEntries(errorLogs)].slice(0, MAX_LOGS);
+    await chrome.storage.local.set({ errorLogs: logs });
   });
 }
 
@@ -120,18 +118,15 @@ async function saveLogToStorage(logEntry) {
  * @returns {Promise<Array>} List of log entries
  */
 async function getLogs() {
-  return sanitizeStoredLogs();
+  const { errorLogs } = await chrome.storage.local.get("errorLogs");
+  return sanitizeLogEntries(errorLogs);
 }
 
 /**
  * Clears all saved logs.
  */
 async function clearLogs() {
-  return new Promise((resolve) => {
-    chrome.storage.local.remove(["errorLogs"], () => {
-      resolve();
-    });
-  });
+  return enqueueLogWrite(() => chrome.storage.local.remove("errorLogs"));
 }
 
 // Global for scripts loaded via manifest

@@ -1,3 +1,4 @@
+/* global TB_GLOSSARY */
 /**
  * AI Translation Service using Gemini and Cerebras.
  */
@@ -13,6 +14,10 @@ const GEMINI_OVERLOAD_COOLDOWN_MS = 30 * 1000;
 const GEMINI_UNAVAILABLE_COOLDOWN_MS = 5 * 60 * 1000;
 const RETIRED_GEMINI_MODELS = new Set(["gemini-2.0-flash", "gemini-2.0-flash-lite"]);
 const AI_TRANSLATION_TIMEOUT_MS = 15 * 1000;
+
+function getProviderSystemPrompt(promptFn) {
+  return promptFn.system ? `${TB.PROMPTS.SYSTEM}\n\n${promptFn.system}` : TB.PROMPTS.SYSTEM;
+}
 
 function emitAIStatus(status, onStatus) {
   try {
@@ -172,6 +177,50 @@ async function translateText(
   promptFn = TB.PROMPTS.USER,
   onStatus
 ) {
+  const rules = settings.translationRules
+    ? TB.PROMPTS.TRANSLATION.normalize(settings.translationRules)
+    : TB.PROMPTS.TRANSLATION.normalize({
+        source: settings.translationSourceLanguage || "ja",
+        target: settings.translationTargetLanguage || "vi",
+      });
+  const reverse = Boolean(settings.isReverseTranslation);
+  if ((reverse && rules.reverseMode === "original") || promptFn.reverseMode === "original") {
+    return commentText;
+  }
+  const selectedPrompt =
+    promptFn === TB.PROMPTS.USER || promptFn === TB.PROMPTS.SIMPLE_TRANSLATE
+      ? TB.PROMPTS.TRANSLATION.prompt(rules, reverse, Boolean(commentUrl))
+      : promptFn;
+  const languagePair = TB.PROMPTS.resolveLanguagePair(settings);
+  let promptBuilder = selectedPrompt;
+  const configuredPrompt = (text) => promptBuilder(text, settings);
+  configuredPrompt.system = selectedPrompt.system;
+  configuredPrompt.attribution = selectedPrompt.attribution;
+  configuredPrompt.extract = selectedPrompt.extract;
+  configuredPrompt.translationLabel =
+    selectedPrompt.translationLabel || languagePair.target.toUpperCase();
+  configuredPrompt.includeOriginal = promptFn === TB.PROMPTS.USER;
+  configuredPrompt.targetLanguage = selectedPrompt.translationLabel || languagePair.target;
+  let sourceText = commentText;
+  let restoreGlossary = (output) => output;
+  if (globalThis.TB_GLOSSARY?.prepare && settings.currentProjectKey && !selectedPrompt.extract) {
+    const prepared = await TB_GLOSSARY.prepare(
+      settings,
+      settings.currentProjectKey,
+      sourceText,
+      selectedPrompt
+    );
+    sourceText = prepared.text;
+    restoreGlossary = prepared.restore;
+    promptBuilder = prepared.prompt;
+    Object.assign(configuredPrompt, {
+      system: prepared.prompt.system,
+      attribution: prepared.prompt.attribution,
+      translationLabel: prepared.prompt.translationLabel,
+      extract: prepared.prompt.extract,
+      wrapped: prepared.prompt,
+    });
+  }
   const primaryProvider = settings.primaryProvider || TB.DEFAULT_PRIMARY_PROVIDER;
   const primaryModel = settings.primaryModel || TB.DEFAULT_PRIMARY_MODEL;
   const fallbackProvider = settings.fallbackProvider || TB.DEFAULT_FALLBACK_PROVIDER;
@@ -183,13 +232,13 @@ async function translateText(
       primaryProvider,
       primaryModel,
       settings,
-      commentText,
+      sourceText,
       commentUrl,
-      promptFn,
+      configuredPrompt,
       onStatus
     );
     emitAIStatus({ phase: "success", provider: primaryProvider, model: primaryModel }, onStatus);
-    return translated;
+    return restoreGlossary(translated);
   } catch (error) {
     // Fallback on rate limit and temporary provider overloads such as Gemini 503 high demand.
     const isRetryableProviderFailure = isRetryableProviderError(error);
@@ -208,16 +257,16 @@ async function translateText(
           fallbackProvider,
           fallbackModel,
           settings,
-          commentText,
+          sourceText,
           commentUrl,
-          promptFn,
+          configuredPrompt,
           onStatus
         );
         emitAIStatus(
           { phase: "success", provider: fallbackProvider, model: fallbackModel },
           onStatus
         );
-        return translated;
+        return restoreGlossary(translated);
       } catch (fallbackError) {
         emitAIStatus({ phase: "error", error: fallbackError.message }, onStatus);
         throw new Error(
@@ -412,6 +461,7 @@ async function callProviderWithFailover(provider, model, settings, text, url, pr
   let skippedCooldowns = 0;
   let nextCooldownReadyAt = Infinity;
   const startIndex = (lastUsedProviderIndexByProvider[provider] || 0) % combinations.length;
+  lastUsedProviderIndexByProvider[provider] = (startIndex + 1) % combinations.length;
 
   for (let i = 0; i < combinations.length; i++) {
     const currentIndex = (startIndex + i) % combinations.length;
@@ -428,7 +478,6 @@ async function callProviderWithFailover(provider, model, settings, text, url, pr
 
     try {
       const result = await callProviderAPI(provider, currentKey, text, currentModel, promptFn, url);
-      lastUsedProviderIndexByProvider[provider] = (currentIndex + 1) % combinations.length;
       return result;
     } catch (error) {
       if (!isRetryableProviderError(error)) {
@@ -519,6 +568,7 @@ function isRetryableProviderError(error) {
     message.includes("503") ||
     message.includes("timeout") ||
     message.includes("timed out") ||
+    message.includes("cooling down") ||
     message.includes("high demand") ||
     message.includes("try again later") ||
     message.includes("only safety metadata")
@@ -624,7 +674,7 @@ async function callGeminiAPI(
         parts: [
           {
             text: isGemma
-              ? `${TB.PROMPTS.SYSTEM}\n\n${promptFn(commentText)}`
+              ? `${getProviderSystemPrompt(promptFn)}\n\n${promptFn(commentText)}`
               : promptFn(commentText),
           },
         ],
@@ -640,7 +690,7 @@ async function callGeminiAPI(
   // Only Gemini models support system_instruction parameter
   if (!isGemma) {
     payload.system_instruction = {
-      parts: [{ text: TB.PROMPTS.SYSTEM }],
+      parts: [{ text: getProviderSystemPrompt(promptFn) }],
     };
   }
 
@@ -675,13 +725,15 @@ async function callGeminiAPI(
     .join("")
     .trim();
 
+  assertCompleteTranslation(data?.candidates?.[0]?.finishReason);
+
   if (!rawText) {
     throw new Error(TB.MESSAGES.GEMINI.EMPTY_TRANSLATION);
   }
 
   const cleaned = extractCleanedTranslation(rawText);
-  if (promptFn === TB.PROMPTS.USER) {
-    return formatTranslation(commentText, cleaned, commentUrl);
+  if (promptFn.includeOriginal) {
+    return formatTranslation(commentText, cleaned, commentUrl, promptFn.targetLanguage);
   }
   return cleaned;
 }
@@ -715,7 +767,7 @@ async function callCerebrasAPI(
       body: JSON.stringify({
         model: model,
         messages: [
-          { role: "system", content: TB.PROMPTS.SYSTEM },
+          { role: "system", content: getProviderSystemPrompt(promptFn) },
           { role: "user", content: promptFn(commentText) },
         ],
         temperature: 0.2,
@@ -732,13 +784,14 @@ async function callCerebrasAPI(
 
   const data = await safeReadJson(response);
   const rawText = data?.choices?.[0]?.message?.content?.trim();
+  assertCompleteTranslation(data?.choices?.[0]?.finish_reason);
   if (!rawText) {
     throw new Error("AI returned no content.");
   }
 
   const cleaned = extractCleanedTranslation(rawText);
-  if (promptFn === TB.PROMPTS.USER) {
-    return formatTranslation(commentText, cleaned, commentUrl);
+  if (promptFn.includeOriginal) {
+    return formatTranslation(commentText, cleaned, commentUrl, promptFn.targetLanguage);
   }
   return cleaned;
 }
@@ -762,7 +815,7 @@ async function callGroqAPI(
       body: JSON.stringify({
         model: model || "llama-3.3-70b-versatile",
         messages: [
-          { role: "system", content: TB.PROMPTS.SYSTEM },
+          { role: "system", content: getProviderSystemPrompt(promptFn) },
           { role: "user", content: promptFn(commentText) },
         ],
         temperature: 0.2,
@@ -779,13 +832,14 @@ async function callGroqAPI(
 
   const data = await safeReadJson(response);
   const rawText = data?.choices?.[0]?.message?.content?.trim();
+  assertCompleteTranslation(data?.choices?.[0]?.finish_reason);
   if (!rawText) {
     throw new Error("AI returned no content.");
   }
 
   const cleaned = extractCleanedTranslation(rawText);
-  if (promptFn === TB.PROMPTS.USER) {
-    return formatTranslation(commentText, cleaned, commentUrl);
+  if (promptFn.includeOriginal) {
+    return formatTranslation(commentText, cleaned, commentUrl, promptFn.targetLanguage);
   }
   return cleaned;
 }
@@ -808,7 +862,7 @@ async function callOpenRouterAPI(
       body: JSON.stringify({
         model: model || "openai/gpt-4o-mini",
         messages: [
-          { role: "system", content: TB.PROMPTS.SYSTEM },
+          { role: "system", content: getProviderSystemPrompt(promptFn) },
           { role: "user", content: promptFn(commentText) },
         ],
         temperature: 0.2,
@@ -825,15 +879,24 @@ async function callOpenRouterAPI(
 
   const data = await safeReadJson(response);
   const rawText = data?.choices?.[0]?.message?.content?.trim();
+  assertCompleteTranslation(data?.choices?.[0]?.finish_reason);
   if (!rawText) {
     throw new Error("AI returned no content.");
   }
 
   const cleaned = extractCleanedTranslation(rawText);
-  if (promptFn === TB.PROMPTS.USER) {
-    return formatTranslation(commentText, cleaned, commentUrl);
+  if (promptFn.includeOriginal) {
+    return formatTranslation(commentText, cleaned, commentUrl, promptFn.targetLanguage);
   }
   return cleaned;
+}
+
+function assertCompleteTranslation(finishReason) {
+  if (finishReason === "MAX_TOKENS" || finishReason === "length") {
+    throw new Error(
+      "AI translation was cut off by the output limit. Split the text into smaller parts before retrying."
+    );
+  }
 }
 
 function extractCleanedTranslation(rawText) {
@@ -1002,19 +1065,25 @@ function fixMangledMarkers(text) {
   return result;
 }
 
-function formatTranslation(originalText, cleanedText, commentUrl = null) {
+function formatTranslation(originalText, cleanedText, commentUrl = null, targetLanguage = "vi") {
   // Format output: add comment URL (if exists) and translation
   const prefix = commentUrl ? `${commentUrl}\n\n` : "";
-  return `${prefix}${originalText.trim()}\n\n---\n\n{{collapse(VN)\n\n${cleanedText}\n}}`;
+  const label = targetLanguage === "vi" ? "VN" : targetLanguage.toUpperCase();
+  return `${prefix}${originalText.trim()}\n\n---\n\n{{collapse(${label})\n\n${cleanedText}\n}}`;
 }
 
 function sanitizeErrorMessage(message, status) {
-  let displayMessage = message;
+  let displayMessage = String(message ?? "Unknown error");
   try {
     const errorJson = JSON.parse(message);
     displayMessage = errorJson.error?.message || errorJson.error || errorJson.message || message;
   } catch (e) {
     // Ignore parsing error if message is not JSON
   }
-  return `Error ${status}: ${displayMessage.replace(/https?:\/\/[^\s]+/g, "[URL]").slice(0, 200)}`;
+  if (typeof displayMessage !== "string") displayMessage = JSON.stringify(displayMessage);
+  return `Error ${status}: ${displayMessage
+    .replace(/https?:\/\/[^\s]+/g, "[URL]")
+    .replace(/\bBearer\s+[^\s]+/gi, "Bearer [REDACTED]")
+    .replace(/((?:api.?key|access_token|token)["']?\s*[:=]\s*["']?)[^\s,}"']+/gi, "$1[REDACTED]")
+    .slice(0, 200)}`;
 }

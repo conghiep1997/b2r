@@ -192,3 +192,61 @@ test("activity client tolerates rejected and disconnected background messages", 
   };
   assert.equal(await harness.context.recordSyncActivity(entry("X")), false);
 });
+
+test("router responds to synchronous authorization errors", async () => {
+  const harness = backgroundHarness();
+  const result = await harness.dispatch({
+    type: "TEST_MODEL_WITH_KEY",
+    provider: "gemini",
+    modelId: "test-model",
+    apiKey: "test-key",
+  });
+  assert.equal(result.ok, false);
+  assert.match(result.error, /options page/);
+});
+
+test("recovery and mapping operations reject content-script callers", async () => {
+  const harness = backgroundHarness();
+  for (const type of [
+    "RESUME_COMMENT_SYNC",
+    "RESOLVE_COMMENT_SYNC",
+    "LIST_SYNC_RECOVERY",
+    "RESUME_MIGRATION",
+    "RESOLVE_MIGRATION",
+    "SAVE_ISSUE_MAPPING",
+    "REMOVE_ISSUE_MAPPING",
+  ]) {
+    const result = await harness.dispatch({
+      type,
+      issueKey: "DEMO-1",
+      action: "adopt",
+      redmineIssueId: "42",
+      recordId: "a".repeat(64),
+    });
+    assert.equal(result.ok, false);
+    assert.match(result.error, /options page/);
+  }
+});
+
+test("Backlog sender validation isolates the configured workspace and frame", () => {
+  const harness = backgroundHarness();
+  const validate = harness.context.assertTrustedBacklogSender;
+  assert.doesNotThrow(() =>
+    validate({ url: "https://demo.backlog.com/view/DEMO-1" }, "https://demo.backlog.com")
+  );
+  assert.throws(() =>
+    validate({ url: "https://other.backlog.com/view/DEMO-1" }, "https://demo.backlog.com")
+  );
+  assert.throws(() =>
+    validate(
+      {
+        url: "https://other.backlog.com/frame",
+        tab: { url: "https://demo.backlog.com/view/DEMO-1" },
+      },
+      "https://demo.backlog.com"
+    )
+  );
+  assert.throws(() =>
+    validate({ url: "http://demo.backlog.com/view/DEMO-1" }, "https://demo.backlog.com")
+  );
+});

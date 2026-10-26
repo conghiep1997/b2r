@@ -1,15 +1,17 @@
-# name
-extension-ui
+---
+name: extension-ui
+description: Guidance for Backlog2Redmine popup and Options UI, injected Backlog/Redmine controls, shared modal/toast
+  styling, themes, i18n, and end-user bug reports.
+---
 
-# description
-Guidance for Backlog2Redmine popup and Options UI, injected Backlog/Redmine controls, shared modal/toast styling, themes, i18n, and end-user bug reports.
+# extension-ui
 
-# when to use
+## When to use
 - Editing `src/options.html`, `src/options.js`, content-script UI, or `src/modules/ui/*`.
 - Changing the popup, Options page, injected Backlog buttons, modals, toasts, or Redmine controls.
 - Updating i18n messages or UI text surfaced through `TB.MESSAGES`.
 
-# concise rules
+## Rules
 - Keep DOM injection scoped to matched pages and stable selectors.
 - Use existing UI helpers in `src/modules/ui/` before adding new patterns.
 - Keep options UI settings aligned with encrypted storage keys and background `getSettings`.
@@ -23,7 +25,7 @@ Guidance for Backlog2Redmine popup and Options UI, injected Backlog/Redmine cont
 - Keep bug reports local-first: redact logs, bound screenshot type/size, and make external issue creation explicit.
 - Do not move privileged API calls into page-facing UI code.
 
-# validation checklist
+## Validation
 - Options save/load still masks saved API keys.
 - UI controls do not duplicate on repeated scans or SPA navigation.
 - Toasts/modals report success and failure states clearly.

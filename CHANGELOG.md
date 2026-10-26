@@ -1,5 +1,51 @@
 # Changelog - Backlog2Redmine
 
+## [1.8.20] - 2026-10-26
+- **✨ Added**: Project-scoped glossaries, saved issue mappings, migration preview with comment/file selection, and resumable migration checkpoints.
+- **✨ Added**: Configurable translation and reverse-sync modes, project-pair profiles, migration title/search rules, tracker aliases, and custom-field policies.
+- **✨ Added**: Monthly log-time rules and project selection, plus a local Redmine sandbox for validation.
+- **🔧 Fixed**: Prevent duplicate syncs and migration issues after interrupted requests; preserve completed work and reconcile ambiguous results before retrying.
+- **🔧 Fixed**: Validate Redmine destinations, attachments, time-entry plans, and settings before writes; isolate workspace/project data and protect encrypted credentials.
+- **📝 Docs**: Expanded setup, Options, migration, recovery, and sandbox guidance; refreshed screenshots and skill documentation.
+- **📝 Docs**: Added implementation review and validation notes in `IMPLEMENTATION.md`.
+
+
+## [1.8.19] - 2026-10-22
+- **✨ Added**: One Redmine project selector for issue migration and monthly reports.
+- **🔧 Fixed**: Popup setup status now reflects the required API key and AI provider for each sync direction; overall setup accepts either Redmine or Backlog key when an AI provider is selected.
+- **🔧 Fixed**: Apply project-specific issue lookup mode, title delimiter, tracker aliases, and Redmine project restriction; avoid selecting unrelated search results.
+- **🔧 Fixed**: Use the selected log-time rules consistently in previews, confirmations, and pre-write checks.
+- **📝 Docs**: Simplified Options guidance and removed redundant API key and workspace-domain explanations.
+
+
+## [1.8.18] - 2026-10-02
+
+### Added
+- Configure independent source/target languages for Backlog → Redmine and extraction, translation, or original-content modes for Redmine → Backlog.
+- Configure daily log-time hours, equal or estimate-based allocation in quarter-hour increments, and API-backed default/testing activities.
+- Select workspace-scoped profile Report projects in the monthly log-time dialog.
+
+### Fixed
+- Resolve Redmine destinations using complete, paginated API results instead of first-page HTML hits; match complete Backlog keys and reject ambiguous matches.
+- Preserve explicitly empty model selections.
+- Distinguish migration attachments by source ID.
+- Accept corrected payloads after confirmed failures while preserving completed work and manually corrected issue mappings.
+- Restore credentials together with domains when content-script registration fails.
+- Remove legacy checkpoints only after successfully storing their replacements.
+- Discard monthly report previews when the selected project changes and block log-time writes if the hours/activity plan changes before confirmation.
+- Remove fixed time-entry activity-ID fallbacks.
+
+### Improved
+- Keep the chosen translation language across provider fallback and glossary prompts; use the target language for translated comment collapse labels while preserving existing default directions.
+- Support issue titles without Backlog keys through saved mappings.
+- Compact completed checkpoints and scope operation locks and record decryption to the current workspace.
+- Require loading a glossary before saving, protect unsaved edits and explicit clearing, and disable editing during requests.
+
+### Verification
+- 134 unit tests and 24 browser tests passed, including a real unpacked MV3 extension smoke test.
+- Lint, formatting, version synchronization, and build passed.
+- Live Backlog/Redmine writes were not exercised.
+
 ## [1.8.17] - 2026-09-24
 
 - **Added**: First-run onboarding, sync activity history, preview-only dry run, and clearer AI retry/provider status. Expanded automated coverage for Popup, Options, Backlog, and Redmine flows.

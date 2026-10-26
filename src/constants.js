@@ -98,6 +98,8 @@
     options_cerebras_key_required: "❌ Vui lòng nhập Cerebras API key.",
     options_save_success: "✅ Cấu hình đã được lưu thành công!",
     options_save_error: "❌ Lỗi khi lưu: $error$",
+    settings_options_save_success: "✅ Cấu hình đã được lưu thành công!",
+    settings_options_save_error: "❌ Lỗi khi lưu: $error$",
     options_saved_placeholder: "********** (Đã lưu)",
     redmine_lookup_failed: "Không tìm thấy Issue tương ứng trên Redmine.",
     redmine_search_empty_html: "Trang tìm kiếm Redmine trả về dữ liệu rỗng.",
@@ -166,9 +168,13 @@
           return createMessagesProxy(value, `${key}_`);
         }
         if (typeof value === "function") {
-          return (...args) => getMsg(key, args[0]);
+          return value;
         }
-        return getMsg(key);
+        const msg = getMsg(key);
+        if (msg !== key) {
+          return msg;
+        }
+        return typeof value === "string" ? value : msg;
       },
     });
 
@@ -201,7 +207,7 @@
     DEFAULT_FALLBACK_PROVIDER: "none",
     DEFAULT_FALLBACK_MODEL: "",
 
-    BACKLOG_DOMAIN: "https://shift7.backlog.com",
+    BACKLOG_DOMAIN: "https://example.backlog.com",
     REDMINE_DOMAIN: "https://redmine.splus-software.com",
 
     GEMINI_MODELS: global.TB_MODELS?.GEMINI_MODELS || [],

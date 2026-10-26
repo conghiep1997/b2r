@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Cấu hình Translate Backlog Comment</title>
+    <title>Cáº¥u hÃ¬nh Translate Backlog Comment</title>
     <style>
       :root {
         color-scheme: light;
@@ -64,40 +64,296 @@
         padding: 32px 20px 48px;
       }
 
+      /* Top Bar */
+      .options-top-bar {
+        position: sticky;
+        top: 0;
+        z-index: 200;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 16px;
+        padding: 6px 20px;
+        background: var(--panel);
+        border-bottom: 1px solid var(--border);
+        backdrop-filter: blur(10px);
+        margin: -32px -20px 24px;
+      }
+
       .hero {
-        margin-bottom: 20px;
+        margin-bottom: 24px;
       }
 
       .hero h1 {
         margin: 0 0 8px;
-        font-size: clamp(28px, 4vw, 40px);
+        font-size: clamp(24px, 3.5vw, 36px);
+        font-weight: 800;
+        letter-spacing: -0.02em;
       }
 
       .hero p {
         margin: 0;
         color: var(--muted);
+        font-size: 14px;
+        line-height: 1.5;
       }
 
-      /* Keep the most frequently used preferences visible at the top. */
-      .hero > label {
-        display: inline-block;
-        margin-top: 18px;
-        margin-right: 8px;
-        padding: 0;
+      .pref-field {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .pref-field label {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+
+      .pref-field select {
+        min-height: 36px;
+        padding: 6px 10px;
         color: var(--text);
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font: inherit;
         font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+      }
+
+      /* Tab Bar */
+      .options-tab-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-bottom: 20px;
+        padding: 6px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+      }
+
+      .tab-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        border: 1px solid transparent;
+        border-radius: 10px;
+        background: transparent;
+        color: var(--muted);
+        font: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 160ms ease;
+        white-space: nowrap;
+      }
+
+      .tab-btn:hover {
+        background: var(--bg);
+        color: var(--text);
+        border-color: var(--border);
+      }
+
+      .tab-btn[aria-selected="true"] {
+        background: var(--primary);
+        color: #fff;
+        border-color: var(--primary);
         font-weight: 700;
       }
 
-      .hero > select {
-        min-height: 40px;
-        margin: 8px 8px 12px 0 !important;
-        padding: 8px 10px;
-        color: var(--text);
+      :root[data-theme="dark"] .tab-btn[aria-selected="true"] {
+        background: var(--primary);
+        color: #0f172a;
+      }
+
+      .tab-btn:active {
+        transform: scale(0.97);
+      }
+
+      /* Tab Panels */
+      .tab-panel[hidden] {
+        display: none;
+      }
+
+      .tab-panel {
+        display: block;
+      }
+
+      .form-sticky-bar[hidden] {
+        display: none !important;
+      }
+
+      /* Sticky Save Bar */
+      .form-sticky-bar {
+        position: sticky;
+        bottom: 12px;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 16px;
+        margin-top: 24px;
+        padding: 12px 18px;
         background: var(--panel);
         border: 1px solid var(--border);
-        border-radius: 10px;
-        font: inherit;
+        border-radius: 14px;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+        backdrop-filter: blur(12px);
+      }
+
+      /* Modern Onboarding Card */
+      #onboardingCard {
+        position: relative;
+        margin-top: 0;
+        margin-bottom: 20px;
+        padding: 16px 20px;
+        border-radius: 14px;
+        background:
+          linear-gradient(180deg, rgba(37, 99, 235, 0.04) 0%, rgba(37, 99, 235, 0.01) 100%),
+          var(--panel);
+        border: 1px solid rgba(37, 99, 235, 0.18);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+        transition: all 0.2s ease;
+      }
+
+      :root[data-theme="dark"] #onboardingCard {
+        background:
+          linear-gradient(180deg, rgba(96, 165, 250, 0.08) 0%, rgba(96, 165, 250, 0.02) 100%),
+          var(--panel);
+        border-color: rgba(96, 165, 250, 0.25);
+      }
+
+      .onboarding-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .onboarding-header h2 {
+        margin: 0 0 4px;
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text);
+      }
+
+      .onboarding-header p {
+        margin: 0;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .onboarding-dismiss-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--muted);
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        flex-shrink: 0;
+      }
+
+      .onboarding-dismiss-btn:hover {
+        color: var(--text);
+        border-color: var(--muted);
+      }
+
+      .onboarding-steps {
+        margin: 14px 0 0;
+        padding-left: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .onboarding-steps li {
+        font-size: 13px;
+        line-height: 1.5;
+        color: var(--text);
+      }
+
+      .onboarding-steps a {
+        font-weight: 600;
+        color: var(--primary);
+        text-decoration: none;
+      }
+
+      .onboarding-steps a:hover {
+        text-decoration: underline;
+      }
+
+      .onboarding-badge {
+        display: inline-block;
+        margin-left: 8px;
+        padding: 2px 8px;
+        font-size: 11px;
+        font-weight: 600;
+        border-radius: 6px;
+        background: var(--bg);
+        color: var(--muted);
+        border: 1px solid var(--border);
+      }
+
+      .onboarding-badge.status-success,
+      .status-success {
+        background: var(--success-bg) !important;
+        color: var(--success-text) !important;
+        border-color: var(--success-border) !important;
+      }
+
+      .topbar-help-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 6px 12px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--muted);
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+      }
+
+      .topbar-help-btn:hover {
+        color: var(--primary);
+        border-color: var(--primary);
+      }
+
+      .form-sticky-bar .status {
+        margin: 0;
+        flex: 1 1 auto;
+        font-size: 13px;
+        font-weight: 500;
+      }
+
+      .highlight-target {
+        animation: highlight-pulse 1.2s ease;
+      }
+
+      @keyframes highlight-pulse {
+        0%,
+        100% {
+          outline: 3px solid transparent;
+        }
+        50% {
+          outline: 3px solid var(--primary);
+          outline-offset: 2px;
+        }
       }
 
       :root[data-theme="dark"] details[style*="background"] {
@@ -162,6 +418,94 @@
         box-shadow: 0 4px 12px rgba(31, 41, 55, 0.08);
       }
 
+      .settings-section {
+        --section-accent: #64748b;
+        display: block;
+        margin-bottom: 12px;
+        padding: 14px 16px;
+        border: 1px solid var(--border);
+        border-left: 4px solid var(--section-accent);
+        border-radius: 12px;
+        background: var(--panel);
+      }
+
+      .settings-section > summary {
+        cursor: pointer;
+        padding: 4px 0;
+        color: var(--text);
+        font-weight: 650;
+      }
+
+      .settings-section__content {
+        padding-top: 12px;
+      }
+
+      .settings-section__content > .field + .field,
+      .field + .field {
+        margin-top: 16px;
+      }
+
+      #redmineSettings {
+        --section-accent: #3b82f6;
+      }
+
+      #backlogSettings {
+        --section-accent: #d97706;
+      }
+
+      #primaryAiSettings {
+        --section-accent: #059669;
+      }
+
+      #fallbackAiSettings {
+        --section-accent: #7c3aed;
+      }
+
+      #uiSettings {
+        --section-accent: #64748b;
+      }
+
+      .policy-group {
+        margin-top: 10px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: var(--panel);
+      }
+
+      .policy-group > summary,
+      .advanced-settings > summary {
+        cursor: pointer;
+        padding: 12px 14px;
+        color: var(--text);
+        font-weight: 650;
+      }
+
+      .policy-group__content {
+        padding: 0 14px 14px;
+      }
+
+      .advanced-settings {
+        --section-accent: #64748b;
+        display: block;
+        margin: 16px 0 12px;
+        padding: 14px 16px;
+        border: 1px solid var(--border);
+        border-left: 4px solid var(--section-accent);
+        border-radius: 12px;
+        background: var(--panel);
+      }
+
+      .advanced-settings > summary {
+        cursor: pointer;
+        padding: 4px 0;
+        color: var(--text);
+        font-weight: 650;
+      }
+
+      .advanced-settings .policy-group {
+        margin-top: 10px;
+      }
+
       :root[data-theme="dark"] .card,
       :root[data-theme="dark"] details,
       :root[data-theme="dark"] .status,
@@ -170,34 +514,13 @@
         color: var(--text);
       }
 
-      :root[data-theme="dark"] .bug-report-card .secondary-section-summary {
-        color: var(--warning-text) !important;
-      }
-
       .secondary-section > details,
       .secondary-section details {
         padding: 12px 14px;
       }
 
-      .secondary-section-summary {
-        cursor: pointer;
-        font-weight: 600;
-        color: #9a3412;
-      }
-
-      .update-section-summary {
-        color: #0369a1;
-      }
-
       .secondary-section-content {
         padding-top: 12px;
-      }
-      :root[data-theme="dark"] .update-card .update-section-summary {
-        color: #7dd3fc !important;
-      }
-
-      :root[data-theme="dark"] .update-card #updateStatus p {
-        color: var(--muted) !important;
       }
 
       :root[data-theme="dark"] input,
@@ -230,7 +553,7 @@
         background: #1e293b;
       }
 
-      :root[data-theme="dark"] details summary:not(.secondary-section-summary) {
+      :root[data-theme="dark"] details summary {
         color: var(--text) !important;
       }
 
@@ -261,6 +584,26 @@
         display: block;
         margin-bottom: 8px;
         font-weight: 700;
+        line-height: 1.35;
+      }
+
+      .field-heading {
+        position: relative;
+        min-height: 18px;
+        padding-right: 40px;
+        margin-bottom: 8px;
+      }
+
+      .field-heading label {
+        margin: 0;
+        line-height: 18px;
+      }
+
+      .field-heading .btn-sync {
+        position: absolute;
+        top: 50%;
+        right: 0;
+        transform: translateY(-50%);
       }
 
       .field input {
@@ -272,10 +615,315 @@
         font: inherit;
       }
 
-      .field select,
+      #projectProfilesEditor .profile-row {
+        display: grid;
+        gap: 14px;
+        margin: 0;
+        padding: 16px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: var(--panel);
+        color: var(--text);
+      }
+
+      .profile-row > p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .profile-row__scope {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px 10px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--border);
+        line-height: 1.45;
+      }
+
+      .profile-row__scope span:first-child {
+        color: var(--muted);
+      }
+
+      .profile-row__scope span:last-child {
+        color: var(--text);
+        font-weight: 650;
+      }
+
+      .profile-row > label {
+        display: grid;
+        gap: 6px;
+        margin: 0;
+        font-weight: 700;
+      }
+
+      .profile-row__input {
+        width: 100%;
+        box-sizing: border-box;
+        min-height: 42px;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        color: var(--text);
+        background: var(--panel);
+        font: inherit;
+      }
+
+      .profile-row > button {
+        justify-self: start;
+      }
+
+      @media (min-width: 680px) {
+        #projectProfilesEditor .profile-row {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          align-items: end;
+        }
+
+        #projectProfilesEditor .profile-row__scope,
+        #projectProfilesEditor .profile-row > button {
+          grid-column: 1 / -1;
+        }
+      }
+
+      @media (max-width: 520px) {
+        .profile-manager {
+          padding: 12px;
+        }
+
+        #projectProfilesEditor .profile-row {
+          padding: 12px;
+        }
+
+        .profile-inherit {
+          align-items: flex-start;
+          padding: 12px;
+        }
+      }
+
+      .policy-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        align-items: start;
+        gap: 12px;
+        margin-top: 10px;
+        padding: 12px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: var(--panel);
+        color: var(--text);
+      }
+
+      .policy-row > label {
+        display: grid;
+        min-width: 0;
+        gap: 6px;
+        margin: 0;
+        font-weight: 650;
+        line-height: 1.35;
+      }
+
+      .policy-row input:not([type="checkbox"]),
+      .policy-row select,
+      .policy-row textarea {
+        width: 100%;
+        min-width: 0;
+        min-height: 40px;
+        box-sizing: border-box;
+        padding: 9px 10px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: var(--text);
+        background: var(--panel);
+        font: inherit;
+      }
+
+      .policy-row textarea {
+        min-height: 72px;
+        resize: vertical;
+      }
+
+      .policy-row > label.policy-checkbox {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .policy-row .policy-checkbox input {
+        width: auto;
+        margin: 0;
+      }
+
+      .policy-row > button {
+        justify-self: start;
+      }
+
+      .field select {
+        width: 100%;
+        box-sizing: border-box;
+        max-width: 100%;
+        min-height: 42px;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        color: var(--text);
+        background: var(--panel);
+        font: inherit;
+      }
+
       .field textarea {
         box-sizing: border-box;
         max-width: 100%;
+      }
+
+      .translation-language-pair {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 38px minmax(0, 1fr);
+        align-items: end;
+        gap: 10px;
+      }
+
+      .translation-language-pair .field {
+        min-width: 0;
+        margin: 0;
+      }
+
+      .translation-language-pair + .field {
+        margin-top: 16px;
+      }
+
+      .translation-language-pair select {
+        width: 100%;
+        max-width: 100%;
+      }
+
+      .translation-direction-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 42px;
+        box-sizing: border-box;
+        padding: 0;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: var(--panel);
+        color: var(--primary);
+        cursor: pointer;
+        transition: all 0.15s ease;
+      }
+
+      .translation-direction-icon:hover {
+        background: var(--bg);
+        border-color: var(--primary);
+        color: var(--primary-strong);
+        transform: scale(1.05);
+      }
+
+      .translation-direction-icon:active {
+        transform: scale(0.95);
+      }
+
+      .translation-direction-icon svg {
+        width: 18px;
+        height: 18px;
+        display: block;
+      }
+
+      .field-help {
+        margin: 8px 0 14px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      #projectProfilesSettings {
+        --section-accent: #64748b;
+      }
+
+      .profile-scope {
+        max-width: 520px;
+        margin-bottom: 18px;
+      }
+
+      #policyProfileSingle:not([hidden]) {
+        display: block;
+        width: 100%;
+        min-height: 42px;
+        box-sizing: border-box;
+        margin: 0;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        color: var(--text);
+        background: var(--panel);
+        font-size: 14px;
+        font-weight: 650;
+      }
+
+      .profile-manager {
+        margin: 0 0 16px;
+        padding: 16px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: var(--bg);
+      }
+
+      .profile-manager h3 {
+        margin: 0 0 14px;
+        color: var(--text);
+        font-size: 14px;
+      }
+
+      #projectProfilesEditor {
+        display: grid;
+        gap: 12px;
+      }
+
+      .profile-manager__actions {
+        margin-top: 12px;
+      }
+
+      .profile-inherit {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 0 0 14px;
+        padding: 12px 14px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: var(--bg);
+      }
+
+      .profile-inherit[hidden] {
+        display: none;
+      }
+
+      .profile-inherit input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        margin: 0;
+        accent-color: var(--primary);
+        flex: 0 0 auto;
+      }
+
+      .profile-inherit__copy {
+        min-width: 0;
+      }
+
+      .profile-inherit__copy label {
+        display: block;
+        margin: 0;
+        color: var(--text);
+        font-weight: 650;
+        line-height: 1.4;
+        cursor: pointer;
+      }
+
+      .profile-inherit__copy p {
+        margin: 3px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.4;
       }
 
       .field textarea {
@@ -288,20 +936,35 @@
         box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
       }
 
+      .field > button {
+        margin-top: 10px;
+      }
+
+      #redmineApiKey + p {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 8px !important;
+        padding-left: 2px;
+      }
+
       .check-field {
         display: flex;
-        align-items: flex-start;
+        align-items: center;
         gap: 10px;
       }
 
       .check-field input[type="checkbox"] {
         width: auto;
-        margin-top: 3px;
+        height: 18px;
+        margin: 0;
         flex: 0 0 auto;
+        accent-color: var(--primary);
       }
 
       .check-field label {
-        margin-bottom: 4px;
+        margin: 0;
+        line-height: 1.45;
       }
 
       .actions {
@@ -343,17 +1006,53 @@
       }
 
       .btn-sync {
-        background: #eff6ff;
-        color: var(--primary-strong);
-        border: 1px solid #bfdbfe;
-        font-size: 13px;
-        padding: 8px 12px;
+        display: grid;
+        place-items: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        padding: 0;
+        color: var(--muted);
+        background: transparent;
         white-space: nowrap;
-      }
-      .btn-sync:hover {
-        background: #dbeafe;
+        box-shadow: none;
+        transition:
+          color 140ms ease,
+          background-color 140ms ease;
       }
 
+      .btn-sync svg {
+        display: block;
+        width: 17px;
+        height: 17px;
+      }
+
+      .btn-sync:hover:not(:disabled) {
+        color: var(--primary-strong);
+        background: #eff6ff;
+      }
+
+      :root[data-theme="dark"] .btn-sync:hover:not(:disabled) {
+        background: #1e3a5f;
+      }
+
+      .btn-sync.is-loading svg {
+        animation: options-reload-spin 800ms linear infinite;
+      }
+
+      .btn-sync.is-success {
+        color: var(--success-text);
+      }
+
+      .btn-sync.is-error {
+        color: var(--danger-text);
+      }
+
+      @keyframes options-reload-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
       .status {
         display: inline-flex;
         align-items: center;
@@ -562,41 +1261,143 @@
   </head>
   <body>
     <div class="wrap">
+      <div class="options-top-bar">
+        <div class="pref-field">
+          <label for="languagePreference" data-i18n="options_language_label">Language</label>
+          <select id="languagePreference">
+            <option value="vi" data-i18n="options_language_vi">Vietnamese</option>
+            <option value="en" data-i18n="options_language_en">English</option>
+          </select>
+        </div>
+        <button
+          type="button"
+          id="topBarHelpBtn"
+          class="topbar-help-btn"
+          data-i18n-title="options_onboarding_help_title"
+          title="Mở hướng dẫn thiết lập ban đầu"
+        >
+          <span>❓</span>
+          <span data-i18n="options_onboarding_help_btn">Hướng dẫn</span>
+        </button>
+        <div class="pref-field">
+          <label for="themePreference" data-i18n="options_theme_label">Theme</label>
+          <select id="themePreference">
+            <option value="system" data-i18n="options_theme_system">Theo hệ thống</option>
+            <option value="light" data-i18n="options_theme_light">Sáng</option>
+            <option value="dark" data-i18n="options_theme_dark">Tối</option>
+          </select>
+        </div>
+      </div>
+
       <div class="hero">
         <h1 data-i18n="options_title">Translate Backlog & Redmine</h1>
-        <label for="languagePreference" data-i18n="options_language_label">Language</label>
-        <select id="languagePreference" style="max-width: 220px; margin: 8px 0 12px">
-          <option value="vi" data-i18n="options_language_vi">Vietnamese</option>
-          <option value="en" data-i18n="options_language_en">English</option>
-        </select>
-        <label for="themePreference" data-i18n="options_theme_label">Theme</label>
-        <select id="themePreference" style="max-width: 220px; margin: 8px 0 12px">
-          <option value="system" data-i18n="options_theme_system">Theo hệ thống</option>
-          <option value="light" data-i18n="options_theme_light">Sáng</option>
-          <option value="dark" data-i18n="options_theme_dark">Tối</option>
-        </select>
         <p>
           Lưu cấu hình Redmine, Backlog và AI để extension có thể dịch và đồng bộ comment qua lại
           giữa 2 hệ thống.
         </p>
       </div>
 
+      <div class="options-tab-bar" role="tablist" aria-label="Cài đặt">
+        <button
+          type="button"
+          class="tab-btn"
+          id="tab-btn-redmine"
+          role="tab"
+          aria-selected="true"
+          aria-controls="tab-panel-redmine"
+          data-panel="redmine"
+        >
+          <span>💎 Redmine</span>
+        </button>
+        <button
+          type="button"
+          class="tab-btn"
+          id="tab-btn-backlog"
+          role="tab"
+          aria-selected="false"
+          aria-controls="tab-panel-backlog"
+          data-panel="backlog"
+        >
+          <span>📝 Backlog</span>
+        </button>
+        <button
+          type="button"
+          class="tab-btn"
+          id="tab-btn-ai"
+          role="tab"
+          aria-selected="false"
+          aria-controls="tab-panel-ai"
+          data-panel="ai"
+        >
+          <span>🤖 AI</span>
+        </button>
+        <button
+          type="button"
+          class="tab-btn"
+          id="tab-btn-profiles"
+          role="tab"
+          aria-selected="false"
+          aria-controls="tab-panel-profiles"
+          data-panel="profiles"
+        >
+          <span>📁 Profiles</span>
+        </button>
+        <button
+          type="button"
+          class="tab-btn"
+          id="tab-btn-ui"
+          role="tab"
+          aria-selected="false"
+          aria-controls="tab-panel-ui"
+          data-panel="ui"
+        >
+          <span>🎨 UI</span>
+        </button>
+        <button
+          type="button"
+          class="tab-btn"
+          id="tab-btn-advanced"
+          role="tab"
+          aria-selected="false"
+          aria-controls="tab-panel-advanced"
+          data-panel="advanced"
+        >
+          <span>⚙️ Nâng cao</span>
+        </button>
+      </div>
+
       <div class="card">
-        <section id="onboardingCard" class="note" aria-labelledby="onboardingTitle">
-          <h2 id="onboardingTitle" data-i18n="options_onboarding_title">Get started</h2>
-          <p data-i18n="options_onboarding_intro"></p>
-          <ol>
+        <section id="onboardingCard" class="note onboarding-card" aria-labelledby="onboardingTitle">
+          <div class="onboarding-header">
+            <div>
+              <h2 id="onboardingTitle" data-i18n="options_onboarding_title">Get started</h2>
+              <p data-i18n="options_onboarding_intro"></p>
+            </div>
+            <button
+              type="button"
+              id="dismissOnboardingBtn"
+              class="onboarding-dismiss-btn"
+              data-i18n-title="options_onboarding_dismiss"
+              data-i18n-aria-label="options_onboarding_dismiss"
+              title="Ẩn hướng dẫn"
+              aria-label="Ẩn hướng dẫn"
+            >
+              <span>✕</span>
+              <span data-i18n="options_onboarding_dismiss">Ẩn hướng dẫn</span>
+            </button>
+          </div>
+          <ol class="onboarding-steps">
             <li>
               <a href="#redmineSettings" data-i18n="options_onboarding_redmine"></a>
-              <span id="onboardingRedmineStatus" aria-live="polite"></span>
+              <span id="onboardingRedmineStatus" class="onboarding-badge" aria-live="polite"></span>
             </li>
             <li>
               <a href="#backlogSettings" data-i18n="options_onboarding_backlog"></a>
-              <span id="onboardingBacklogStatus" aria-live="polite"></span>
+              <span id="onboardingBacklogStatus" class="onboarding-badge" aria-live="polite"></span>
             </li>
             <li>
               <a href="#primaryAiSettings" data-i18n="options_onboarding_ai"></a>
-              <span id="onboardingAiStatus" aria-live="polite"></span>
+              <span id="onboardingAiStatus" class="onboarding-badge" aria-live="polite"></span>
             </li>
           </ol>
           <div class="onboarding-actions">
@@ -620,255 +1421,409 @@
           <p id="onboardingStatus" role="status" aria-live="polite"></p>
         </section>
         <form id="optionsForm" class="grid">
-          <!-- Nhóm cấu hình Redmine -->
-          <details
-            id="redmineSettings"
-            open
-            style="
-              padding: 16px;
-              background: #dbeafe;
-              border: 1px solid #3b82f6;
-              border-radius: 12px;
-              margin-bottom: 16px;
-              display: block;
-            "
+          <div
+            class="tab-panel"
+            id="tab-panel-redmine"
+            role="tabpanel"
+            aria-labelledby="tab-btn-redmine"
           >
-            <summary style="padding: 4px 0; font-weight: 600; color: #1e40af; cursor: pointer">
-              <span data-i18n="options_redmine_section"
-                >💎 Cấu hình Redmine - Click để thu gọn/mở rộng</span
-              >
-            </summary>
-            <div style="padding-top: 12px">
-              <div class="field" style="margin-bottom: 0">
-                <label for="redmineDomain" data-i18n="options_redmine_domain">Redmine Domain</label>
-                <input
-                  id="redmineDomain"
-                  type="url"
-                  value="https://redmine.splus-software.com"
-                  readonly
-                  style="background: #f3f4f6; color: #6b7280; cursor: not-allowed"
-                />
-                <p
-                  data-i18n="options_redmine_help"
-                  style="margin-top: 6px; font-size: 12px; color: var(--muted)"
+            <!-- Nhóm cấu hình Redmine -->
+            <details id="redmineSettings" class="settings-section" open>
+              <summary>
+                <span data-i18n="options_redmine_section"
+                  >ðŸ’Ž Cáº¥u hÃ¬nh Redmine - Click Ä‘á»ƒ thu gá»n/má»Ÿ rá»™ng</span
                 >
-                  💡 Redmine Domain được cấu hình sẵn.
-                </p>
-              </div>
-
-              <div class="field" style="margin-bottom: 0">
-                <label for="redmineApiKey" data-i18n="options_redmine_api_key"
-                  >Redmine API Key</label
-                >
-                <input id="redmineApiKey" type="text" placeholder="Nhập API key" />
-                <p style="margin-top: 6px; font-size: 12px; color: var(--muted)">
-                  🔑 Lấy API Key tại:
-                  <a
-                    href="https://redmine.splus-software.com/my/account"
-                    target="_blank"
-                    style="color: var(--primary)"
-                    data-i18n="options_personal_account"
-                    >Tài khoản cá nhân</a
+              </summary>
+              <div class="settings-section__content">
+                <div class="field" style="margin-bottom: 0">
+                  <label for="redmineDomain" data-i18n="options_redmine_domain"
+                    >Redmine Domain</label
                   >
-                  (Bấm vào "Hiện" tại mục "Mã truy cập API").
-                </p>
-              </div>
+                  <input id="redmineDomain" type="url" value="https://redmine.splus-software.com" />
+                </div>
 
-              <div class="field" style="margin-bottom: 12px">
-                <label for="defaultProjectId"
-                  >Project mặc định (Dùng cho Migrate)
-                  <button
-                    type="button"
-                    id="syncProjectsBtn"
-                    class="secondary btn-sync"
-                    style="float: right; margin-top: -8px"
+                <div class="field" style="margin-bottom: 0">
+                  <label for="redmineApiKey" data-i18n="options_redmine_api_key"
+                    >Redmine API Key</label
                   >
-                    🔄 Đồng bộ Project
-                  </button>
-                </label>
-                <select
-                  id="defaultProjectId"
-                  style="
-                    width: 100%;
-                    box-sizing: border-box;
-                    border: 1px solid var(--border);
-                    border-radius: 12px;
-                    padding: 12px 14px;
-                    font: inherit;
-                    background: white;
-                  "
-                >
-                  <option value="" data-i18n="options_save_api_first">
-                    -- Trước tiên cần lưu API Key --
-                  </option>
-                </select>
-              </div>
+                  <input
+                    id="redmineApiKey"
+                    type="text"
+                    placeholder="Redmine API key"
+                    data-i18n-placeholder="options_redmine_key_placeholder"
+                  />
+                  <p style="margin: 4px 0 0; font-size: 11px; color: var(--muted)">
+                    <a
+                      href="https://redmine.splus-software.com/my/account"
+                      target="_blank"
+                      style="color: var(--primary)"
+                      data-i18n="options_personal_account"
+                      >TÃ i khoáº£n cÃ¡ nhÃ¢n â†—</a
+                    >
+                  </p>
+                </div>
 
-              <!-- REPORT PROJECT ID -->
-              <div class="field" style="margin-bottom: 0">
-                <label for="reportProjectId" data-i18n="options_report_project"
-                  >Project cho Report (Log Time Tháng)</label
-                >
-                <select
-                  id="reportProjectId"
-                  style="
-                    width: 100%;
-                    box-sizing: border-box;
-                    border: 1px solid var(--border);
-                    border-radius: 12px;
-                    padding: 12px 14px;
-                    font: inherit;
-                    background: white;
-                  "
-                >
-                  <option value="" data-i18n="options_save_api_first">
-                    -- Cần lưu API Key trước --
-                  </option>
-                </select>
-                <p
-                  data-i18n="options_report_help"
-                  style="margin-top: 6px; font-size: 12px; color: var(--muted)"
-                >
-                  💡 Project chứa các issue Report (dùng cho chức năng "Log Time Tháng").
-                </p>
-              </div>
-
-              <!-- Cấu hình Custom Fields (JSON Mapping) -->
-              <details
-                style="
-                  border: 1px solid #bfdbfe;
-                  border-radius: 12px;
-                  background: white;
-                  padding: 0 14px;
-                  margin-top: 8px;
-                "
-              >
-                <summary style="padding: 12px 0; font-weight: 600; cursor: pointer; color: #1d4ed8">
-                  <span data-i18n="options_custom_fields_section"
-                    >Cấu hình Custom Fields (JSON Mapping)</span
-                  >
-                </summary>
-                <div class="field" style="padding-bottom: 16px">
-                  <textarea
-                    id="manualFields"
-                    placeholder='{ "Severity": 0, "Reproduction Rate": 0, "Role": 0, "QC Activity": 0 }'
+                <div class="field" style="margin-bottom: 12px">
+                  <div class="field-heading">
+                    <label for="defaultProjectId">
+                      <span data-i18n="options_default_project"
+                        >Dự án Redmine (di chuyển issue và báo cáo tháng)</span
+                      >
+                    </label>
+                    <button
+                      type="button"
+                      id="syncProjectsBtn"
+                      class="btn-sync"
+                      aria-label="Reload projects"
+                      data-i18n-aria-label="options_sync_projects"
+                      title="Reload projects"
+                      data-i18n-title="options_sync_projects"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path
+                          d="M20 7v5h-5M4 17v-5h5m10.2-1A7.5 7.5 0 0 0 6.3 6.3L4 8m16 8-2.3 1.7A7.5 7.5 0 0 1 4.8 13"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                  <select
+                    id="defaultProjectId"
                     style="
                       width: 100%;
-                      height: 100px;
                       box-sizing: border-box;
                       border: 1px solid var(--border);
                       border-radius: 12px;
                       padding: 12px 14px;
-                      font-family: monospace;
-                      font-size: 13px;
+                      font: inherit;
                       background: white;
-                      resize: none;
                     "
-                  ></textarea>
-                  <p
-                    data-i18n="options_custom_fields_help"
-                    style="margin-top: 6px; font-size: 12px; color: var(--muted)"
                   >
-                    💡 Nhập mã ID của các trường bắt buộc. Ví dụ:
-                    <code
-                      >{ "Severity": 46, "Reproduction Rate": 0, "Role": 11, "QC Activity": 8, "Q&A
-                      Category": 58 }</code
-                    >
-                  </p>
+                    <option value="" data-i18n="options_save_api_first">
+                      -- Trước tiên cần lưu API Key --
+                    </option>
+                  </select>
                 </div>
-              </details>
-            </div>
-          </details>
 
-          <!-- Nhóm cấu hình Backlog -->
-          <details
-            id="backlogSettings"
-            open
-            style="
-              padding: 16px;
-              background: #fef3c7;
-              border: 1px solid #f59e0b;
-              border-radius: 12px;
-              margin-bottom: 16px;
-              display: block;
-            "
-          >
-            <summary style="padding: 4px 0; font-weight: 600; color: #b45309; cursor: pointer">
-              <span data-i18n="options_backlog_section">📝 Cấu hình Backlog</span>
-            </summary>
-            <div style="padding-top: 12px">
-              <div class="field" style="margin-bottom: 0">
-                <label for="backlogDomain" data-i18n="options_backlog_domain">Backlog Domain</label>
-                <input
-                  id="backlogDomain"
-                  type="url"
-                  placeholder="https://shift7.backlog.com"
-                  data-i18n-placeholder="options_backlog_domain_placeholder"
-                />
-                <p
-                  data-i18n="options_backlog_domain_help"
-                  style="margin-top: 6px; font-size: 12px; color: var(--muted)"
-                >
-                  💡 Mặc định: https://shift7.backlog.com
-                </p>
-              </div>
-              <div class="field">
-                <label for="backlogApiKey" data-i18n="options_backlog_api_key"
-                  >Backlog API Key</label
-                >
-                <input id="backlogApiKey" type="text" placeholder="Nhập Backlog API key" />
-                <p style="margin-top: 6px; font-size: 12px; color: var(--muted)">
-                  <span data-i18n="options_backlog_help_prefix">🔑 Lấy tại:</span>
-                  <strong data-i18n="options_backlog_account_api">Tài khoản > API</strong>
-                  <span data-i18n="options_backlog_help_suffix"
-                    >trong Backlog của bạn. Cần thiết để gửi nội dung ngược lại từ Redmine sang
-                    Backlog.</span
-                  >
-                </p>
-              </div>
-            </div>
-          </details>
-
-          <!-- Primary AI Configuration -->
-          <details
-            id="primaryAiSettings"
-            open
-            style="
-              padding: 16px;
-              background: #d1fae5;
-              border: 1px solid #10b981;
-              border-radius: 12px;
-              margin-bottom: 16px;
-            "
-          >
-            <summary style="padding: 4px 0; font-weight: 600; color: #065f46; cursor: pointer">
-              <span data-i18n="options_primary_ai_section">🤖 Cấu hình AI Chính (Primary)</span>
-            </summary>
-            <div class="grid" style="padding-top: 12px; gap: 12px">
-              <div class="field" style="margin-bottom: 0">
-                <label for="primaryProvider" data-i18n="options_provider">Nhà cung cấp</label>
-                <select
-                  id="primaryProvider"
+                <!-- Cáº¥u hÃ¬nh Custom Fields (JSON Mapping) -->
+                <details
+                  hidden
                   style="
-                    width: 100%;
-                    box-sizing: border-box;
-                    border: 1px solid var(--border);
+                    border: 1px solid #bfdbfe;
                     border-radius: 12px;
-                    padding: 12px 14px;
-                    font: inherit;
                     background: white;
+                    padding: 0 14px;
+                    margin-top: 8px;
                   "
                 >
-                  <option value="gemini">Google Gemini AI Studio (Miễn phí/Dịch tốt)</option>
-                  <option value="groq">Groq Cloud (Siêu nhanh - Llama 3)</option>
-                  <option value="cerebras">Cerebras (Hiệu năng cao)</option>
-                  <option value="openrouter">OpenRouter (Nhiều model miễn phí)</option>
-                </select>
+                  <summary
+                    style="padding: 12px 0; font-weight: 600; cursor: pointer; color: #1d4ed8"
+                  >
+                    <span data-i18n="options_custom_fields_section"
+                      >Cáº¥u hÃ¬nh Custom Fields (JSON Mapping)</span
+                    >
+                  </summary>
+                  <div class="field" style="padding-bottom: 16px">
+                    <textarea
+                      id="manualFields"
+                      placeholder='{ "Severity": 0, "Reproduction Rate": 0, "Role": 0, "QC Activity": 0 }'
+                      style="
+                        width: 100%;
+                        height: 100px;
+                        box-sizing: border-box;
+                        border: 1px solid var(--border);
+                        border-radius: 12px;
+                        padding: 12px 14px;
+                        font-family: monospace;
+                        font-size: 13px;
+                        background: white;
+                        resize: none;
+                      "
+                    ></textarea>
+                    <p
+                      data-i18n="options_custom_fields_help"
+                      style="margin-top: 6px; font-size: 12px; color: var(--muted)"
+                    >
+                      ðŸ’¡ Nháº­p mÃ£ ID cá»§a cÃ¡c trÆ°á»ng báº¯t buá»™c. VÃ­ dá»¥:
+                      <code
+                        >{ "Severity": 46, "Reproduction Rate": 0, "Role": 11, "QC Activity": 8,
+                        "Q&A Category": 58 }</code
+                      >
+                    </p>
+                  </div>
+                </details>
               </div>
+            </details>
+          </div>
 
-              <!-- Gemini Keys & Models (shown when gemini selected) -->
-              <div id="primaryGeminiConfig" style="display: none">
-                <p class="provider-key-help">
+          <!-- Nhóm cấu hình Backlog -->
+          <div
+            class="tab-panel"
+            id="tab-panel-backlog"
+            role="tabpanel"
+            aria-labelledby="tab-btn-backlog"
+            hidden
+          >
+            <details id="backlogSettings" class="settings-section" open>
+              <summary>
+                <span data-i18n="options_backlog_section">📝 Cấu hình Backlog</span>
+              </summary>
+              <div class="settings-section__content">
+                <div class="field" style="margin-bottom: 0">
+                  <label for="backlogDomain" data-i18n="options_backlog_domain"
+                    >Backlog Domain</label
+                  >
+                  <input
+                    id="backlogDomain"
+                    type="url"
+                    placeholder="https://example.backlog.com"
+                    data-i18n-placeholder="options_backlog_domain_placeholder"
+                  />
+                </div>
+                <div class="field">
+                  <label for="backlogApiKey" data-i18n="options_backlog_api_key"
+                    >Backlog API Key</label
+                  >
+                  <input
+                    id="backlogApiKey"
+                    type="text"
+                    placeholder="Backlog API key (Account > API)"
+                    data-i18n-placeholder="options_backlog_key_placeholder"
+                  />
+                </div>
+              </div>
+            </details>
+          </div>
+
+          <!-- Primary AI Configuration -->
+          <div
+            class="tab-panel"
+            id="tab-panel-ai"
+            role="tabpanel"
+            aria-labelledby="tab-btn-ai"
+            hidden
+          >
+            <details id="primaryAiSettings" class="settings-section" open>
+              <summary>
+                <span data-i18n="options_primary_ai_section"
+                  >ðŸ¤– Cáº¥u hÃ¬nh AI ChÃ­nh (Primary)</span
+                >
+              </summary>
+              <div class="grid" style="padding-top: 12px; gap: 12px">
+                <div class="field" style="margin-bottom: 0">
+                  <label for="primaryProvider" data-i18n="options_provider">NhÃ  cung cáº¥p</label>
+                  <select
+                    id="primaryProvider"
+                    style="
+                      width: 100%;
+                      box-sizing: border-box;
+                      border: 1px solid var(--border);
+                      border-radius: 12px;
+                      padding: 12px 14px;
+                      font: inherit;
+                      background: white;
+                    "
+                  >
+                    <option value="gemini">
+                      Google Gemini AI Studio (Miá»…n phÃ­/Dá»‹ch tá»‘t)
+                    </option>
+                    <option value="groq">Groq Cloud (SiÃªu nhanh - Llama 3)</option>
+                    <option value="cerebras">Cerebras (Hiá»‡u nÄƒng cao)</option>
+                    <option value="openrouter">OpenRouter (Nhiá»u model miá»…n phÃ­)</option>
+                  </select>
+                </div>
+
+                <!-- Gemini Keys & Models (shown when gemini selected) -->
+                <div id="primaryGeminiConfig" style="display: block">
+                  <p class="provider-key-help">
+                    <span data-i18n="options_gemini_key_prefix">Get a Gemini API key from</span>
+                    <a
+                      href="https://aistudio.google.com/app/apikey"
+                      target="_blank"
+                      data-i18n="options_gemini_console"
+                      >Google AI Studio</a
+                    >.
+                  </p>
+                  <div style="margin-bottom: 12px">
+                    <p style="margin: 0 0 6px; font-size: 11px; color: #166534; font-weight: 500">
+                      <span data-i18n="options_models_help">Models (click chá»n/bá»)</span>
+                    </p>
+                    <div
+                      id="geminiModelsList"
+                      style="display: flex; flex-wrap: wrap; gap: 6px"
+                    ></div>
+                    <p style="margin: 4px 0 0; font-size: 11px; color: var(--muted)">
+                      <span data-i18n="options_selected">ÄÃ£ chá»n:</span>
+                      <span id="selectedModelCount">0</span>
+                    </p>
+                  </div>
+                  <div>
+                    <div
+                      id="geminiKeysList"
+                      style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px"
+                    ></div>
+                    <input
+                      id="geminiApiKeys"
+                      placeholder="API key (press Enter to add)"
+                      data-i18n-placeholder="options_key_quick_add"
+                      style="
+                        width: 100%;
+                        height: 36px;
+                        box-sizing: border-box;
+                        border: 1px solid var(--border);
+                        border-radius: 8px;
+                        padding: 8px 12px;
+                        font-family: monospace;
+                        font-size: 12px;
+                      "
+                    />
+                    <p style="margin: 4px 0 0; font-size: 11px; color: var(--muted)">
+                      <span data-i18n="options_added">ÄÃ£ thÃªm:</span>
+                      <span id="selectedKeyCount">0</span>/10
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Groq (shown when groq selected) -->
+                <div id="primaryGroqConfig" class="field" style="margin-bottom: 0; display: none">
+                  <input
+                    id="groqApiKey"
+                    type="password"
+                    placeholder="Enter API key"
+                    data-i18n-placeholder="options_groq_key_placeholder"
+                  />
+                  <p style="margin-top: 6px; font-size: 11px; color: var(--muted)">
+                    ðŸ”‘ Láº¥y táº¡i:
+                    <a
+                      href="https://console.groq.com/keys"
+                      target="_blank"
+                      data-i18n="options_groq_console"
+                      >Groq Console</a
+                    >.
+                  </p>
+                </div>
+
+                <!-- Cerebras (shown when cerebras selected) -->
+                <div
+                  id="primaryCerebrasConfig"
+                  class="field"
+                  style="margin-bottom: 0; display: none"
+                >
+                  <input
+                    id="cerebrasApiKey"
+                    type="password"
+                    placeholder="Enter API key"
+                    data-i18n-placeholder="options_cerebras_key_placeholder"
+                  />
+                  <p style="margin-top: 6px; font-size: 11px; color: var(--muted)">
+                    ðŸ”‘ Láº¥y táº¡i:
+                    <a
+                      href="https://cloud.cerebras.ai/"
+                      target="_blank"
+                      data-i18n="options_cerebras_console"
+                      >Cerebras Cloud</a
+                    >.
+                  </p>
+                </div>
+
+                <!-- OpenRouter (shown when openrouter selected) -->
+                <div
+                  id="primaryOpenrouterConfig"
+                  class="field"
+                  style="margin-bottom: 0; display: none"
+                >
+                  <input
+                    id="openrouterApiKey"
+                    type="password"
+                    placeholder="Enter API key"
+                    data-i18n-placeholder="options_openrouter_key_placeholder"
+                  />
+                  <p style="margin-top: 6px; font-size: 11px; color: var(--muted)">
+                    ðŸ”‘ Láº¥y táº¡i:
+                    <a href="https://openrouter.ai/keys" target="_blank">OpenRouter Keys</a>. ðŸ’¡
+                    Nhiá»u model miá»…n phÃ­ (suffix :free).
+                  </p>
+                </div>
+              </div>
+            </details>
+
+            <!-- Fallback AI Configuration -->
+            <details id="fallbackAiSettings" class="settings-section">
+              <summary>
+                <span data-i18n="options_fallback_ai_section"
+                  >ðŸ”„ Cáº¥u hÃ¬nh AI Dá»± phÃ²ng (Fallback)</span
+                >
+              </summary>
+              <div class="grid" style="padding-top: 12px; gap: 12px">
+                <div class="field" style="margin-bottom: 0">
+                  <label for="fallbackProvider" data-i18n="options_fallback_provider"
+                    >NhÃ  cung cáº¥p dá»± phÃ²ng</label
+                  >
+                  <select
+                    id="fallbackProvider"
+                    style="
+                      width: 100%;
+                      box-sizing: border-box;
+                      border: 1px solid var(--border);
+                      border-radius: 12px;
+                      padding: 12px 14px;
+                      font: inherit;
+                      background: white;
+                    "
+                  >
+                    <option value="none">KhÃ´ng dÃ¹ng dá»± phÃ²ng</option>
+                    <option value="gemini">Google Gemini AI Studio</option>
+                    <option value="groq">Groq Cloud</option>
+                    <option value="cerebras">Cerebras</option>
+                    <option value="openrouter">OpenRouter</option>
+                  </select>
+                </div>
+
+                <!-- Fallback Groq Key -->
+                <div id="fallbackGeminiConfig" style="display: none">
+                  <div style="margin-bottom: 12px">
+                    <p style="margin: 0 0 6px; font-size: 11px; color: #166534; font-weight: 500">
+                      Models dá»± phÃ²ng (click chá»n/bá»)
+                    </p>
+                    <div
+                      id="fallbackGeminiModelsList"
+                      style="display: flex; flex-wrap: wrap; gap: 6px"
+                    ></div>
+                    <p style="margin: 4px 0 0; font-size: 11px; color: var(--muted)">
+                      ÄÃ£ chá»n: <span id="fallbackGeminiSelectedModelCount">0</span>
+                    </p>
+                  </div>
+                  <div>
+                    <div
+                      id="fallbackGeminiKeysList"
+                      style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px"
+                    ></div>
+                    <input
+                      id="fallbackGeminiApiKeys"
+                      placeholder="API key (press Enter to add)"
+                      data-i18n-placeholder="options_key_quick_add"
+                      style="
+                        width: 100%;
+                        height: 36px;
+                        box-sizing: border-box;
+                        border: 1px solid var(--border);
+                        border-radius: 8px;
+                        padding: 8px 12px;
+                        font-family: monospace;
+                        font-size: 12px;
+                      "
+                    />
+                    <p style="margin: 4px 0 0; font-size: 11px; color: var(--muted)">
+                      ÄÃ£ thÃªm: <span id="fallbackGeminiSelectedKeyCount">0</span>/10
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Fallback Groq -->
+                <div id="fallbackGeminiHelp" class="provider-key-help" style="display: none">
                   <span data-i18n="options_gemini_key_prefix">Get a Gemini API key from</span>
                   <a
                     href="https://aistudio.google.com/app/apikey"
@@ -876,458 +1831,628 @@
                     data-i18n="options_gemini_console"
                     >Google AI Studio</a
                   >.
-                </p>
-                <div style="margin-bottom: 12px">
-                  <p style="margin: 0 0 6px; font-size: 11px; color: #166534; font-weight: 500">
-                    <span data-i18n="options_models_help">Models (click chọn/bỏ)</span>
-                  </p>
-                  <div id="geminiModelsList" style="display: flex; flex-wrap: wrap; gap: 6px"></div>
-                  <p style="margin: 4px 0 0; font-size: 11px; color: var(--muted)">
-                    <span data-i18n="options_selected">Đã chọn:</span>
-                    <span id="selectedModelCount">0</span>
-                  </p>
                 </div>
-                <div>
-                  <p style="margin: 0 0 6px; font-size: 11px; color: #166534; font-weight: 500">
-                    <span data-i18n="options_keys_help"
-                      >Keys (nhập rồi Lưu, Enter để thêm nhanh, click để xóa)</span
+                <div id="fallbackGroqConfig" class="field" style="margin-bottom: 0; display: none">
+                  <input
+                    id="fallbackGroqApiKey"
+                    type="password"
+                    placeholder="Enter API key"
+                    data-i18n-placeholder="options_groq_key_placeholder"
+                  />
+                  <p style="margin-top: 6px; font-size: 11px; color: var(--muted)">
+                    ðŸ”‘
+                    <a href="https://console.groq.com/keys" target="_blank"
+                      >Láº¥y key táº¡i Groq Console</a
                     >
                   </p>
-                  <div
-                    id="geminiKeysList"
-                    style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px"
-                  ></div>
+                </div>
+
+                <!-- Fallback Cerebras -->
+                <div
+                  id="fallbackCerebrasConfig"
+                  class="field"
+                  style="margin-bottom: 0; display: none"
+                >
                   <input
-                    id="geminiApiKeys"
-                    placeholder="Enter a key, then Save or press Enter to add quickly"
-                    data-i18n-placeholder="options_key_quick_add"
-                    style="
-                      width: 100%;
-                      height: 36px;
-                      box-sizing: border-box;
-                      border: 1px solid var(--border);
-                      border-radius: 8px;
-                      padding: 8px 12px;
-                      font-family: monospace;
-                      font-size: 12px;
-                    "
+                    id="fallbackCerebrasApiKey"
+                    type="password"
+                    placeholder="Enter API key"
+                    data-i18n-placeholder="options_cerebras_key_placeholder"
                   />
-                  <p style="margin: 4px 0 0; font-size: 11px; color: var(--muted)">
-                    <span data-i18n="options_added">Đã thêm:</span>
-                    <span id="selectedKeyCount">0</span>/10
+                  <p style="margin-top: 6px; font-size: 11px; color: var(--muted)">
+                    ðŸ”‘
+                    <a href="https://cloud.cerebras.ai/" target="_blank"
+                      >Láº¥y key táº¡i Cerebras Cloud</a
+                    >
+                  </p>
+                </div>
+
+                <!-- Fallback OpenRouter -->
+                <div
+                  id="fallbackOpenrouterConfig"
+                  class="field"
+                  style="margin-bottom: 0; display: none"
+                >
+                  <input
+                    id="fallbackOpenrouterApiKey"
+                    type="password"
+                    placeholder="Enter API key"
+                    data-i18n-placeholder="options_openrouter_key_placeholder"
+                  />
+                  <p style="margin-top: 6px; font-size: 11px; color: var(--muted)">
+                    ðŸ”‘
+                    <a href="https://openrouter.ai/keys" target="_blank"
+                      >Láº¥y key táº¡i OpenRouter</a
+                    >
                   </p>
                 </div>
               </div>
+            </details>
+          </div>
 
-              <!-- Groq (shown when groq selected) -->
-              <div id="primaryGroqConfig" class="field" style="margin-bottom: 0; display: none">
-                <input
-                  id="groqApiKey"
-                  type="password"
-                  placeholder="Enter API key"
-                  data-i18n-placeholder="options_groq_key_placeholder"
-                />
-                <p style="margin-top: 6px; font-size: 11px; color: var(--muted)">
-                  🔑 Lấy tại:
-                  <a
-                    href="https://console.groq.com/keys"
-                    target="_blank"
-                    data-i18n="options_groq_console"
-                    >Groq Console</a
-                  >.
-                </p>
-              </div>
-
-              <!-- Cerebras (shown when cerebras selected) -->
-              <div id="primaryCerebrasConfig" class="field" style="margin-bottom: 0; display: none">
-                <input
-                  id="cerebrasApiKey"
-                  type="password"
-                  placeholder="Enter API key"
-                  data-i18n-placeholder="options_cerebras_key_placeholder"
-                />
-                <p style="margin-top: 6px; font-size: 11px; color: var(--muted)">
-                  🔑 Lấy tại:
-                  <a
-                    href="https://cloud.cerebras.ai/"
-                    target="_blank"
-                    data-i18n="options_cerebras_console"
-                    >Cerebras Cloud</a
-                  >.
-                </p>
-              </div>
-
-              <!-- OpenRouter (shown when openrouter selected) -->
-              <div
-                id="primaryOpenrouterConfig"
-                class="field"
-                style="margin-bottom: 0; display: none"
-              >
-                <input
-                  id="openrouterApiKey"
-                  type="password"
-                  placeholder="Enter API key"
-                  data-i18n-placeholder="options_openrouter_key_placeholder"
-                />
-                <p style="margin-top: 6px; font-size: 11px; color: var(--muted)">
-                  🔑 Lấy tại:
-                  <a href="https://openrouter.ai/keys" target="_blank">OpenRouter Keys</a>. 💡 Nhiều
-                  model miễn phí (suffix :free).
-                </p>
-              </div>
-            </div>
-          </details>
-
-          <!-- Fallback AI Configuration -->
-          <details
-            id="fallbackAiSettings"
-            style="
-              padding: 16px;
-              background: #ede9fe;
-              border: 1px solid #8b5cf6;
-              border-radius: 12px;
-              margin-bottom: 16px;
-            "
+          <div
+            class="tab-panel"
+            id="tab-panel-ui"
+            role="tabpanel"
+            aria-labelledby="tab-btn-ui"
+            hidden
           >
-            <summary style="padding: 4px 0; font-weight: 600; color: #5b21b6; cursor: pointer">
-              <span data-i18n="options_fallback_ai_section"
-                >🔄 Cấu hình AI Dự phòng (Fallback)</span
-              >
-            </summary>
-            <div class="grid" style="padding-top: 12px; gap: 12px">
-              <div class="field" style="margin-bottom: 0">
-                <label for="fallbackProvider" data-i18n="options_fallback_provider"
-                  >Nhà cung cấp dự phòng</label
-                >
-                <select
-                  id="fallbackProvider"
-                  style="
-                    width: 100%;
-                    box-sizing: border-box;
-                    border: 1px solid var(--border);
-                    border-radius: 12px;
-                    padding: 12px 14px;
-                    font: inherit;
-                    background: white;
-                  "
-                >
-                  <option value="none">Không dùng dự phòng</option>
-                  <option value="gemini">Google Gemini AI Studio</option>
-                  <option value="groq">Groq Cloud</option>
-                  <option value="cerebras">Cerebras</option>
-                  <option value="openrouter">OpenRouter</option>
-                </select>
-              </div>
-
-              <!-- Fallback Groq Key -->
-              <div id="fallbackGeminiConfig" style="display: none">
-                <div style="margin-bottom: 12px">
-                  <p style="margin: 0 0 6px; font-size: 11px; color: #166534; font-weight: 500">
-                    Models dự phòng (click chọn/bỏ)
-                  </p>
-                  <div
-                    id="fallbackGeminiModelsList"
-                    style="display: flex; flex-wrap: wrap; gap: 6px"
-                  ></div>
-                  <p style="margin: 4px 0 0; font-size: 11px; color: var(--muted)">
-                    Đã chọn: <span id="fallbackGeminiSelectedModelCount">0</span>
-                  </p>
-                </div>
+            <details id="uiSettings" class="settings-section" open>
+              <summary>
+                <span data-i18n="options_ui_section">TÃ¹y chá»n giao diá»‡n</span>
+              </summary>
+              <div class="field check-field" style="padding-top: 12px; margin-bottom: 0">
+                <input id="showRedmineSuccessModal" type="checkbox" />
                 <div>
-                  <p style="margin: 0 0 6px; font-size: 11px; color: #166534; font-weight: 500">
-                    Keys d&#7921; ph&#242;ng (nh&#7853;p r&#7891;i L&#432;u, Enter &#273;&#7875;
-                    th&#234;m nhanh, click &#273;&#7875; x&#243;a)
-                  </p>
-                  <div
-                    id="fallbackGeminiKeysList"
-                    style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px"
-                  ></div>
-                  <input
-                    id="fallbackGeminiApiKeys"
-                    placeholder="Enter a key, then Save or press Enter to add quickly"
-                    data-i18n-placeholder="options_key_quick_add"
-                    style="
-                      width: 100%;
-                      height: 36px;
-                      box-sizing: border-box;
-                      border: 1px solid var(--border);
-                      border-radius: 8px;
-                      padding: 8px 12px;
-                      font-family: monospace;
-                      font-size: 12px;
-                    "
-                  />
-                  <p style="margin: 4px 0 0; font-size: 11px; color: var(--muted)">
-                    Đã thêm: <span id="fallbackGeminiSelectedKeyCount">0</span>/10
+                  <label for="showRedmineSuccessModal" data-i18n="options_success_modal"
+                    >Hiện thông báo sau khi gửi bình luận sang Redmine</label
+                  >
+                  <p style="margin: 0; font-size: 12px; color: var(--muted)">
+                    Chá»‰ Ã¡p dá»¥ng cho chá»©c nÄƒng dá»‹ch comment. Di chuyá»ƒn Issue luÃ´n hiá»‡n
+                    modal kÃ¨m link Redmine. Báº­t láº¡i náº¿u trÆ°á»›c Ä‘Ã³ báº¡n Ä‘Ã£ chá»n khÃ´ng
+                    hiá»ƒn thá»‹ thÃ´ng bÃ¡o thÃ nh cÃ´ng.
                   </p>
                 </div>
               </div>
+            </details>
+          </div>
 
-              <!-- Fallback Groq -->
-              <div id="fallbackGeminiHelp" class="provider-key-help" style="display: none">
-                <span data-i18n="options_gemini_key_prefix">Get a Gemini API key from</span>
-                <a
-                  href="https://aistudio.google.com/app/apikey"
-                  target="_blank"
-                  data-i18n="options_gemini_console"
-                  >Google AI Studio</a
-                >.
-              </div>
-              <div id="fallbackGroqConfig" class="field" style="margin-bottom: 0; display: none">
-                <input
-                  id="fallbackGroqApiKey"
-                  type="password"
-                  placeholder="Enter API key"
-                  data-i18n-placeholder="options_groq_key_placeholder"
-                />
-                <p style="margin-top: 6px; font-size: 11px; color: var(--muted)">
-                  🔑
-                  <a href="https://console.groq.com/keys" target="_blank"
-                    >Lấy key tại Groq Console</a
-                  >
-                </p>
-              </div>
-
-              <!-- Fallback Cerebras -->
-              <div
-                id="fallbackCerebrasConfig"
-                class="field"
-                style="margin-bottom: 0; display: none"
-              >
-                <input
-                  id="fallbackCerebrasApiKey"
-                  type="password"
-                  placeholder="Enter API key"
-                  data-i18n-placeholder="options_cerebras_key_placeholder"
-                />
-                <p style="margin-top: 6px; font-size: 11px; color: var(--muted)">
-                  🔑
-                  <a href="https://cloud.cerebras.ai/" target="_blank"
-                    >Lấy key tại Cerebras Cloud</a
-                  >
-                </p>
-              </div>
-
-              <!-- Fallback OpenRouter -->
-              <div
-                id="fallbackOpenrouterConfig"
-                class="field"
-                style="margin-bottom: 0; display: none"
-              >
-                <input
-                  id="fallbackOpenrouterApiKey"
-                  type="password"
-                  placeholder="Enter API key"
-                  data-i18n-placeholder="options_openrouter_key_placeholder"
-                />
-                <p style="margin-top: 6px; font-size: 11px; color: var(--muted)">
-                  🔑 <a href="https://openrouter.ai/keys" target="_blank">Lấy key tại OpenRouter</a>
-                </p>
-              </div>
-            </div>
-          </details>
-
-          <details
-            id="uiSettings"
-            style="
-              padding: 16px;
-              background: #f8fafc;
-              border: 1px solid #cbd5e1;
-              border-radius: 12px;
-              margin-bottom: 16px;
-            "
+          <div
+            class="tab-panel"
+            id="tab-panel-profiles"
+            role="tabpanel"
+            aria-labelledby="tab-btn-profiles"
+            hidden
           >
-            <summary style="padding: 4px 0; font-weight: 600; color: #334155; cursor: pointer">
-              <span data-i18n="options_ui_section">Tùy chọn giao diện</span>
-            </summary>
-            <div class="field check-field" style="padding-top: 12px; margin-bottom: 0">
-              <input id="showRedmineSuccessModal" type="checkbox" />
-              <div>
-                <label for="showRedmineSuccessModal"
-                  >Hiển thị modal thành công khi dịch/gửi comment sang Redmine</label
-                >
-                <p style="margin: 0; font-size: 12px; color: var(--muted)">
-                  Chỉ áp dụng cho chức năng dịch comment. Di chuyển Issue luôn hiện modal kèm link
-                  Redmine. Bật lại nếu trước đó bạn đã chọn không hiển thị thông báo thành công.
+            <details id="projectProfilesSettings" class="settings-section" open>
+              <summary data-i18n="options_profiles_title">Project profiles and rules</summary>
+              <div class="settings-section__content">
+                <p class="field-help" data-i18n="options_profiles_help">
+                  Projects without a profile use global rules. Profiles apply to the current
+                  servers.
                 </p>
-              </div>
-            </div>
-          </details>
+                <div class="field profile-scope">
+                  <label for="policyProfile" data-i18n="options_profiles_editing"
+                    >Policy scope</label
+                  >
+                  <select id="policyProfile"></select>
+                  <span id="policyProfileSingle" class="field-help" hidden></span>
+                </div>
+                <div class="profile-manager">
+                  <h3 data-i18n="options_profiles_manager">Project profiles</h3>
+                  <div id="projectProfilesEditor"></div>
+                  <datalist id="profileProjects"></datalist>
+                  <div class="profile-manager__actions">
+                    <button
+                      id="addProjectProfile"
+                      type="button"
+                      class="secondary"
+                      data-i18n="options_profiles_add"
+                    >
+                      Add profile
+                    </button>
+                  </div>
+                </div>
+                <div id="profileInheritRow" class="profile-inherit" hidden>
+                  <input id="profileInherit" type="checkbox" />
+                  <div class="profile-inherit__copy">
+                    <label for="profileInherit" data-i18n="options_profiles_inherit"
+                      >Use global rules for this project</label
+                    >
+                    <p data-i18n="options_profiles_inherit_help">
+                      Uncheck to customize the rules below.
+                    </p>
+                  </div>
+                </div>
 
-          <div class="actions">
-            <button class="primary" type="submit" data-i18n="options_save">Lưu cấu hình</button>
+                <details class="policy-group">
+                  <summary data-i18n="options_policy_matching">
+                    Issue matching and migration
+                  </summary>
+                  <div class="policy-group__content">
+                    <div class="field">
+                      <label for="syncSubjectTemplate" data-i18n="options_subject_template"
+                        >Issue title template</label
+                      >
+                      <input id="syncSubjectTemplate" maxlength="500" />
+                    </div>
+                    <div class="field">
+                      <label for="syncTitleDelimiter" data-i18n="options_title_delimiter"
+                        >Title delimiter</label
+                      >
+                      <input id="syncTitleDelimiter" maxlength="80" />
+                    </div>
+                    <div class="field">
+                      <label for="syncSearchMode" data-i18n="options_search_mode"
+                        >Issue search mode</label
+                      >
+                      <select id="syncSearchMode">
+                        <option value="key-title" data-i18n="options_search_key_title">
+                          Key and title
+                        </option>
+                        <option value="key" data-i18n="options_search_key">Key only</option>
+                        <option value="title" data-i18n="options_search_title">Title only</option>
+                      </select>
+                    </div>
+                    <div class="field check-field">
+                      <input id="syncRestrictProject" type="checkbox" />
+                      <label for="syncRestrictProject" data-i18n="options_restrict_project"
+                        >Restrict to project</label
+                      >
+                    </div>
+                    <textarea id="syncTrackerAliases" hidden></textarea>
+                  </div>
+                </details>
+
+                <details class="policy-group" open>
+                  <summary data-i18n="options_policy_translation">Translation</summary>
+                  <div class="policy-group__content">
+                    <div id="translationSettings">
+                      <div class="translation-language-pair">
+                        <div class="field">
+                          <label for="translation_source" data-i18n="options_translation_source"
+                            >Source language</label
+                          >
+                          <select id="translation_source"></select>
+                        </div>
+                        <button
+                          type="button"
+                          id="swapTranslationLanguages"
+                          class="translation-direction-icon"
+                          title="Đổi hướng dịch"
+                          aria-label="Đổi hướng dịch"
+                        >
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            aria-hidden="true"
+                          >
+                            <path d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                          </svg>
+                        </button>
+                        <div class="field">
+                          <label for="translation_target" data-i18n="options_translation_target"
+                            >Translate to</label
+                          >
+                          <select id="translation_target"></select>
+                        </div>
+                      </div>
+                      <p
+                        id="translationProjectStatus"
+                        class="field-help"
+                        data-i18n="options_translation_project_required"
+                        hidden
+                      >
+                        Select a Redmine project to activate translation to Redmine.
+                      </p>
+                      <div class="field">
+                        <label
+                          for="translation_reverseMode"
+                          data-i18n="options_translation_reverse_mode"
+                          >Reverse mode</label
+                        >
+                        <select id="translation_reverseMode">
+                          <option value="extract" data-i18n="options_translation_extract">
+                            Extract Japanese
+                          </option>
+                          <option value="translate" data-i18n="options_translation_translate">
+                            Translate
+                          </option>
+                          <option value="original" data-i18n="options_translation_original">
+                            Keep original
+                          </option>
+                        </select>
+                      </div>
+                      <div class="field">
+                        <label
+                          for="translation_reverseSource"
+                          data-i18n="options_translation_reverse_source"
+                          >Reverse source</label
+                        ><select id="translation_reverseSource"></select>
+                      </div>
+                      <div class="field">
+                        <label
+                          for="translation_reverseTarget"
+                          data-i18n="options_translation_reverse_target"
+                          >Reverse target</label
+                        ><select id="translation_reverseTarget"></select>
+                      </div>
+                    </div>
+                  </div>
+                </details>
+
+                <details class="policy-group">
+                  <summary data-i18n="options_policy_log_time">Report time logging</summary>
+                  <div class="policy-group__content">
+                    <div id="logTimeSettings">
+                      <div class="field">
+                        <label for="logTime_dailyHours" data-i18n="options_log_daily_hours"
+                          >Daily hours</label
+                        >
+                        <input
+                          id="logTime_dailyHours"
+                          type="number"
+                          min="0.25"
+                          max="24"
+                          step="0.25"
+                        />
+                      </div>
+                      <div class="field">
+                        <label for="logTime_allocation" data-i18n="options_log_allocation"
+                          >Allocation</label
+                        >
+                        <select id="logTime_allocation">
+                          <option value="equal" data-i18n="options_log_equal">Equal</option>
+                          <option value="estimate" data-i18n="options_log_estimate">
+                            By estimate
+                          </option>
+                        </select>
+                      </div>
+                      <div class="field">
+                        <label for="logTime_activityMode" data-i18n="options_log_activity_mode"
+                          >Activity selection</label
+                        >
+                        <select id="logTime_activityMode">
+                          <option value="legacy" data-i18n="options_log_activity_legacy">
+                            Legacy mapping
+                          </option>
+                          <option value="default" data-i18n="options_log_activity_default">
+                            Configured activity
+                          </option>
+                        </select>
+                      </div>
+                      <div class="field">
+                        <label
+                          for="logTime_defaultActivityId"
+                          data-i18n="options_log_default_activity"
+                          >Default activity</label
+                        >
+                        <select id="logTime_defaultActivityId"></select>
+                      </div>
+                      <div class="field">
+                        <label
+                          for="logTime_testingActivityId"
+                          data-i18n="options_log_testing_activity"
+                          >Testing activity</label
+                        >
+                        <select id="logTime_testingActivityId"></select>
+                      </div>
+                      <div class="field">
+                        <button
+                          id="loadLogTimeActivities"
+                          type="button"
+                          class="secondary"
+                          data-i18n="options_log_load_activities"
+                        >
+                          Load Redmine activities
+                        </button>
+                      </div>
+                      <p id="logTimeStatus" class="status" aria-live="polite"></p>
+                    </div>
+                  </div>
+                </details>
+
+                <details class="policy-group">
+                  <summary data-i18n="options_policy_fields">Field and tracker mappings</summary>
+                  <div class="policy-group__content">
+                    <section id="trackerAliasesPanel" class="policy-editor">
+                      <h3 data-i18n="options_tracker_aliases">
+                        Tracker mapping by Backlog issue type
+                      </h3>
+                      <div id="trackerAliasesEditor"></div>
+                      <button
+                        id="addTrackerAlias"
+                        type="button"
+                        class="secondary"
+                        data-i18n="options_mapping_add"
+                      >
+                        Add
+                      </button>
+                    </section>
+                    <section id="dueDateRulesPanel" class="policy-editor">
+                      <h3 data-i18n="options_due_date_title">Due date rules</h3>
+                      <div id="dueDateRulesEditor"></div>
+                      <button
+                        id="addDueDateRule"
+                        type="button"
+                        class="secondary"
+                        data-i18n="options_mapping_add"
+                      >
+                        Add
+                      </button>
+                    </section>
+                    <section id="customFieldsPanel" class="policy-editor">
+                      <h3 data-i18n="options_custom_fields_section">Custom fields</h3>
+                      <div id="customFieldsEditor"></div>
+                      <button
+                        id="addCustomField"
+                        type="button"
+                        class="secondary"
+                        data-i18n="options_mapping_add"
+                      >
+                        Add
+                      </button>
+                    </section>
+                  </div>
+                </details>
+                <p id="configurationStatus" class="status" aria-live="polite"></p>
+              </div>
+            </details>
+          </div>
+
+          <div class="form-sticky-bar">
             <div id="status" class="status"></div>
+            <button class="primary" type="submit" data-i18n="options_save">LÆ°u cáº¥u hÃ¬nh</button>
           </div>
         </form>
 
-        <section class="note secondary-section" aria-labelledby="syncHistoryTitle">
-          <details>
-            <summary id="syncHistoryTitle" data-i18n="options_sync_history_title">
-              Recent sync activity
-            </summary>
-            <div class="secondary-section-content">
-              <ol id="syncActivityList" aria-live="polite"></ol>
-              <p id="syncActivityEmpty" data-i18n="options_sync_history_empty">
-                No sync activity yet.
-              </p>
-              <button
-                id="clearSyncActivityBtn"
-                type="button"
-                class="secondary"
-                data-i18n="options_sync_history_clear"
-              >
-                Clear activity
-              </button>
-            </div>
-          </details>
-        </section>
-
-        <!-- Bug Report Section -->
-        <section
-          class="card bug-report-card"
-          style="margin-top: 24px; background: #fff7ed; border-color: #fb923c"
-        >
-          <details class="secondary-section">
-            <summary class="secondary-section-summary" data-i18n="options_bug_title">
-              🐞 Báo lỗi
-            </summary>
-            <div class="secondary-section-content">
-              <p style="margin: 0 0 16px; color: var(--muted); font-size: 14px">
-                Tạo báo cáo có cấu trúc kèm ảnh chụp và thông tin môi trường. Dữ liệu chỉ được tải
-                xuống hoặc mở trong GitHub khi bạn xác nhận.
-              </p>
-              <div class="field">
-                <label for="bugTitle" data-i18n="options_bug_subject">Tiêu đề lỗi</label>
-                <input
-                  id="bugTitle"
-                  type="text"
-                  maxlength="120"
-                  placeholder="Ví dụ: Không gửi được comment sang Redmine"
-                />
-              </div>
-              <div class="field">
-                <label for="bugDescription" data-i18n="options_bug_description_label"
-                  >Mô tả lỗi</label
-                >
-                <textarea
-                  id="bugDescription"
-                  rows="4"
-                  maxlength="4000"
-                  placeholder="Điều gì đã xảy ra?"
-                ></textarea>
-              </div>
-              <div class="field">
-                <label for="bugSteps" data-i18n="options_bug_steps">Các bước tái hiện</label>
-                <textarea
-                  id="bugSteps"
-                  rows="3"
-                  maxlength="2000"
-                  placeholder="1. ...\n2. ..."
-                ></textarea>
-              </div>
-              <div class="field">
-                <label for="bugPageUrl" data-i18n="options_bug_url"
-                  >URL trang xảy ra lỗi (không bắt buộc)</label
-                >
-                <input
-                  id="bugPageUrl"
-                  type="url"
-                  placeholder="https://..."
-                  data-i18n-placeholder="options_bug_url_placeholder"
-                />
-              </div>
-              <div class="field">
-                <label for="bugScreenshot" data-i18n="options_screenshot">Ảnh chụp màn hình</label>
-                <input
-                  id="bugScreenshot"
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp"
-                  aria-describedby="bugScreenshotHelp"
-                />
-                <p
-                  id="bugScreenshotHelp"
-                  data-i18n="options_screenshot_help"
-                  style="margin: 4px 0 0; font-size: 11px; color: var(--muted)"
-                >
-                  PNG, JPEG, or WebP; maximum 5 MB.
-                </p>
-                <img
-                  id="bugScreenshotPreview"
-                  alt="Xem trước ảnh lỗi"
-                  data-i18n-alt="options_screenshot_preview_alt"
-                  hidden
-                  style="
-                    display: block;
-                    max-width: 100%;
-                    max-height: 240px;
-                    margin-top: 10px;
-                    border-radius: 8px;
-                    border: 1px solid var(--border);
-                  "
-                />
-              </div>
-              <div class="actions">
-                <button id="downloadBugReportBtn" type="button" class="secondary">
-                  📥 Tải báo cáo
-                </button>
-                <button id="copyBugReportBtn" type="button" class="secondary">📋 Sao chép</button>
-                <button id="openGithubIssueBtn" type="button" class="primary">
-                  Mở GitHub Issue
-                </button>
-              </div>
-              <div id="bugReportStatus" class="status" aria-live="polite"></div>
-            </div>
-          </details>
-        </section>
-
-        <!-- Error logs remain available to bug reports but are hidden from the settings UI. -->
-        <div class="error-log-management" hidden>
-          <h3 style="margin: 0 0 12px; font-size: 16px">Quản lý Lỗi (Logs)</h3>
-          <p style="margin: 0 0 16px; color: var(--muted); font-size: 14px">
-            Nếu gặp sự cố, bạn có thể xuất file log lỗi để gửi cho đội phát triển.
-          </p>
-          <div class="actions">
-            <button id="exportLogsBtn" class="secondary">📥 Xuất File Lỗi</button>
-            <button id="clearLogsBtn" class="secondary">🗑️ Xóa Lịch Sử Lỗi</button>
-          </div>
-        </div>
-
-        <!-- Update Check Section -->
         <div
-          class="card update-card"
-          style="margin-top: 24px; background: #f0f9ff; border-color: #0ea5e9"
+          class="tab-panel"
+          id="tab-panel-advanced"
+          role="tabpanel"
+          aria-labelledby="tab-btn-advanced"
+          hidden
         >
-          <details class="secondary-section">
-            <summary
-              class="secondary-section-summary update-section-summary"
-              data-i18n="options_update_title"
-            >
-              🔔 Cập nhật Extension
-            </summary>
-            <div class="secondary-section-content">
-              <div id="updateStatus" style="margin-bottom: 12px">
-                <p style="margin: 0; color: #64748b">Đang kiểm tra phiên bản...</p>
+          <details id="advancedSettings" class="advanced-settings" open>
+            <summary data-i18n="options_advanced_title">Advanced settings</summary>
+            <details class="policy-group" id="projectGlossary">
+              <summary id="glossaryTitle" data-i18n="glossary_title">Project glossary</summary>
+              <div class="policy-group__content">
+                <div class="field">
+                  <label for="glossaryProjectKey" data-i18n="glossary_project"
+                    >Backlog project key</label
+                  >
+                  <input id="glossaryProjectKey" maxlength="100" autocomplete="off" />
+                </div>
+                <div class="actions">
+                  <button
+                    id="loadProjectGlossary"
+                    type="button"
+                    class="secondary"
+                    data-i18n="glossary_load"
+                  >
+                    Load
+                  </button>
+                  <button
+                    id="addGlossaryTerm"
+                    type="button"
+                    class="secondary"
+                    data-i18n="glossary_add"
+                  >
+                    Add term
+                  </button>
+                  <button
+                    id="saveProjectGlossary"
+                    type="button"
+                    class="primary"
+                    data-i18n="glossary_save"
+                  >
+                    Save
+                  </button>
+                </div>
+                <div id="glossaryTerms"></div>
+                <p id="glossaryStatus" class="status" aria-live="polite"></p>
               </div>
+            </details>
+
+            <details class="policy-group">
+              <summary id="syncHistoryTitle" data-i18n="options_sync_history_title">
+                Recent sync activity
+              </summary>
+              <div class="policy-group__content">
+                <ol id="syncActivityList" aria-live="polite"></ol>
+                <p id="syncActivityEmpty" data-i18n="options_sync_history_empty">
+                  No sync activity yet.
+                </p>
+                <button
+                  id="clearSyncActivityBtn"
+                  type="button"
+                  class="secondary"
+                  data-i18n="options_sync_history_clear"
+                >
+                  Clear activity
+                </button>
+              </div>
+            </details>
+
+            <!-- Bug Report Section -->
+            <details class="policy-group">
+              <summary id="bugReportTitle" data-i18n="options_bug_title">ðŸž BÃ¡o lá»—i</summary>
+              <div class="policy-group__content">
+                <p style="margin: 0 0 16px; color: var(--muted); font-size: 14px">
+                  Táº¡o bÃ¡o cÃ¡o cÃ³ cáº¥u trÃºc kÃ¨m áº£nh chá»¥p vÃ  thÃ´ng tin mÃ´i trÆ°á»ng.
+                  Dá»¯ liá»‡u chá»‰ Ä‘Æ°á»£c táº£i xuá»‘ng hoáº·c má»Ÿ trong GitHub khi báº¡n xÃ¡c
+                  nháº­n.
+                </p>
+                <div class="field">
+                  <label for="bugTitle" data-i18n="options_bug_subject">TiÃªu Ä‘á» lá»—i</label>
+                  <input
+                    id="bugTitle"
+                    type="text"
+                    maxlength="120"
+                    placeholder="VÃ­ dá»¥: KhÃ´ng gá»­i Ä‘Æ°á»£c comment sang Redmine"
+                  />
+                </div>
+                <div class="field">
+                  <label for="bugDescription" data-i18n="options_bug_description_label"
+                    >MÃ´ táº£ lá»—i</label
+                  >
+                  <textarea
+                    id="bugDescription"
+                    rows="4"
+                    maxlength="4000"
+                    placeholder="Äiá»u gÃ¬ Ä‘Ã£ xáº£y ra?"
+                  ></textarea>
+                </div>
+                <div class="field">
+                  <label for="bugSteps" data-i18n="options_bug_steps"
+                    >CÃ¡c bÆ°á»›c tÃ¡i hiá»‡n</label
+                  >
+                  <textarea
+                    id="bugSteps"
+                    rows="3"
+                    maxlength="2000"
+                    placeholder="1. ...\n2. ..."
+                  ></textarea>
+                </div>
+                <div class="field">
+                  <label for="bugPageUrl" data-i18n="options_bug_url"
+                    >URL trang xáº£y ra lá»—i (khÃ´ng báº¯t buá»™c)</label
+                  >
+                  <input
+                    id="bugPageUrl"
+                    type="url"
+                    placeholder="https://..."
+                    data-i18n-placeholder="options_bug_url_placeholder"
+                  />
+                </div>
+                <div class="field">
+                  <label for="bugScreenshot" data-i18n="options_screenshot"
+                    >áº¢nh chá»¥p mÃ n hÃ¬nh</label
+                  >
+                  <input
+                    id="bugScreenshot"
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    aria-describedby="bugScreenshotHelp"
+                  />
+                  <p
+                    id="bugScreenshotHelp"
+                    data-i18n="options_screenshot_help"
+                    style="margin: 4px 0 0; font-size: 11px; color: var(--muted)"
+                  >
+                    PNG, JPEG or WebP, up to 5 MB. Screenshots are attached manually on GitHub.
+                  </p>
+                  <img
+                    id="bugScreenshotPreview"
+                    alt="Xem trÆ°á»›c áº£nh lá»—i"
+                    data-i18n-alt="options_screenshot_preview_alt"
+                    hidden
+                    style="
+                      display: block;
+                      max-width: 100%;
+                      max-height: 240px;
+                      margin-top: 10px;
+                      border-radius: 8px;
+                      border: 1px solid var(--border);
+                    "
+                  />
+                </div>
+                <div class="actions">
+                  <button id="downloadBugReportBtn" type="button" class="secondary">
+                    ðŸ“¥ Táº£i bÃ¡o cÃ¡o
+                  </button>
+                  <button id="copyBugReportBtn" type="button" class="secondary">
+                    ðŸ“‹ Sao chÃ©p
+                  </button>
+                  <button id="openGithubIssueBtn" type="button" class="primary">
+                    Má»Ÿ GitHub Issue
+                  </button>
+                </div>
+                <div id="bugReportStatus" class="status" aria-live="polite"></div>
+              </div>
+            </details>
+
+            <details class="policy-group" id="syncRecovery">
+              <summary id="recoveryTitle" data-i18n="recovery_title">Sync recovery</summary>
+              <div class="policy-group__content">
+                <button
+                  id="refreshSyncRecovery"
+                  type="button"
+                  class="secondary"
+                  data-i18n="recovery_refresh"
+                >
+                  Refresh
+                </button>
+                <div id="syncRecoveryList" aria-live="polite"></div>
+                <div class="field">
+                  <label for="mappingSource" data-i18n="recovery_source">Backlog issue key</label>
+                  <input id="mappingSource" maxlength="100" />
+                </div>
+                <div class="field">
+                  <label for="mappingDestination" data-i18n="recovery_destination"
+                    >Redmine issue ID</label
+                  >
+                  <input id="mappingDestination" inputmode="numeric" />
+                </div>
+                <div class="field">
+                  <button
+                    id="saveIssueMapping"
+                    type="button"
+                    class="secondary"
+                    data-i18n="recovery_save_mapping"
+                  >
+                    Save mapping
+                  </button>
+                </div>
+                <p id="syncRecoveryStatus" class="status" aria-live="polite"></p>
+              </div>
+            </details>
+
+            <!-- Error logs remain available to bug reports but are hidden from the settings UI. -->
+            <div class="error-log-management" hidden>
+              <h3 style="margin: 0 0 12px; font-size: 16px">Quáº£n lÃ½ Lá»—i (Logs)</h3>
+              <p style="margin: 0 0 16px; color: var(--muted); font-size: 14px">
+                Náº¿u gáº·p sá»± cá»‘, báº¡n cÃ³ thá»ƒ xuáº¥t file log lá»—i Ä‘á»ƒ gá»­i cho Ä‘á»™i
+                phÃ¡t triá»ƒn.
+              </p>
               <div class="actions">
-                <button type="button" id="checkUpdateBtn" class="secondary">
-                  🔍 Kiểm tra cập nhật
-                </button>
-                <button type="button" id="goToDashboardBtn" class="secondary">
-                  📦 Trang Download
-                </button>
+                <button id="exportLogsBtn" class="secondary">ðŸ“¥ Xuáº¥t File Lá»—i</button>
+                <button id="clearLogsBtn" class="secondary">ðŸ—‘ï¸ XÃ³a Lá»‹ch Sá»­ Lá»—i</button>
               </div>
             </div>
+
+            <!-- Update Check Section -->
+            <details class="policy-group">
+              <summary data-i18n="options_update_title">ðŸ”” Cáº­p nháº­t Extension</summary>
+              <div class="policy-group__content">
+                <div id="updateStatus" style="margin-bottom: 12px">
+                  <p style="margin: 0; color: var(--muted)">Äang kiá»ƒm tra phiÃªn báº£n...</p>
+                </div>
+                <div class="actions">
+                  <button type="button" id="checkUpdateBtn" class="secondary">
+                    ðŸ” Kiá»ƒm tra cáº­p nháº­t
+                  </button>
+                  <button type="button" id="goToDashboardBtn" class="secondary">
+                    📦 Trang Download
+                  </button>
+                  <button
+                    type="button"
+                    id="reopenOnboardingBtn"
+                    class="secondary"
+                    data-i18n="options_onboarding_reopen"
+                  >
+                    📋 Hiện lại hướng dẫn bắt đầu
+                  </button>
+                </div>
+              </div>
+            </details>
           </details>
         </div>
-
-        <div id="supportNote" class="note">
-          Hỗ trợ đồng bộ 2 chiều: <strong>Backlog → Redmine</strong> (Dịch Nhật/Anh sang Việt) và
-          <strong>Redmine → Backlog</strong> (Lọc lấy nội dung tiếng Nhật).
-        </div>
-      </div>
-
-      <div class="disclaimer">
-        Extension này chỉ làm theo ý bạn...nếu có lỗi thì chắc chắc bạn bấm nhầm thôi 👀
       </div>
     </div>
 
@@ -1338,7 +2463,15 @@
     <script src="modules/utils/redmine-domain.js"></script>
     <script src="constants.js"></script>
     <script src="modules/utils/crypto.js"></script>
+    <script src="modules/utils/sync-rules.js"></script>
+    <script src="modules/utils/custom-fields.js"></script>
+    <script src="modules/utils/project-profiles.js"></script>
     <script src="modules/utils/logger.js"></script>
+    <script src="modules/ui/options-policy-editors.js"></script>
+    <script src="modules/ui/options-sync-rules.js"></script>
+    <script src="modules/ui/options-project-profiles.js"></script>
+    <script src="modules/ui/options-glossary.js"></script>
+    <script src="modules/ui/options-recovery.js"></script>
     <script src="options.js"></script>
   </body>
 </html>

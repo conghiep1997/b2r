@@ -10,11 +10,15 @@
     "src/constants.js",
     "src/modules/utils/helpers.js",
     "src/modules/utils/logger.js",
+    "src/modules/utils/markdown.js",
+    "src/modules/utils/render-markdown.js",
     "src/modules/ui/styles.js",
     "src/modules/ui/toast.js",
     "src/modules/ui/modal.js",
     "src/modules/services/redmine.js",
     "src/modules/services/report-log-time.js",
+    "src/modules/utils/custom-fields.js",
+    "src/modules/utils/sync-rules.js",
     "src/redmine_content.js",
   ]);
 
