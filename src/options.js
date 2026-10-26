@@ -676,6 +676,16 @@ document.addEventListener("DOMContentLoaded", async () => {
       manualFields: document.getElementById("manualFields")?.value?.trim() || "",
       showRedmineSuccessModal: showRedmineSuccessModalInput?.checked !== false,
     };
+    const globalPolicy = TB_OPTIONS_PROJECT_PROFILES.readGlobal();
+    const projectProfiles = TB_OPTIONS_PROJECT_PROFILES.readProfiles();
+    settings.syncRules = globalPolicy.syncRules;
+    settings.translationRules = globalPolicy.translationRules;
+    settings.translationSourceLanguage = globalPolicy.translationRules.source;
+    settings.translationTargetLanguage = globalPolicy.translationRules.target;
+    settings.logTimeRules = globalPolicy.logTimeRules;
+    settings.customFields = globalPolicy.customFields;
+    settings.manualFields = globalPolicy.manualFields;
+    settings.projectProfiles = await encryptData(JSON.stringify(projectProfiles));
 
     try {
       const globalPolicy = TB_OPTIONS_PROJECT_PROFILES.readGlobal();

@@ -869,6 +869,24 @@ async function handleFetchActivitiesWithCredentials(domain, apiKey) {
   return data?.time_entry_activities || [];
 }
 
+async function handleFetchActivitiesWithCredentials(domain, apiKey) {
+  await assertRedmineHostPermission(domain);
+  if (!apiKey) throw new Error("Missing Redmine API key.");
+  const response = await timeoutFetch(
+    new URL("/enumerations/time_entry_activities.json", domain).toString(),
+    {
+      redirect: "error",
+      headers: { "X-Redmine-API-Key": apiKey, Accept: "application/json" },
+    },
+    10000
+  );
+  if (!response.ok) {
+    throw new Error(`Redmine activities request failed (${response.status}).`);
+  }
+  const data = await safeReadJson(response);
+  return data?.time_entry_activities || [];
+}
+
 async function fetchRedmineProjectById(domain, apiKey, projectId) {
   await assertRedmineHostPermission(domain);
   if (!apiKey || !projectId) return null;

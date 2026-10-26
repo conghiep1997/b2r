@@ -1031,7 +1031,7 @@ async function executeMonthlyTimeDelete(redmineDomain, redmineApiKey, updateProg
           `${reportMessage("report_entry_not_verified")} #${entry?.id || "unknown"} (${spentOn}).`
         );
       }
-      entriesToDelete.push(entry);
+      if (/^\[B2R report:\d+\]$/.test(entry.comments || "")) entriesToDelete.push(entry);
     }
   }
 
