@@ -48,7 +48,9 @@
       if (maxId !== null) url.searchParams.set("maxId", String(maxId));
       const response = await timeoutFetch(url.toString(), { redirect: "error" }, 30000);
       if (!response.ok) {
-        throw new Error(`Unable to reconcile Backlog comments (HTTP ${response.status}).`);
+        const error = new Error(`Unable to reconcile Backlog comments (HTTP ${response.status}).`);
+        error.status = response.status;
+        throw error;
       }
       const comments = await response.json();
       if (!Array.isArray(comments)) throw new Error("Invalid Backlog comment response.");
@@ -108,7 +110,26 @@
                 }
               : record
           );
-        if (record.state === "complete") return { ...record.result, deduplicated: true };
+        if (record.state === "complete") {
+          let destinationGone = false;
+          try {
+            const exists = await reconcile(settings, record);
+            if (!exists) destinationGone = true;
+          } catch (error) {
+            destinationGone = error.status === 404 || error.status === 410;
+          }
+          if (destinationGone) {
+            record = {
+              id: crypto.randomUUID(),
+              request,
+              state: "ready",
+            };
+            record.marker = `\u2063B2R_SYNC_${record.id}\u2063`;
+            await TB_SYNC_STATE.write(settings, "comment", recordId, record);
+          } else {
+            return { ...record.result, deduplicated: true };
+          }
+        }
         if (record.state === "sending") {
           const result = await reconcile(settings, record);
           if (!result) {

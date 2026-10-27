@@ -20,7 +20,7 @@ const DONATION_METHODS = [
     descriptionKey: "popup_donate_paypal_description",
     url: "",
   },
-];
+].filter((method) => Boolean(method.qrImage || method.url));
 
 const PROVIDER_LABELS = {
   gemini: "Gemini",
@@ -64,6 +64,9 @@ function localizePopup() {
   document.querySelectorAll("[data-i18n-aria-label]").forEach((element) => {
     element.setAttribute("aria-label", t(element.dataset.i18nAriaLabel));
   });
+  document.querySelectorAll("[data-i18n-title]").forEach((element) => {
+    element.setAttribute("title", t(element.dataset.i18nTitle));
+  });
   document.documentElement.lang = storedSettings.languagePreference || "en";
 }
 
@@ -84,15 +87,31 @@ async function renderStatus() {
     "redmineApiKey",
     "backlogApiKey",
     "primaryProvider",
+    "geminiApiKey",
+    "geminiApiKeys",
+    "groqApiKey",
+    "groqApiKeys",
+    "cerebrasApiKey",
+    "cerebrasApiKeys",
+    "openrouterApiKey",
+    "openrouterApiKeys",
     "backlogDomain",
     "defaultProjectId",
     "defaultProjectName",
   ]);
   const redmineReady = Boolean(items.redmineApiKey);
   const backlogReady = Boolean(items.backlogApiKey);
-  const aiReady = Boolean(items.primaryProvider);
-  const provider =
-    PROVIDER_LABELS[items.primaryProvider] || items.primaryProvider || t("popup_not_selected");
+  const activeProvider = items.primaryProvider || "gemini";
+  const providerKeyReadyMap = {
+    gemini: Boolean(items.geminiApiKeys || items.geminiApiKey),
+    groq: Boolean(items.groqApiKeys || items.groqApiKey),
+    cerebras: Boolean(items.cerebrasApiKeys || items.cerebrasApiKey),
+    openrouter: Boolean(items.openrouterApiKeys || items.openrouterApiKey),
+  };
+  const aiReady = Boolean(items.primaryProvider && providerKeyReadyMap[activeProvider]);
+  const provider = aiReady
+    ? PROVIDER_LABELS[activeProvider] || activeProvider
+    : t("popup_not_selected");
   const forwardReady = redmineReady && aiReady;
   const forwardStatus = forwardReady
     ? t("popup_active")
@@ -179,7 +198,14 @@ function setupActions() {
       await chrome.tabs.create({ url: chrome.runtime.getURL("src/options.html#defaultProjectId") });
       return;
     }
-    openTab(settings.redmineDomain || "https://redmine.splus-software.com");
+    const baseDomain = settings.redmineDomain || "https://redmine.splus-software.com";
+    try {
+      const targetUrl = new URL(baseDomain);
+      targetUrl.hash = "b2r-monthly-log";
+      openTab(targetUrl.href);
+    } catch {
+      openTab(baseDomain);
+    }
   });
   document.getElementById("openBacklog").addEventListener("click", async () => {
     const { backlogDomain } = await chrome.storage.local.get("backlogDomain");

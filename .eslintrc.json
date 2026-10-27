@@ -29,6 +29,7 @@
     "decodeHtmlText": "readonly",
     "decodeHtmlEntitiesOutsideCode": "readonly",
     "stripHtml": "readonly",
+    "stripSyncMarkers": "readonly",
     "buildRedmineUrl": "readonly",
     "buildRedmineUploadUrl": "readonly",
     "normalizeBacklogOrigin": "readonly",

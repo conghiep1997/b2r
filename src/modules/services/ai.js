@@ -177,6 +177,10 @@ async function translateText(
   promptFn = TB.PROMPTS.USER,
   onStatus
 ) {
+  const cleanInputText =
+    typeof stripSyncMarkers === "function"
+      ? stripSyncMarkers(commentText)
+      : String(commentText || "").trim();
   const rules = settings.translationRules
     ? TB.PROMPTS.TRANSLATION.normalize(settings.translationRules)
     : TB.PROMPTS.TRANSLATION.normalize({
@@ -185,7 +189,7 @@ async function translateText(
       });
   const reverse = Boolean(settings.isReverseTranslation);
   if ((reverse && rules.reverseMode === "original") || promptFn.reverseMode === "original") {
-    return commentText;
+    return cleanInputText;
   }
   const selectedPrompt =
     promptFn === TB.PROMPTS.USER || promptFn === TB.PROMPTS.SIMPLE_TRANSLATE
@@ -201,7 +205,7 @@ async function translateText(
     selectedPrompt.translationLabel || languagePair.target.toUpperCase();
   configuredPrompt.includeOriginal = promptFn === TB.PROMPTS.USER;
   configuredPrompt.targetLanguage = selectedPrompt.translationLabel || languagePair.target;
-  let sourceText = commentText;
+  let sourceText = cleanInputText;
   let restoreGlossary = (output) => output;
   if (globalThis.TB_GLOSSARY?.prepare && settings.currentProjectKey && !selectedPrompt.extract) {
     const prepared = await TB_GLOSSARY.prepare(
@@ -235,7 +239,8 @@ async function translateText(
       sourceText,
       commentUrl,
       configuredPrompt,
-      onStatus
+      onStatus,
+      false
     );
     emitAIStatus({ phase: "success", provider: primaryProvider, model: primaryModel }, onStatus);
     return restoreGlossary(translated);
@@ -260,7 +265,8 @@ async function translateText(
           sourceText,
           commentUrl,
           configuredPrompt,
-          onStatus
+          onStatus,
+          true
         );
         emitAIStatus(
           { phase: "success", provider: fallbackProvider, model: fallbackModel },
@@ -301,7 +307,16 @@ function getRandomGeminiModel(models) {
   return models[idx].trim();
 }
 
-async function callAIsByProvider(provider, model, settings, text, url, promptFn, onStatus) {
+async function callAIsByProvider(
+  provider,
+  model,
+  settings,
+  text,
+  url,
+  promptFn,
+  onStatus,
+  isFallbackCall = false
+) {
   // Fallback for legacy "gem" provider
   if (provider === "gem") {
     console.warn("[TB-AI] Legacy provider 'gem' detected, falling back to 'gemini'");
@@ -310,7 +325,7 @@ async function callAIsByProvider(provider, model, settings, text, url, promptFn,
 
   if (provider === TB.PROVIDERS.GEMINI) {
     let selectedModels = [];
-    if (provider === settings.fallbackProvider && settings.fallbackGeminiModels?.length > 0) {
+    if (isFallbackCall && settings.fallbackGeminiModels?.length > 0) {
       selectedModels = settings.fallbackGeminiModels;
     } else if (settings.geminiModels?.length > 0) {
       selectedModels = settings.geminiModels;
@@ -328,7 +343,7 @@ async function callAIsByProvider(provider, model, settings, text, url, promptFn,
 
     const apiKeys = [
       ...new Set(
-        (provider === settings.fallbackProvider && settings.fallbackGeminiApiKeys?.length > 0
+        (isFallbackCall && settings.fallbackGeminiApiKeys?.length > 0
           ? settings.fallbackGeminiApiKeys
           : settings.geminiApiKeys?.length > 0
             ? settings.geminiApiKeys
@@ -433,19 +448,37 @@ async function callAIsByProvider(provider, model, settings, text, url, promptFn,
 
     // If all combinations were exhausted, throw the last captured error.
     throw lastError || new Error("All Gemini model/key combinations failed.");
-  } else if (provider === TB.PROVIDERS.CEREBRAS) {
-    return await callProviderWithFailover(provider, model, settings, text, url, promptFn, onStatus);
-  } else if (provider === TB.PROVIDERS.GROQ) {
-    return await callProviderWithFailover(provider, model, settings, text, url, promptFn, onStatus);
-  } else if (provider === TB.PROVIDERS.OPENROUTER) {
-    return await callProviderWithFailover(provider, model, settings, text, url, promptFn, onStatus);
+  } else if (
+    provider === TB.PROVIDERS.CEREBRAS ||
+    provider === TB.PROVIDERS.GROQ ||
+    provider === TB.PROVIDERS.OPENROUTER
+  ) {
+    return await callProviderWithFailover(
+      provider,
+      model,
+      settings,
+      text,
+      url,
+      promptFn,
+      onStatus,
+      isFallbackCall
+    );
   }
   throw new Error(`Unknown provider: ${provider}`);
 }
 
-async function callProviderWithFailover(provider, model, settings, text, url, promptFn, onStatus) {
-  const models = getProviderModelsForCall(settings, provider, model);
-  const apiKeys = getProviderApiKeysForCall(settings, provider);
+async function callProviderWithFailover(
+  provider,
+  model,
+  settings,
+  text,
+  url,
+  promptFn,
+  onStatus,
+  isFallbackCall = false
+) {
+  const models = getProviderModelsForCall(settings, provider, model, isFallbackCall);
+  const apiKeys = getProviderApiKeysForCall(settings, provider, isFallbackCall);
   const combinations = [];
   for (const currentModel of models) {
     for (const key of apiKeys) {
@@ -514,8 +547,8 @@ async function callProviderWithFailover(provider, model, settings, text, url, pr
   throw lastError || new Error(`All ${provider} model/key combinations failed.`);
 }
 
-function getProviderModelsForCall(settings, provider, selectedModel) {
-  if (provider === settings.fallbackProvider) {
+function getProviderModelsForCall(settings, provider, selectedModel, isFallbackCall = false) {
+  if (isFallbackCall) {
     const fallbackModels = settings[`fallback${capitalize(provider)}Models`] || [];
     if (fallbackModels.length > 0) {
       return fallbackModels;
@@ -533,8 +566,8 @@ function getProviderModelsForCall(settings, provider, selectedModel) {
   return defaultModels.map((item) => item.value).filter(Boolean);
 }
 
-function getProviderApiKeysForCall(settings, provider) {
-  if (provider === settings.fallbackProvider) {
+function getProviderApiKeysForCall(settings, provider, isFallbackCall = false) {
+  if (isFallbackCall) {
     const fallbackKeys = settings[`fallback${capitalize(provider)}ApiKeys`] || [];
     if (fallbackKeys.length > 0) return fallbackKeys;
     const fallbackKey = settings[`fallback${capitalize(provider)}ApiKey`];
@@ -610,48 +643,6 @@ function maskApiKey(apiKey) {
 
 function capitalize(value) {
   return value ? `${value.charAt(0).toUpperCase()}${value.slice(1)}` : "";
-}
-
-function getProviderApiKey(settings, provider) {
-  if (provider === settings.fallbackProvider) {
-    if (provider === TB.PROVIDERS.CEREBRAS) {
-      return settings.fallbackCerebrasApiKey || settings.cerebrasApiKey;
-    }
-    if (provider === TB.PROVIDERS.GROQ) {
-      return settings.fallbackGroqApiKey || settings.groqApiKey;
-    }
-    if (provider === TB.PROVIDERS.OPENROUTER) {
-      return settings.fallbackOpenrouterApiKey || settings.openrouterApiKey;
-    }
-  }
-  if (provider === TB.PROVIDERS.CEREBRAS) return settings.cerebrasApiKey;
-  if (provider === TB.PROVIDERS.GROQ) return settings.groqApiKey;
-  if (provider === TB.PROVIDERS.OPENROUTER) return settings.openrouterApiKey;
-  return "";
-}
-
-async function translateWithGemini(
-  apiKey,
-  commentText,
-  model,
-  fallbackModel = null,
-  commentUrl = null,
-  promptFn = TB.PROMPTS.USER
-) {
-  try {
-    return await callGeminiAPI(apiKey, commentText, model, null, promptFn, commentUrl);
-  } catch (error) {
-    if (error.message.includes("429") || error.message.includes("rate limit")) {
-      if (fallbackModel && fallbackModel !== model) {
-        try {
-          return await callGeminiAPI(apiKey, commentText, fallbackModel, null, promptFn);
-        } catch (fallbackError) {
-          throw new Error(TB.MESSAGES.TOAST.RATE_LIMIT_FAILED);
-        }
-      }
-    }
-    throw error;
-  }
 }
 
 async function callGeminiAPI(
@@ -736,16 +727,6 @@ async function callGeminiAPI(
     return formatTranslation(commentText, cleaned, commentUrl, promptFn.targetLanguage);
   }
   return cleaned;
-}
-
-async function translateWithCerebras(
-  apiKey,
-  commentText,
-  model,
-  commentUrl = null,
-  promptFn = TB.PROMPTS.USER
-) {
-  return callCerebrasAPI(apiKey, commentText, model, promptFn, commentUrl);
 }
 
 async function callCerebrasAPI(
@@ -925,11 +906,14 @@ function stripPromptBoundaryMarkers(text) {
 
 function normalizeTranslationOutput(rawText) {
   // Normalize output from AI: remove unnecessary markers and tags
+  if (typeof stripSyncMarkers === "function") {
+    rawText = stripSyncMarkers(rawText);
+  }
   let cleaned = rawText.trim();
   const resultPatterns = [
     /<result>([\s\S]*?)<\/result>/i,
     /\[result\]([\s\S]*?)\[\/result\]/i,
-    /result:([\s\S]*)/i,
+    /^\s*result:([\s\S]*)/i,
   ];
 
   let foundContent = "";
@@ -970,7 +954,7 @@ function normalizeTranslationOutput(rawText) {
       const isNoise =
         isPromptBoundaryMarkerLine(line) ||
         noiseMarkers.some((marker) => line.toUpperCase().includes(marker.toUpperCase()));
-      if (isNoise || isSafetyMetadataLine(line) || /^\d+\.\s+[A-Z\s]+/.test(line)) {
+      if (isNoise || isSafetyMetadataLine(line) || /^\d+\.\s+[A-Z][A-Z\s]*$/.test(line)) {
         firstValidLineIndex = i + 1;
         continue;
       }
@@ -995,6 +979,9 @@ function normalizeTranslationOutput(rawText) {
     .replace(/<\/?result>/gi, "")
     .trim();
   cleaned = stripPromptBoundaryMarkers(cleaned);
+  if (typeof stripSyncMarkers === "function") {
+    cleaned = stripSyncMarkers(cleaned);
+  }
   if (!cleaned || cleaned.length < 2) {
     cleaned = rawText.trim();
   }

@@ -8,7 +8,9 @@
   function markerIsPresent(text, id, index = "issue") {
     const value = String(text || "");
     const token = `B2R_MIGRATION_${id}_${index}`;
-    if (value.includes(marker(id, index)) || value.includes(token)) return true;
+    const escapedToken = token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const tokenPattern = new RegExp(`${escapedToken}(?![a-zA-Z0-9_-])`);
+    if (value.includes(marker(id, index)) || tokenPattern.test(value)) return true;
     // Match checkpoints written by versions that used an HTML comment marker.
     const legacy = `<!-- b2r:${id}:${index} -->`;
     return (
@@ -38,7 +40,9 @@
       30000
     );
     if (!response.ok) {
-      throw new Error(`Unable to reconcile destination issue (HTTP ${response.status}).`);
+      const error = new Error(`Unable to reconcile destination issue (HTTP ${response.status}).`);
+      error.status = response.status;
+      throw error;
     }
     return (await response.json()).issue;
   }
@@ -132,6 +136,31 @@
                 }
               : record
           );
+        if (record.state === "complete" && record.issueId) {
+          // A migration is a fresh request again once its destination issue was deleted.
+          let destinationGone = false;
+          try {
+            await remoteIssue(settings, record.issueId);
+          } catch (error) {
+            destinationGone = error.status === 404 || error.status === 410;
+          }
+          if (destinationGone) {
+            record = {
+              id: crypto.randomUUID(),
+              attachmentPrefix: crypto.randomUUID(),
+              issueData: request.issueData,
+              createIssueData: null,
+              comments: request.comments || [],
+              selection: request.selection || null,
+              completed: [],
+              pendingComment: null,
+              attachments: [],
+              state: "ready",
+              issueId: null,
+            };
+            await TB_SYNC_STATE.write(settings, "migration", identity, record);
+          }
+        }
         if (record.state === "complete") {
           const result = record.result || {
             issueId: record.issueId,
@@ -192,7 +221,7 @@
               migrationMarker: marker(record.id),
               processedAttachments: attachments,
               settingsOverride: { ...settings, attachmentIdentityPrefix: record.attachmentPrefix },
-              strictAttachments: true,
+              strictAttachments: false,
             });
             const previousIssueId = record.issueId;
             const previousCreateIssueData = record.createIssueData;
@@ -279,7 +308,7 @@
                   ...settings,
                   attachmentIdentityPrefix: record.attachmentPrefix,
                 },
-                strictAttachments: true,
+                strictAttachments: false,
               },
               null
             );
@@ -293,7 +322,9 @@
               await save();
             }
             failedComments.push({ index: index + 1, message: sanitizeErrorMessage(error.message) });
-            break;
+            // Like v1.8.17, keep sending later comments after a definite rejection.
+            // An uncertain result must stop so completed order and idempotency stay verifiable.
+            if (record.pendingComment !== null) break;
           }
         }
         record.state = record.completed.length === record.comments.length ? "complete" : "partial";

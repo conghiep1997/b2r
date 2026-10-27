@@ -84,11 +84,6 @@ function observeCommentActions() {
     }
   });
 
-  const observeOptions =
-    targetContainer === document.body
-      ? { childList: true, subtree: true }
-      : { childList: true, subtree: true, target: targetContainer };
-
   commentObserver.observe(targetContainer, { childList: true, subtree: true });
 }
 
@@ -207,8 +202,8 @@ function injectButtonIfNeeded(actionsEl) {
 
 async function handleTranslateAndOpenModal(actionsEl, button) {
   const commentItem = actionsEl
-    ? actionsEl.closest(".comment-item")
-    : null || actionsEl.parentElement;
+    ? actionsEl.closest(".comment-item") || actionsEl.parentElement
+    : null;
   const { issueKey, issueSummary, backlogIssueType } = getBacklogHeaderInfo();
   if (!issueKey) {
     showToast(TB.MESSAGES.TOAST.MISSING_ISSUE_KEY, "error");
@@ -412,7 +407,10 @@ async function handleIssueMigration(button) {
       document.querySelector("#issueDescription .markdown-body") ||
       document.querySelector(".issue-description .markdown-body") ||
       document.querySelector(".description .markdown-body");
-    const descriptionText = descriptionEl ? extractBacklogContent(descriptionEl) : "";
+    let descriptionText = descriptionEl ? extractBacklogContent(descriptionEl) : "";
+    if (typeof stripSyncMarkers === "function") {
+      descriptionText = stripSyncMarkers(descriptionText);
+    }
     // Scrape attachments for description (it has its own attachment list in Modern UI)
     let fullDescription = descriptionText;
     const descAttachments = document.querySelectorAll(
@@ -559,48 +557,27 @@ function showSettingsErrorLink(message) {
   if (!container) {
     container = document.createElement("div");
     container.id = "tb-settings-error";
-    Object.assign(container.style, {
-      position: "fixed",
-      top: "20px",
-      right: "20px",
-      zIndex: "9999",
-      padding: "15px 20px",
-      backgroundColor: "#FFFBEB",
-      border: "1px solid #FBBF24",
-      borderRadius: "8px",
-      boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-      display: "flex",
-      alignItems: "center",
-      gap: "15px",
-    });
+    container.className = "tb-settings-error-banner";
+    container.setAttribute("role", "alert");
     document.body.appendChild(container);
   }
 
   const messageEl = document.createElement("span");
-  messageEl.style.color = "#92400E";
+  messageEl.className = "tb-settings-error-text";
   messageEl.textContent = String(message || TB.MESSAGES.SETTINGS.INCOMPLETE);
 
   const settingsLink = document.createElement("a");
   settingsLink.href = "#";
   settingsLink.id = "tb-open-settings-link";
+  settingsLink.className = "tb-settings-error-link";
   settingsLink.textContent = TB.MESSAGES.SETTINGS.OPEN_LINK;
-  Object.assign(settingsLink.style, {
-    color: "#05668D",
-    textDecoration: "underline",
-    fontWeight: "bold",
-  });
 
   const closeButton = document.createElement("button");
   closeButton.id = "tb-close-error-link";
   closeButton.type = "button";
+  closeButton.className = "tb-settings-error-close";
+  closeButton.setAttribute("aria-label", TB.MESSAGES.MODAL.CLOSE_ARIA);
   closeButton.textContent = "×";
-  Object.assign(closeButton.style, {
-    background: "none",
-    border: "none",
-    fontSize: "20px",
-    cursor: "pointer",
-    color: "#92400E",
-  });
 
   container.replaceChildren(messageEl, settingsLink, closeButton);
 
@@ -671,6 +648,9 @@ function getCommentFullText(itemEl) {
     itemEl.querySelector(".item-body");
 
   let text = contentEl ? extractBacklogContent(contentEl) : itemEl.innerText || "";
+  if (typeof stripSyncMarkers === "function") {
+    text = stripSyncMarkers(text);
+  }
 
   // 1. Get current attachments
   const currentAttachments = scrapeAttachments(itemEl);

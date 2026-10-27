@@ -83,6 +83,31 @@ function stripHtml(value) {
 }
 
 /**
+ * Strips Backlog2Redmine synchronization and migration markers from text.
+ * Cleans idempotency tokens, invisible separators, legacy HTML markers, and trailing blank lines.
+ * @param {string} value - Text containing potential sync or migration markers.
+ * @returns {string} Text with markers removed and cleaned whitespace.
+ */
+function stripSyncMarkers(value) {
+  if (!value) return "";
+  const raw = String(value);
+  const hasMarker =
+    /\u2063|B2R_(?:SYNC|MIGRATION)_[a-zA-Z0-9_-]+|(?:<|&lt;|&#60;)!--\s*b2r:[a-zA-Z0-9_-]+:[a-zA-Z0-9_-]+\s*--(?:>|&gt;|&#62;)/i.test(
+      raw
+    );
+  if (!hasMarker) return raw.trim();
+  return raw
+    .replace(/(?:[\t ]*\r?\n)?[\t ]*\u2063?B2R_(?:SYNC|MIGRATION)_[a-zA-Z0-9_-]+\u2063?[\t ]*/g, "")
+    .replace(
+      /(?:[\t ]*\r?\n)?[\t ]*(?:<|&lt;|&#60;)!--\s*b2r:[a-zA-Z0-9_-]+:[a-zA-Z0-9_-]+\s*--(?:>|&gt;|&#62;)[\t ]*/gi,
+      ""
+    )
+    .replace(/\u2063/g, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+/**
  * Builds a Redmine URL from a base URL and path.
  */
 function buildRedmineUrl(baseUrl, path) {
@@ -291,4 +316,8 @@ async function timeoutFetch(url, options = {}, timeoutMs = 10000) {
       return typeof value === "function" ? value.bind(target) : value;
     },
   });
+}
+
+if (typeof globalThis !== "undefined") {
+  globalThis.stripSyncMarkers = stripSyncMarkers;
 }

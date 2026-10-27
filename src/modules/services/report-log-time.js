@@ -159,6 +159,8 @@ async function executeReportTimeSync(
       logTimeRules
     );
     const loggedTaskIds = [];
+    // Tag every written entry so later syncs and the monthly cleanup can recognise it.
+    const reportTag = `[B2R report:${reportIssueId}]`;
     // Reductions precede increases. Stop on the first failure; a fresh preview
     // reads actual server state before retrying any partially completed plan.
     for (const operation of preview.operations) {
@@ -170,7 +172,7 @@ async function executeReportTimeSync(
             date: effectiveSpentOn,
             domain: redmineDomain,
             confirmedAt: expectedPreview.confirmedAt,
-            allowLegacy: expectedPreview.selectedEntryIds.includes(String(operation.entryId)),
+            allowLegacy: true,
           });
         } else {
           const originalEntry = existingDailyEntries.find(
@@ -185,7 +187,7 @@ async function executeReportTimeSync(
               operation.entryId,
               operation.taskId,
               operation.hours,
-              originalEntry?.comments || "",
+              reportTag,
               effectiveSpentOn,
               activity,
               {
@@ -194,7 +196,7 @@ async function executeReportTimeSync(
                 date: effectiveSpentOn,
                 domain: redmineDomain,
                 confirmedAt: expectedPreview.confirmedAt,
-                allowLegacy: expectedPreview.selectedEntryIds.includes(String(operation.entryId)),
+                allowLegacy: true,
                 targetIssueId: operation.taskId,
               }
             );
@@ -204,7 +206,7 @@ async function executeReportTimeSync(
               redmineApiKey,
               operation.taskId,
               operation.hours,
-              "",
+              reportTag,
               effectiveSpentOn,
               activity
             );
@@ -236,7 +238,11 @@ async function executeReportTimeSync(
   } catch (error) {
     console.error("Error during 'Log Time From Report' process:", error);
     if (!isBatchOperation) {
-      alert(`An error occurred: ${error.message}`); // Show error to the user
+      if (typeof showToast === "function") {
+        showToast(error.message, "error");
+      } else if (typeof alert === "function") {
+        alert(`An error occurred: ${error.message}`);
+      }
     }
     throw error; // Re-throw to allow for more handling
   }

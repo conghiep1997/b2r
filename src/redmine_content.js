@@ -42,6 +42,21 @@ async function initializeRedmineContent() {
   observeJournalActions();
   injectLogTimeButton(); // For single report issue
   injectMonthlyLogButton(); // For logging the entire month
+  checkAutoOpenMonthlyLog();
+  window.addEventListener("hashchange", checkAutoOpenMonthlyLog);
+}
+
+function checkAutoOpenMonthlyLog() {
+  if (window.location.hash !== "#b2r-monthly-log") return;
+  try {
+    history.replaceState(null, "", window.location.pathname + window.location.search);
+  } catch (_error) {
+    // Ignore history API restrictions.
+  }
+  logTimeForMonth().catch((error) => {
+    console.error("[B2R] Auto Log Time Tháng error:", error);
+    showToast(error?.message || String(error), "error");
+  });
 }
 
 // Cleanup on page unload
@@ -95,7 +110,7 @@ function injectMonthlyLogButton() {
     e.preventDefault();
     logTimeForMonth().catch((error) => {
       console.error("[B2R] Log Time Tháng error:", error);
-      alert(error?.message || String(error));
+      showToast(error?.message || String(error), "error");
     });
   };
 
@@ -107,11 +122,14 @@ function injectMonthlyLogButton() {
  * Main logic for logging time for the entire month.
  */
 async function logTimeForMonth() {
+  if (document.querySelector(".tb-monthly-log-overlay")) {
+    return;
+  }
   const baseSettings = await getSettings();
   const { redmineDomain, reportProjects = [], hasRedmineApiKey } = baseSettings;
   const configuredReportId = baseSettings.reportProjectId;
   if (!redmineDomain || !hasRedmineApiKey || (!reportProjects.length && !configuredReportId)) {
-    alert(reportMessage("report_settings_required"));
+    showToast(reportMessage("report_settings_required"), "error");
     return;
   }
 
@@ -134,7 +152,7 @@ async function logTimeForMonth() {
   try {
     settings = await getReportSettingsForProject(reportProjectId, { profileKey, globalProfile });
   } catch (error) {
-    alert(error.message);
+    showToast(error.message, "error");
     return;
   }
 
@@ -164,6 +182,7 @@ async function logTimeForMonth() {
       startButton.textContent = reportMessage("report_confirm_logging");
       deleteButton.disabled = true;
       closeButton.disabled = true;
+      if (modalInstance.monthInput) modalInstance.monthInput.disabled = true;
       previewButton.textContent = reportMessage("report_scanning");
       resultBody.replaceChildren();
       progressList.replaceChildren();
@@ -181,10 +200,7 @@ async function logTimeForMonth() {
 
       try {
         statusText.textContent = reportMessage("report_scanning");
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = now.getMonth() + 1;
-        const monthLabel = `${String(month).padStart(2, "0")}/${year}`;
+        const { year, month, monthLabel } = modalInstance.getSelectedMonth();
         updateProgress(reportMessage("report_searching", { month: monthLabel }));
         const trackers = await getTrackers(redmineDomain, redmineApiKey);
         const reportTracker = trackers.find((tracker) => tracker.name.toLowerCase() === "report");
@@ -325,7 +341,7 @@ async function logTimeForMonth() {
               summaryRow.className = "tb-task-list-summary";
               const label = document.createElement("span");
               label.className = "tb-task-summary-label";
-              label.textContent = "Tổng:";
+              label.textContent = reportMessage("report_total_label");
               const totalEl = document.createElement("span");
               totalEl.className = "tb-hours-total";
               totalEl.textContent = `∑ ${Number.isInteger(total) ? total : total.toFixed(1)}h`;
@@ -342,31 +358,35 @@ async function logTimeForMonth() {
 
           if (preview.error) {
             statusBadge.classList.add("tb-status-badge--error");
-            statusBadge.textContent = "❌ Lỗi";
+            statusBadge.textContent = reportMessage("report_badge_error");
             statusBadge.title = reportMessage("report_preview_failed", { error: preview.error });
           } else if (preview.willReplaceDailyEntries) {
             statusBadge.classList.add("tb-status-badge--warning");
-            statusBadge.textContent = `⚠️ Trùng (${preview.existingDailyHours}h)`;
+            statusBadge.textContent = reportMessage("report_badge_duplicate", {
+              hours: preview.existingDailyHours,
+            });
             statusBadge.title = reportMessage("report_preview_replace_warning", {
               hours: preview.existingDailyHours,
             });
           } else if (preview.dayAlreadyFull) {
             statusBadge.classList.add("tb-status-badge--full");
-            statusBadge.textContent = `Đã đủ ${preview.existingDailyHours}h`;
+            statusBadge.textContent = reportMessage("report_badge_full", {
+              hours: preview.existingDailyHours,
+            });
             statusBadge.title = reportMessage("report_day_full", {
               hours: preview.existingDailyHours,
             });
           } else if (preview.tasks.length === 0) {
             statusBadge.classList.add("tb-status-badge--empty");
-            statusBadge.textContent = "Không có task";
+            statusBadge.textContent = reportMessage("report_badge_empty");
             statusBadge.title = reportMessage("report_no_tasks");
           } else if (preview.tasks.some((task) => task.alreadyLogged)) {
             statusBadge.classList.add("tb-status-badge--warning");
-            statusBadge.textContent = "⚠️ Đã ghi 1 phần";
+            statusBadge.textContent = reportMessage("report_badge_partial_existing");
             statusBadge.title = reportMessage("report_preview_duplicate");
           } else {
             statusBadge.classList.add("tb-status-badge--ready");
-            statusBadge.textContent = "Sẵn sàng";
+            statusBadge.textContent = reportMessage("report_badge_ready");
             statusBadge.title = reportMessage("report_preview_ready");
           }
           statusCell.appendChild(statusBadge);
@@ -484,6 +504,7 @@ async function logTimeForMonth() {
         previewButton.textContent = reportMessage("report_check_tasks");
         deleteButton.disabled = false;
         closeButton.disabled = false;
+        if (modalInstance.monthInput) modalInstance.monthInput.disabled = false;
       }
     },
     onDelete: async (modalInstance) => {
@@ -497,6 +518,7 @@ async function logTimeForMonth() {
       previewButton.disabled = true;
       deleteButton.disabled = true;
       closeButton.disabled = true;
+      if (modalInstance.monthInput) modalInstance.monthInput.disabled = true;
       statusText.textContent = reportMessage("report_deleting");
 
       const updateProgress = (message, type = "info") => {
@@ -508,10 +530,13 @@ async function logTimeForMonth() {
       };
 
       try {
+        const { year, month } = modalInstance.getSelectedMonth();
         const deletedCount = await deleteCurrentMonthSpentTime(
           redmineDomain,
           redmineApiKey,
-          updateProgress
+          updateProgress,
+          year,
+          month
         );
         statusText.textContent = reportMessage("report_deleted");
         updateProgress(reportMessage("report_deleted_count", { count: deletedCount }), "success");
@@ -525,6 +550,7 @@ async function logTimeForMonth() {
         previewButton.disabled = false;
         deleteButton.disabled = false;
         closeButton.disabled = false;
+        if (modalInstance.monthInput) modalInstance.monthInput.disabled = false;
       }
     },
     onStart: async (modalInstance) => {
@@ -547,6 +573,7 @@ async function logTimeForMonth() {
       modalInstance.previewButton.disabled = true;
       modalInstance.deleteButton.disabled = true;
       closeButton.disabled = true;
+      if (modalInstance.monthInput) modalInstance.monthInput.disabled = true;
       resultBody.replaceChildren();
       copyButton.disabled = true;
 
@@ -610,7 +637,7 @@ async function logTimeForMonth() {
             summaryRow.className = "tb-task-list-summary";
             const label = document.createElement("span");
             label.className = "tb-task-summary-label";
-            label.textContent = "Tổng:";
+            label.textContent = reportMessage("report_total_label");
             const totalEl = document.createElement("span");
             totalEl.className = "tb-hours-total";
             totalEl.textContent = `∑ ${result.hours}`;
@@ -628,12 +655,12 @@ async function logTimeForMonth() {
         if (statusLower.includes("partial") || statusLower.includes("failed")) {
           row.classList.add("tb-result-row-partial");
           badge.classList.add("tb-status-badge--warning");
-          badge.textContent = "Một phần";
+          badge.textContent = reportMessage("report_badge_partial_result");
           badge.title = result.status;
         } else if (statusLower.startsWith("logged") || statusLower.includes("success")) {
           row.classList.add("tb-result-row-success");
           badge.classList.add("tb-status-badge--success");
-          badge.textContent = "Đã log";
+          badge.textContent = reportMessage("report_badge_logged_result");
           badge.title = result.status;
         } else {
           badge.classList.add("tb-status-badge--ready");
@@ -647,9 +674,7 @@ async function logTimeForMonth() {
 
       try {
         statusText.textContent = reportMessage("report_starting_logging");
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = now.getMonth() + 1;
+        const { year, month } = modalInstance.getSelectedMonth();
         const copyRowsByDate = createMonthlyCopyRows(year, month);
         let issues = modalInstance.previewIssues || [];
 
@@ -660,6 +685,8 @@ async function logTimeForMonth() {
             reportProjectId,
             settings,
             updateProgress,
+            year,
+            month,
           });
           modalInstance.previewIssues = issues;
         }
@@ -828,11 +855,11 @@ async function logTimeForMonth() {
           navigator.clipboard
             .writeText(copyText)
             .then(() => {
-              alert(reportMessage("report_copied_tasks"));
+              showToast(reportMessage("report_copied_tasks"), "success");
             })
             .catch(() => {
               copyTextWithSelectionFallback(copyText);
-              alert(reportMessage("report_copied_tasks"));
+              showToast(reportMessage("report_copied_tasks"), "success");
             });
         };
 
@@ -848,6 +875,7 @@ async function logTimeForMonth() {
         startButton.textContent = reportMessage("report_logged_button");
         modalInstance.previewButton.disabled = false;
         modalInstance.deleteButton.disabled = false;
+        if (modalInstance.monthInput) modalInstance.monthInput.disabled = false;
       }
     },
   });
@@ -859,10 +887,12 @@ async function scanCurrentMonthReports({
   reportProjectId,
   settings,
   updateProgress = () => {},
+  year: selectedYear,
+  month: selectedMonth,
 }) {
   const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1;
+  const year = selectedYear || now.getFullYear();
+  const month = selectedMonth || now.getMonth() + 1;
   const trackers = await getTrackers(redmineDomain, redmineApiKey);
   const reportTracker = trackers.find((tracker) => tracker.name.toLowerCase() === "report");
   if (!reportTracker) throw new Error(reportMessage("report_missing_tracker"));
@@ -999,18 +1029,36 @@ function getLogResultStatusText(logResult) {
   return `Logged ${logResult.loggedTaskIds.length}, skipped ${logResult.skippedTaskIds.length}`;
 }
 
-async function deleteCurrentMonthSpentTime(redmineDomain, redmineApiKey, updateProgress) {
+async function deleteCurrentMonthSpentTime(
+  redmineDomain,
+  redmineApiKey,
+  updateProgress,
+  selectedYear,
+  selectedMonth
+) {
   return navigator.locks.request("b2r-report-time-write", { ifAvailable: true }, (lock) => {
     if (!lock) throw new Error(reportMessage("report_delete_busy"));
-    return executeMonthlyTimeDelete(redmineDomain, redmineApiKey, updateProgress);
+    return executeMonthlyTimeDelete(
+      redmineDomain,
+      redmineApiKey,
+      updateProgress,
+      selectedYear,
+      selectedMonth
+    );
   });
 }
 
-async function executeMonthlyTimeDelete(redmineDomain, redmineApiKey, updateProgress) {
+async function executeMonthlyTimeDelete(
+  redmineDomain,
+  redmineApiKey,
+  updateProgress,
+  selectedYear,
+  selectedMonth
+) {
   const currentUser = await getCurrentUser(redmineDomain, redmineApiKey);
   const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1;
+  const year = selectedYear || now.getFullYear();
+  const month = selectedMonth || now.getMonth() + 1;
   const dates = [...createMonthlyCopyRows(year, month).keys()];
   const entriesToDelete = [];
 
@@ -1051,9 +1099,9 @@ async function executeMonthlyTimeDelete(redmineDomain, redmineApiKey, updateProg
 
   for (const entry of entriesToDelete) {
     const reportId = String(
-      entry.issue?.id ??
+      entry.comments?.match(/^\[B2R report:(\d+)\]$/)?.[1] ??
+        entry.issue?.id ??
         entry.issue_id ??
-        entry.comments?.match(/^\[B2R report:(\d+)\]$/)?.[1] ??
         ""
     );
     if (!/^\d+$/.test(reportId)) {
@@ -1090,6 +1138,8 @@ function isSafeMonthlyDeleteEntry(entry, currentUser, spentOn) {
 }
 
 function openMonthlyLogModal({ monthLabel, redmineDomain, onPreview, onStart, onDelete }) {
+  const now = new Date();
+  const initialMonthValue = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   const overlay = document.createElement("div");
   overlay.className = "tb-monthly-log-overlay";
   overlay.innerHTML = `
@@ -1097,7 +1147,10 @@ function openMonthlyLogModal({ monthLabel, redmineDomain, onPreview, onStart, on
       <header class="tb-monthly-log-header">
         <div>
         <p class="tb-monthly-log-kicker">${reportMessage("report_spent_time")}</p>
-          <h2 id="tb-monthly-log-title">${reportMessage("report_log_time_month")} ${monthLabel}</h2>
+          <div class="tb-monthly-log-title-row">
+            <h2 id="tb-monthly-log-title">${reportMessage("report_log_time_month")} ${monthLabel}</h2>
+            <input type="month" id="tb-monthly-log-month" class="tb-monthly-log-month-input" value="${initialMonthValue}" aria-label="${reportMessage("report_log_time_month")}">
+          </div>
           <p id="tb-monthly-log-status" class="tb-monthly-log-status">${reportMessage("report_ready_to_scan")}</p>
         </div>
         <button type="button" class="tb-monthly-log-close" aria-label="${reportMessage("modal_close_aria")}">&times;</button>
@@ -1178,7 +1231,7 @@ function openMonthlyLogModal({ monthLabel, redmineDomain, onPreview, onStart, on
       link.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (error) {
-      alert(error.message);
+      showToast(error.message, "error");
     }
   };
   document.body.classList.add("tb-modal-open");
@@ -1186,11 +1239,25 @@ function openMonthlyLogModal({ monthLabel, redmineDomain, onPreview, onStart, on
   const closeButton = overlay.querySelector(".tb-monthly-log-close");
   const previewButton = overlay.querySelector("#tb-monthly-log-preview");
   const startButton = overlay.querySelector("#tb-monthly-log-start");
+  const monthInput = overlay.querySelector("#tb-monthly-log-month");
+  const titleEl = overlay.querySelector("#tb-monthly-log-title");
+  const getSelectedMonth = () => {
+    const match = String(monthInput?.value || "").match(/^(\d{4})-(\d{2})$/);
+    const year = match ? Number(match[1]) : now.getFullYear();
+    const month = match ? Number(match[2]) : now.getMonth() + 1;
+    return {
+      year,
+      month,
+      monthLabel: `${String(month).padStart(2, "0")}/${year}`,
+    };
+  };
   const modalInstance = {
     overlay,
     previewButton,
     startButton,
     closeButton,
+    monthInput,
+    getSelectedMonth,
     deleteButton: overlay.querySelector("#tb-monthly-log-delete"),
     copyButton: overlay.querySelector("#tb-monthly-log-copy"),
     statusText: overlay.querySelector("#tb-monthly-log-status"),
@@ -1202,10 +1269,42 @@ function openMonthlyLogModal({ monthLabel, redmineDomain, onPreview, onStart, on
     bulkActivityApply: overlay.querySelector("#tb-bulk-activity-apply"),
   };
 
+  monthInput.onchange = () => {
+    const { year, month } = getSelectedMonth();
+    titleEl.textContent = `${reportMessage("report_log_time_month")} ${month}/${year}`;
+    modalInstance.previewIssues = [];
+    modalInstance.hasUnsafeReplacement = false;
+    startButton.disabled = true;
+    startButton.textContent = reportMessage("report_confirm_logging");
+    modalInstance.copyButton.disabled = true;
+    if (modalInstance.bulkActivityToolbar) modalInstance.bulkActivityToolbar.hidden = true;
+    modalInstance.statusText.textContent = reportMessage("report_ready_to_scan");
+    const readyProgress = document.createElement("div");
+    readyProgress.className = "tb-monthly-log-progress-item tb-monthly-log-progress-item--info";
+    readyProgress.textContent = reportMessage("report_ready_to_scan");
+    modalInstance.progressList.replaceChildren(readyProgress);
+    const emptyRow = document.createElement("tr");
+    const emptyCell = document.createElement("td");
+    emptyCell.colSpan = 4;
+    emptyCell.className = "tb-table-empty-state";
+    emptyCell.textContent = reportMessage("report_ready_to_scan");
+    emptyRow.appendChild(emptyCell);
+    modalInstance.resultBody.replaceChildren(emptyRow);
+  };
+
+  function onKeyDown(event) {
+    if (event.key === "Escape" && !closeButton.disabled) {
+      document.removeEventListener("keydown", onKeyDown);
+      overlay.remove();
+      document.body.classList.remove("tb-modal-open");
+    }
+  }
   const close = () => {
+    document.removeEventListener("keydown", onKeyDown);
     overlay.remove();
     document.body.classList.remove("tb-modal-open");
   };
+  document.addEventListener("keydown", onKeyDown);
   closeButton.onclick = close;
   overlay.onclick = (event) => {
     if (event.target === overlay && !closeButton.disabled) close();
@@ -1497,6 +1596,39 @@ function observeJournalActions() {
 
 function scanAndInjectButtons() {
   document.querySelectorAll("div.journal div.contextual").forEach(injectButtonIfNeeded);
+  cleanSyncMarkersFromRedmineDom();
+}
+
+function cleanSyncMarkersFromRedmineDom() {
+  const wikiElements = document.querySelectorAll(
+    "div.journal div.wiki, #issue_descr_fields div.wiki, .issue div.wiki"
+  );
+  wikiElements.forEach((wikiEl) => {
+    if (wikiEl.dataset.tbMarkersCleaned === "1") return;
+    wikiEl.dataset.tbMarkersCleaned = "1";
+    const paragraphs = wikiEl.querySelectorAll("p");
+    paragraphs.forEach((p) => {
+      const text = p.textContent || "";
+      if (/^\s*\u2063?B2R_(?:SYNC|MIGRATION)_[a-zA-Z0-9_-]+\u2063?\s*$/.test(text)) {
+        p.style.display = "none";
+      } else if (text.includes("B2R_SYNC_") || text.includes("B2R_MIGRATION_")) {
+        p.childNodes.forEach((node) => {
+          if (
+            node.nodeType === Node.TEXT_NODE &&
+            (node.nodeValue.includes("B2R_SYNC_") || node.nodeValue.includes("B2R_MIGRATION_"))
+          ) {
+            node.nodeValue =
+              typeof stripSyncMarkers === "function"
+                ? stripSyncMarkers(node.nodeValue)
+                : node.nodeValue.replace(
+                    /\u2063?B2R_(?:SYNC|MIGRATION)_[a-zA-Z0-9_-]+\u2063?/g,
+                    ""
+                  );
+          }
+        });
+      }
+    });
+  });
 }
 
 function injectButtonIfNeeded(actionsEl) {
@@ -1521,7 +1653,8 @@ function injectButtonIfNeeded(actionsEl) {
 async function handleExtractAndOpenModal(actionsEl, button) {
   const commentContentEl = actionsEl.closest(".journal")?.querySelector("div.wiki");
   const rawText = commentContentEl?.innerText?.trim() || "";
-  if (!rawText) {
+  const cleanText = typeof stripSyncMarkers === "function" ? stripSyncMarkers(rawText) : rawText;
+  if (!cleanText) {
     showToast(TB.MESSAGES.TOAST.NO_COMMENT_CONTENT, "error");
     return;
   }
@@ -1533,7 +1666,7 @@ async function handleExtractAndOpenModal(actionsEl, button) {
     const attachments = extractRedmineAttachments(commentContentEl);
     const result = await sendRuntimeMessage({
       type: "EXTRACT_JAPANESE_CONTENT",
-      commentText: rawText,
+      commentText: cleanText,
       backlogIssueKey,
     });
     openBacklogModal({

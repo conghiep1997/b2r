@@ -247,6 +247,7 @@ async function handleSendToRedmine(
     settingsOverride,
     syncMarker,
     onBeforeSubmit,
+    strictAttachments = true,
   },
   sender
 ) {
@@ -262,7 +263,8 @@ async function handleSendToRedmine(
       backlogDomain,
       settings,
       backlogIssueKey,
-      stagedAttachments
+      stagedAttachments,
+      strictAttachments
     );
   } catch (error) {
     error.definitelyNotSent = true;
@@ -336,6 +338,7 @@ async function handleCreateRedmineIssue({
   migrationMarker,
   processedAttachments: sharedAttachments = null,
   onBeforeSubmit,
+  strictAttachments = true,
 }) {
   const settings = settingsOverride || (await getSettings());
   const processedAttachments = sharedAttachments || new Map();
@@ -348,7 +351,8 @@ async function handleCreateRedmineIssue({
       null, // Pass null, let the function grab from settings
       settings,
       issueData.backlogIssueKey,
-      processedAttachments
+      processedAttachments,
+      strictAttachments
     );
   } catch (error) {
     error.definitelyNotSent = true;
@@ -544,6 +548,16 @@ function extractRedmineSearchResults(html) {
 const STRONG_SUMMARY_MIN_LENGTH = 12;
 
 /**
+ * Checks that an issue key appears as a whole key, so "cp-12" does not match "cp-123".
+ * Both inputs must already be normalized with normalizeLoose.
+ */
+function containsIssueKey(normalizedText, normalizedKey) {
+  if (!normalizedText || !normalizedKey) return false;
+  const escaped = normalizedKey.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`${escaped}(?!\\d)`).test(normalizedText);
+}
+
+/**
  * Strip Redmine search link prefix like "Task #123 (New): ".
  */
 function stripRedmineSearchSubjectPrefix(subject = "") {
@@ -578,8 +592,8 @@ function hasStrongRedmineTextMatch(subject, normalizedIssueKey, normalizedIssueS
   }
   if (
     normalizedIssueKey &&
-    (normalizedSubject.includes(normalizedIssueKey) ||
-      normalizedComparable.includes(normalizedIssueKey))
+    (containsIssueKey(normalizedSubject, normalizedIssueKey) ||
+      containsIssueKey(normalizedComparable, normalizedIssueKey))
   ) {
     return true;
   }
@@ -619,8 +633,8 @@ function pickBestRedmineSearchResult(
       let score = 0;
       if (
         normalizedIssueKey &&
-        (normalizedSubject.includes(normalizedIssueKey) ||
-          normalizedComparable.includes(normalizedIssueKey))
+        (containsIssueKey(normalizedSubject, normalizedIssueKey) ||
+          containsIssueKey(normalizedComparable, normalizedIssueKey))
       ) {
         score += 10;
       }
@@ -678,6 +692,7 @@ function pickBestRedmineSearchResult(
  * @param {object} settings - The extension's settings.
  * @param {string} backlogIssueKey - The Backlog issue key.
  * @param {Map|null} processedAttachments - (Optional) Persistent map of [attachmentId -> markup] to reuse across calls.
+ * @param {boolean} [strict=true] - Throw on attachment failure instead of inserting an inline error marker.
  * @returns {Promise<{updatedNotes: string, uploads: Array}>}
  */
 async function processNotesAttachments(
@@ -685,7 +700,8 @@ async function processNotesAttachments(
   backlogDomain,
   settings,
   backlogIssueKey,
-  processedAttachments = null
+  processedAttachments = null,
+  strict = true
 ) {
   if (!notes) {
     return { updatedNotes: "", uploads: [] };
@@ -782,7 +798,11 @@ async function processNotesAttachments(
       const reason = String(e?.message || "unknown error")
         .replace(/https?:\/\/[^\s]+/gi, "[URL]")
         .slice(0, 120);
-      throw new Error(`Attachment "${info.filename}" could not be transferred: ${reason}`);
+      if (strict) {
+        throw new Error(`Attachment "${info.filename}" could not be transferred: ${reason}`);
+      }
+      // Non-strict mode keeps the issue/comment usable and marks the failed attachment inline.
+      info.markup = `[Attachment Error: ${info.filename} - ${reason}]`;
     }
   }
 
@@ -795,8 +815,8 @@ async function processNotesAttachments(
         "gi"
       );
 
-      finalNotes = finalNotes.replace(imageMarkerPattern, info.markup);
-      finalNotes = finalNotes.replace(fileMarkerPattern, info.markup);
+      finalNotes = finalNotes.replace(imageMarkerPattern, () => info.markup);
+      finalNotes = finalNotes.replace(fileMarkerPattern, () => info.markup);
     }
   }
 

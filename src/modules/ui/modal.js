@@ -231,6 +231,29 @@ function ensureModalShell() {
     overlay.className = "tb-modal-overlay";
     overlay.style.display = "none";
     document.body.appendChild(overlay);
+    document.addEventListener("keydown", (event) => {
+      if (!overlay || overlay.style.display === "none") return;
+      if (event.key === "Escape") {
+        const successModal = overlay.querySelector("#tb-success-modal");
+        const isSuccessVisible =
+          successModal && !successModal.hidden && successModal.style.display !== "none";
+        if (isSuccessVisible) {
+          overlay.querySelector("#tb-success-close-btn")?.click();
+        } else {
+          overlay.querySelector("#tb-modal-close")?.click();
+        }
+      } else if (
+        (event.ctrlKey || event.metaKey) &&
+        event.key === "Enter" &&
+        event.target?.closest?.("#tb-confirm-modal")
+      ) {
+        const confirmBtn = overlay.querySelector("#tb-modal-confirm");
+        if (confirmBtn && !confirmBtn.disabled) {
+          event.preventDefault();
+          confirmBtn.click();
+        }
+      }
+    });
   }
 
   overlay.innerHTML = `
@@ -248,7 +271,7 @@ function ensureModalShell() {
         </div>
         <div class="tb-modal-body">
           <p id="tb-modal-subtitle" class="tb-modal-subtitle" hidden></p>
-          <p class="tb-preview-notice" style="margin:0 0 12px;color:#64748b;font-size:12px">${globalThis.TB_GET_MESSAGE("options_preview_notice")}</p>
+          <p class="tb-preview-notice">${globalThis.TB_GET_MESSAGE("options_preview_notice")}</p>
           <div id="tb-standard-fields">
             <div class="tb-field-group">
               <label for="tb-redmine-issue-id">${TB.MESSAGES.MODAL.ISSUE_ID_LABEL}</label>
@@ -322,7 +345,7 @@ function ensureModalShell() {
              </div>
            </div>
         </div>
-        <div id="tb-dry-run-result" role="status" aria-live="polite" hidden style="margin:0 18px 12px;padding:12px;border:1px solid #bfdbfe;border-radius:8px;background:#eff6ff;color:#1e3a5f;font-size:13px"></div>
+        <div id="tb-dry-run-result" class="tb-dry-run-result" role="status" aria-live="polite" hidden></div>
         <div class="tb-modal-footer">
           <button id="tb-modal-cancel" class="tb-btn tb-btn-secondary">${TB.MESSAGES.MODAL.CANCEL}</button>
           <button id="tb-dry-run" type="button" class="tb-btn tb-btn-secondary">${globalThis.TB_GET_MESSAGE("modal_dry_run_button")}</button>
@@ -523,6 +546,7 @@ function openConfirmModal(options) {
   let migrationDescriptionInitialized = false;
   const selectionPanel = document.createElement("div");
   selectionPanel.id = "tb-migration-selection";
+  selectionPanel.className = "tb-migration-selection";
   selectionPanel.hidden = !isMigration;
   migrationFields.after(selectionPanel);
 
@@ -556,6 +580,7 @@ function openConfirmModal(options) {
       card.querySelector(".tb-note-card-header").prepend(input);
     });
     const summary = document.createElement("p");
+    summary.className = "tb-migration-selection-summary";
     const planned = migrationPlan();
     summary.textContent = globalThis
       .TB_GET_MESSAGE("migration_selection_count")
@@ -563,21 +588,27 @@ function openConfirmModal(options) {
       .replace("$files$", planned.files.length);
     selectionPanel.replaceChildren(summary);
     const candidateNotes = notes.filter((_, index) => !excludedComments.has(index));
-    for (const file of TB_MIGRATION_SELECTION.files([previewTextarea.value, ...candidateNotes])) {
-      const label = document.createElement("label");
-      label.style.display = "block";
-      const input = document.createElement("input");
-      input.type = "checkbox";
-      input.className = "tb-file-selected";
-      input.dataset.fileId = file.id;
-      input.checked = !excludedFiles.has(file.id);
-      input.addEventListener("change", () => {
-        input.checked ? excludedFiles.delete(file.id) : excludedFiles.add(file.id);
-        dryRunResult.hidden = true;
-        refreshMigrationSelection();
-      });
-      label.append(input, document.createTextNode(` ${file.filename}`));
-      selectionPanel.append(label);
+    const files = TB_MIGRATION_SELECTION.files([previewTextarea.value, ...candidateNotes]);
+    if (files.length > 0) {
+      const fileList = document.createElement("div");
+      fileList.className = "tb-migration-file-list";
+      for (const file of files) {
+        const label = document.createElement("label");
+        label.className = "tb-migration-file-item";
+        const input = document.createElement("input");
+        input.type = "checkbox";
+        input.className = "tb-file-selected";
+        input.dataset.fileId = file.id;
+        input.checked = !excludedFiles.has(file.id);
+        input.addEventListener("change", () => {
+          input.checked ? excludedFiles.delete(file.id) : excludedFiles.add(file.id);
+          dryRunResult.hidden = true;
+          refreshMigrationSelection();
+        });
+        label.append(input, document.createTextNode(` ${file.filename}`));
+        fileList.append(label);
+      }
+      selectionPanel.append(fileList);
     }
   }
 
@@ -873,19 +904,21 @@ function openConfirmModal(options) {
   issueTitleInput.value = issueTitle;
 
   let lastCheckedId = "";
+  let issueIdDebounceTimer = null;
 
   const loadRedmineTitle = async (id) => {
     id = id.trim();
     if (!id || id === lastCheckedId) return;
 
     lastCheckedId = id;
-    confirmButton.disabled = true;
 
     if (!/^\d+$/.test(id)) {
       issueTitleInput.value = TB.MESSAGES.MODAL.ERROR_NUMERIC_ID;
+      confirmButton.disabled = true;
       return;
     }
 
+    confirmButton.disabled = false;
     issueTitleInput.value = TB.MESSAGES.MODAL.LOADING_TITLE;
 
     try {
@@ -893,6 +926,7 @@ function openConfirmModal(options) {
         type: "FETCH_REDMINE_METADATA",
         endpoint: `/issues/${id}.json`,
       });
+      if (issueIdInput.value.trim() !== id) return;
       if (res?.data?.issue?.subject) {
         issueTitleInput.value = res.data.issue.subject;
         confirmButton.disabled = false;
@@ -900,14 +934,35 @@ function openConfirmModal(options) {
         throw new Error("Invalid response");
       }
     } catch (err) {
+      if (issueIdInput.value.trim() !== id) return;
       issueTitleInput.value = TB.MESSAGES.MODAL.ERROR_NOT_FOUND;
       confirmButton.disabled = true;
     }
   };
 
-  issueIdInput.onblur = (e) => loadRedmineTitle(e.target.value);
+  issueIdInput.oninput = (e) => {
+    clearTimeout(issueIdDebounceTimer);
+    const val = e.target.value;
+    const trimmed = val.trim();
+    if (!trimmed) {
+      lastCheckedId = "";
+      issueTitleInput.value = "";
+      confirmButton.disabled = false;
+      return;
+    }
+    if (/^\d+$/.test(trimmed)) {
+      confirmButton.disabled = false;
+    }
+    issueIdDebounceTimer = setTimeout(() => loadRedmineTitle(val), 350);
+  };
+  issueIdInput.onblur = (e) => {
+    clearTimeout(issueIdDebounceTimer);
+    loadRedmineTitle(e.target.value);
+  };
 
   const safeClose = () => {
+    if (confirmButton.disabled && modalElements.loadingOverlay?.style.display === "flex") return;
+    clearTimeout(issueIdDebounceTimer);
     closeModal();
     onCancel?.();
   };
@@ -1177,8 +1232,11 @@ function openBacklogModal({
     }
 
     if (backlogUsers.length > 0) {
-      backlogSuggestionsEl.innerHTML =
-        '<div class="tb-suggestion-item" style="color: #999;">No @mention found</div>';
+      backlogSuggestionsEl.replaceChildren();
+      const hint = document.createElement("div");
+      hint.className = "tb-suggestion-item tb-suggestion-item--muted";
+      hint.textContent = globalThis.TB_GET_MESSAGE("modal_no_mention_found");
+      backlogSuggestionsEl.appendChild(hint);
     }
   }
 
@@ -1225,10 +1283,13 @@ function openBacklogModal({
       : backlogUsers.filter((user) => user && user.name && (user.userId || user.id)).slice(0, 10);
 
     if (matchedUsers.length === 0) {
+      if (/\s/.test(query)) {
+        parseMentionsFromPreview();
+        return;
+      }
       backlogSuggestionsEl.replaceChildren();
       const hint = document.createElement("div");
-      hint.className = "tb-suggestion-item";
-      hint.style.color = "#999";
+      hint.className = "tb-suggestion-item tb-suggestion-item--muted";
       hint.textContent = globalThis.TB_GET_MESSAGE("modal_no_user_found");
       backlogSuggestionsEl.appendChild(hint);
       return;
@@ -1250,10 +1311,7 @@ function openBacklogModal({
         } else {
           mentionText = username; // just the name when loginId is not available
         }
-        const nextValue = textBeforeCursor.replace(
-          /(^|\s)@([a-zA-Z0-9_.-]*)$/,
-          `$1${mentionText} `
-        );
+        const nextValue = textBeforeCursor.replace(/(^|\s)@([^\n\r@]{0,30})$/, `$1${mentionText} `);
         previewTextarea.value = `${nextValue}${textAfterCursor}`;
         previewTextarea.focus();
         const newCursorPos = nextValue.length;
@@ -1312,7 +1370,7 @@ function openBacklogModal({
       clearTimeout(mentionTimeout);
       const cursorPos = previewTextarea.selectionStart;
       const textBeforeCursor = previewTextarea.value.slice(0, cursorPos);
-      const atMatch = textBeforeCursor.match(/(^|\s)@([a-zA-Z0-9_.-]*)$/);
+      const atMatch = textBeforeCursor.match(/(^|\s)@([^\n\r@]{0,30})$/);
       if (atMatch) {
         mentionTimeout = setTimeout(() => showUserSuggestions(atMatch[2] || ""), 150);
       } else {
@@ -1372,15 +1430,8 @@ function openBacklogModal({
   modalElements.batchOptionEl.hidden = true;
   confirmButton.disabled = false;
 
-  backlogSuggestionsEl.style.display = "block";
-  backlogSuggestionsEl.style.position = "relative";
-  backlogSuggestionsEl.style.zIndex = "9999";
-  backlogSuggestionsEl.style.maxHeight = "180px";
-  backlogSuggestionsEl.style.overflowY = "auto";
-  backlogSuggestionsEl.style.border = "1px solid #ddd";
-  backlogSuggestionsEl.style.borderRadius = "6px";
-  backlogSuggestionsEl.style.background = "#fff";
-  backlogSuggestionsEl.style.marginTop = "8px";
+  backlogSuggestionsEl.classList.add("tb-suggestions--inline");
+  backlogSuggestionsEl.removeAttribute("style");
 
   confirmButton.onclick = async () => {
     const key = issueIdInput.value.trim();

@@ -34,7 +34,7 @@ async function getBacklogUsers(projectKeyOrIssueKey = null) {
   console.log(`[BacklogService] Domain: ${domain}, Project: ${projectKey}`);
 
   try {
-    const response = await fetch(url.toString(), { redirect: "error" });
+    const response = await timeoutFetch(url.toString(), { redirect: "error" });
 
     console.log(`[BacklogService] Response status: ${response.status}`);
 
@@ -70,7 +70,7 @@ async function getBacklogIssueInfo(issueKey) {
   const url = new URL(`api/v2/issues/${issueKey}`, domain);
   url.searchParams.set("apiKey", settings.backlogApiKey);
 
-  const response = await fetch(url.toString(), { redirect: "error" });
+  const response = await timeoutFetch(url.toString(), { redirect: "error" });
 
   if (!response.ok) {
     const errorMsg = await readErrorMessage(response);
@@ -262,7 +262,7 @@ async function downloadBacklogFile(domain, attachmentId, filename = "", issueKey
       );
       apiUrl.searchParams.set("apiKey", settings.backlogApiKey);
 
-      const apiRes = await fetch(apiUrl.toString(), { redirect: "error" });
+      const apiRes = await timeoutFetch(apiUrl.toString(), { redirect: "error" }, 30000);
       if (apiRes.ok) {
         const contentType = apiRes.headers.get("content-type") || "";
         const blob = await apiRes.blob();
@@ -293,7 +293,7 @@ async function downloadBacklogFile(domain, attachmentId, filename = "", issueKey
   }
 
   const webUrl = `${origin}/downloadAttachment/${attachmentId}/${encodeURIComponent(safeFilename)}`;
-  const response = await fetch(webUrl, { credentials: "include" });
+  const response = await timeoutFetch(webUrl, { credentials: "include" }, 30000);
 
   if (!response.ok) {
     throw new Error(`Backlog file download failed: ${response.status}`);

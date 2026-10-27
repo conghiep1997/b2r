@@ -439,12 +439,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       assertTrustedRedmineSender(sender, baseSettings.redmineDomain);
       const settings = settingsForBacklog(baseSettings, msg.backlogIssueKey);
       const rules = TB.PROMPTS.TRANSLATION.normalize(settings.translationRules);
-      if (rules.reverseMode === "original") return { previewText: msg.commentText };
+      const cleanText =
+        typeof stripSyncMarkers === "function"
+          ? stripSyncMarkers(msg.commentText)
+          : String(msg.commentText || "").trim();
+      if (rules.reverseMode === "original") return { previewText: cleanText };
       assertSettings(settings, ["ai"]);
       settings.isReverseTranslation = true;
       return {
         previewText: await translateText(
-          msg.commentText,
+          cleanText,
           settings,
           null,
           TB.PROMPTS.USER,
@@ -476,7 +480,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     TRANSLATE_COMMENT_FULL: async (msg) => {
       const baseSettings = await getSettings();
       assertTrustedBacklogOrRedmineSender(sender, baseSettings);
-      const settings = msg.issueKey ? settingsForBacklog(baseSettings, msg.issueKey) : baseSettings;
+      const settings = msg.issueKey
+        ? settingsForBacklog(baseSettings, msg.issueKey)
+        : { ...baseSettings };
       try {
         settings.isReverseTranslation =
           new URL(sender.url).origin === new URL(settings.redmineDomain).origin;
@@ -638,6 +644,14 @@ async function getSettings() {
       console.warn(`${DEBUG_PREFIX} Ignoring invalid encrypted project profiles.`, error);
     }
   }
+  const safeNormalize = (fn, fallback) => {
+    try {
+      return fn();
+    } catch (error) {
+      console.warn(`${DEBUG_PREFIX} Ignoring invalid stored policy setting.`, error);
+      return fallback;
+    }
+  };
   const decryptedSettings = {
     redmineDomain: items.redmineDomain || TB.REDMINE_DOMAIN,
     redmineApiKey: await decryptData(items.redmineApiKey ?? ""),
@@ -654,13 +668,26 @@ async function getSettings() {
       translationLanguages.source,
       translationLanguages.target
     ),
-    syncRules: TB_SYNC_RULES.normalize(items.syncRules),
-    logTimeRules: TB_LOG_TIME_RULES.normalize(items.logTimeRules),
-    customFields: TB_CUSTOM_FIELDS.normalize(items.customFields),
-    projectProfiles: TB_PROJECT_PROFILES.normalize(projectProfiles, {
-      backlogDomain: items.backlogDomain || TB.BACKLOG_DOMAIN,
-      redmineDomain: items.redmineDomain || TB.REDMINE_DOMAIN,
-    }),
+    syncRules: safeNormalize(
+      () => TB_SYNC_RULES.normalize(items.syncRules),
+      TB_SYNC_RULES.normalize({})
+    ),
+    logTimeRules: safeNormalize(
+      () => TB_LOG_TIME_RULES.normalize(items.logTimeRules),
+      TB_LOG_TIME_RULES.normalize({})
+    ),
+    customFields: safeNormalize(
+      () => TB_CUSTOM_FIELDS.normalize(items.customFields),
+      TB_CUSTOM_FIELDS.normalize([])
+    ),
+    projectProfiles: safeNormalize(
+      () =>
+        TB_PROJECT_PROFILES.normalize(projectProfiles, {
+          backlogDomain: items.backlogDomain || TB.BACKLOG_DOMAIN,
+          redmineDomain: items.redmineDomain || TB.REDMINE_DOMAIN,
+        }),
+      []
+    ),
     geminiApiKey: await decryptData(items.geminiApiKey ?? ""), // Legacy fallback
     geminiApiKeys: geminiApiKeysStr.split("\n").filter(Boolean),
     geminiModels: geminiModelsStr.split("\n").filter(Boolean),
@@ -696,12 +723,18 @@ async function getSettings() {
 }
 
 /**
- * Clears the settings cache when storage is changed.
+ * Clears the settings cache when storage is changed (ignoring sync-state / log / activity keys).
  */
-chrome.storage.onChanged.addListener(() => {
-  settingsCache = null;
-  settingsCacheTime = 0;
-  issueLookupCache.clear();
+chrome.storage.onChanged.addListener((changes) => {
+  const transientPrefixes = ["b2r_sync_", "b2r_time_backup:", "tb_error_logs", "b2r_sync_activity"];
+  const hasSettingsChange = Object.keys(changes || {}).some(
+    (key) => !transientPrefixes.some((prefix) => key.startsWith(prefix))
+  );
+  if (hasSettingsChange) {
+    settingsCache = null;
+    settingsCacheTime = 0;
+    issueLookupCache.clear();
+  }
 });
 
 /**

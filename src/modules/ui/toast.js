@@ -5,6 +5,22 @@
 // Local state for toast element (avoid conflict with modal.js global)
 let toastElement = null;
 
+function hideToast() {
+  if (!toastElement) return;
+  window.clearTimeout(toastElement._tbTimer);
+  toastElement.classList.remove("tb-toast--visible");
+  window.setTimeout(() => {
+    if (toastElement) toastElement.hidden = true;
+  }, 200);
+}
+
+function scheduleToastHide(durationMs) {
+  if (!toastElement) return;
+  window.clearTimeout(toastElement._tbTimer);
+  toastElement._tbDuration = durationMs;
+  toastElement._tbTimer = window.setTimeout(hideToast, durationMs);
+}
+
 function showToast(message, type = "info") {
   ensureToastShell();
   const text = String(message ?? "")
@@ -17,13 +33,8 @@ function showToast(message, type = "info") {
   toastElement.hidden = false;
   requestAnimationFrame(() => toastElement.classList.add("tb-toast--visible"));
 
-  window.clearTimeout(toastElement._tbTimer);
-  toastElement._tbTimer = window.setTimeout(() => {
-    toastElement.classList.remove("tb-toast--visible");
-    window.setTimeout(() => {
-      toastElement.hidden = true;
-    }, 200);
-  }, 3000);
+  const duration = type === "error" ? 5000 : 3000;
+  scheduleToastHide(duration);
 }
 
 function ensureToastShell() {
@@ -33,6 +44,15 @@ function ensureToastShell() {
 
   toastElement = document.createElement("div");
   toastElement.className = "tb-toast";
+  toastElement.setAttribute("role", "status");
+  toastElement.setAttribute("aria-live", "polite");
   toastElement.hidden = true;
+  toastElement.addEventListener("mouseenter", () => {
+    window.clearTimeout(toastElement._tbTimer);
+  });
+  toastElement.addEventListener("mouseleave", () => {
+    scheduleToastHide(toastElement._tbDuration || 3000);
+  });
+  toastElement.addEventListener("click", hideToast);
   document.body.appendChild(toastElement);
 }

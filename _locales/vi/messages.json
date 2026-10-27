@@ -2003,5 +2003,45 @@
   },
   "options_onboarding_help_title": {
     "message": "Mở hướng dẫn thiết lập ban đầu"
+  },
+  "modal_no_mention_found": {
+    "message": "Ch?a c? @mention"
+  },
+  "report_total_label": {
+    "message": "T?ng:"
+  },
+  "report_badge_error": {
+    "message": "? L?i"
+  },
+  "report_badge_duplicate": {
+    "message": "?? Tr?ng ($hours$h)",
+    "placeholders": {
+      "hours": {
+        "content": "$1"
+      }
+    }
+  },
+  "report_badge_full": {
+    "message": "?? ?? $hours$h",
+    "placeholders": {
+      "hours": {
+        "content": "$1"
+      }
+    }
+  },
+  "report_badge_empty": {
+    "message": "Kh?ng c? task"
+  },
+  "report_badge_partial_existing": {
+    "message": "?? ?? ghi 1 ph?n"
+  },
+  "report_badge_ready": {
+    "message": "S?n s?ng"
+  },
+  "report_badge_partial_result": {
+    "message": "M?t ph?n"
+  },
+  "report_badge_logged_result": {
+    "message": "?? log"
   }
 }

@@ -165,6 +165,20 @@ test("absent uncertain comments require explicit resolution before retry", async
   assert.equal(first.remote.writes, 1);
 });
 
+test("completed comments re-send when the remote comment was deleted", async () => {
+  const first = harness();
+  await first.send();
+  assert.equal(first.remote.writes, 1);
+  // Remote note still exists -> deduplicated
+  assert.equal((await first.send()).deduplicated, true);
+  assert.equal(first.remote.writes, 1);
+  // Delete remote note -> re-sent
+  first.remote.notes.length = 0;
+  const resent = await first.send();
+  assert.equal(resent.deduplicated, undefined);
+  assert.equal(first.remote.writes, 2);
+});
+
 test("concurrent sends and workspace scopes keep separate durable identities", async () => {
   const first = harness();
   await Promise.all([first.send(), first.send()]);

@@ -2,7 +2,49 @@
  * Styles module for Backlog2Redmine Extension.
  */
 
+function syncInjectedTheme() {
+  try {
+    const apply = (pref) => {
+      const theme = pref || "system";
+      const resolved =
+        theme === "system"
+          ? typeof matchMedia === "function" && matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light"
+          : theme;
+      document.documentElement.dataset.tbTheme = resolved;
+    };
+    if (typeof chrome !== "undefined" && chrome.storage?.local?.get) {
+      chrome.storage.local.get("themePreference", (res) => {
+        apply(res?.themePreference);
+      });
+      if (!globalThis.__tbThemeListenerAttached && chrome.storage?.onChanged?.addListener) {
+        globalThis.__tbThemeListenerAttached = true;
+        chrome.storage.onChanged.addListener((changes, area) => {
+          if (area === "local" && changes.themePreference) {
+            apply(changes.themePreference.newValue);
+          }
+        });
+        if (typeof matchMedia === "function") {
+          matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+            chrome.storage.local.get("themePreference", (res) => {
+              if (!res?.themePreference || res.themePreference === "system") {
+                apply("system");
+              }
+            });
+          });
+        }
+      }
+    } else {
+      apply("system");
+    }
+  } catch (_err) {
+    // Ignore theme sync errors in restricted contexts.
+  }
+}
+
 function injectStyles() {
+  syncInjectedTheme();
   if (document.getElementById("tb-injected-styles")) {
     return;
   }
@@ -845,6 +887,272 @@ function injectStyles() {
     .tb-monthly-log-footer .tb-btn-secondary:hover:not(:disabled) {
       background: #e2e8f0;
       color: #1e293b;
+    }
+    .tb-preview-notice {
+      margin: 0 0 12px;
+      color: #64748b;
+      font-size: 12px;
+    }
+    .tb-dry-run-result {
+      margin: 0 18px 12px;
+      padding: 12px;
+      border: 1px solid #bfdbfe;
+      border-radius: 8px;
+      background: #eff6ff;
+      color: #1e3a5f;
+      font-size: 13px;
+    }
+    .tb-migration-selection {
+      margin: 8px 0 10px;
+      padding: 10px 12px;
+      border: 1px solid #dbe4f0;
+      border-radius: 8px;
+      background: #f8fafc;
+      font-size: 12px;
+      color: #334155;
+    }
+    .tb-migration-selection-summary {
+      margin: 0 0 6px;
+      font-weight: 600;
+      color: #1e293b;
+    }
+    .tb-migration-file-list {
+      max-height: 132px;
+      overflow-y: auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 4px 12px;
+      padding-top: 4px;
+      border-top: 1px dashed #cbd5e1;
+    }
+    .tb-migration-file-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #334155;
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .tb-suggestions--inline {
+      display: block;
+      position: relative;
+      z-index: 9999;
+      max-height: 180px;
+      overflow-y: auto;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      background: #ffffff;
+      margin-top: 8px;
+    }
+    .tb-suggestion-item--muted {
+      color: #94a3b8 !important;
+      cursor: default !important;
+    }
+    .tb-monthly-log-title-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .tb-monthly-log-month-input {
+      height: 30px;
+      padding: 2px 8px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      background: #ffffff;
+      color: #0f172a;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .tb-monthly-log-month-input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    }
+    .tb-settings-error-banner {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 2147483645;
+      padding: 14px 18px;
+      background-color: #fffbeb;
+      border: 1px solid #fbbf24;
+      border-radius: 10px;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.14);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 13px;
+    }
+    .tb-settings-error-text {
+      color: #92400e;
+      font-weight: 500;
+    }
+    .tb-settings-error-link {
+      color: #0369a1 !important;
+      text-decoration: underline !important;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .tb-settings-error-close {
+      background: none !important;
+      border: none !important;
+      font-size: 20px;
+      line-height: 1;
+      cursor: pointer;
+      color: #92400e !important;
+      padding: 0 4px;
+    }
+    .tb-toast {
+      cursor: pointer;
+    }
+
+    /* Dark Mode Overrides for Injected UI */
+    :root[data-tb-theme="dark"] .tb-modal-container,
+    :root[data-tb-theme="dark"] .tb-monthly-log-dialog {
+      background: #0f172a;
+      color: #f1f5f9;
+      border-color: #334155;
+    }
+    :root[data-tb-theme="dark"] .tb-modal-header,
+    :root[data-tb-theme="dark"] .tb-modal-footer,
+    :root[data-tb-theme="dark"] .tb-monthly-log-header,
+    :root[data-tb-theme="dark"] .tb-monthly-log-footer,
+    :root[data-tb-theme="dark"] .tb-monthly-log-panel-title {
+      background: #1e293b;
+      border-color: #334155;
+      color: #f1f5f9;
+    }
+    :root[data-tb-theme="dark"] .tb-modal-title,
+    :root[data-tb-theme="dark"] .tb-monthly-log-header h2,
+    :root[data-tb-theme="dark"] .tb-task-name {
+      color: #f8fafc;
+    }
+    :root[data-tb-theme="dark"] .tb-modal-subtitle,
+    :root[data-tb-theme="dark"] .tb-preview-notice,
+    :root[data-tb-theme="dark"] .tb-monthly-log-status,
+    :root[data-tb-theme="dark"] .tb-monthly-log-kicker,
+    :root[data-tb-theme="dark"] .tb-field-group label,
+    :root[data-tb-theme="dark"] .tb-note-card-meta,
+    :root[data-tb-theme="dark"] .tb-success-hide-option {
+      color: #94a3b8;
+    }
+    :root[data-tb-theme="dark"] .tb-modal-close:hover,
+    :root[data-tb-theme="dark"] .tb-monthly-log-close:hover {
+      background: #334155 !important;
+      color: #f8fafc !important;
+    }
+    :root[data-tb-theme="dark"] .tb-field-group input,
+    :root[data-tb-theme="dark"] .tb-field-group select,
+    :root[data-tb-theme="dark"] .tb-field-group textarea,
+    :root[data-tb-theme="dark"] .tb-monthly-log-month-input,
+    :root[data-tb-theme="dark"] .tb-bulk-activity-select {
+      background: #1e293b;
+      border-color: #334155;
+      color: #f1f5f9;
+    }
+    :root[data-tb-theme="dark"] .tb-field-group input[readonly],
+    :root[data-tb-theme="dark"] .tb-field-group textarea[readonly] {
+      background: #0f172a;
+      color: #94a3b8;
+    }
+    :root[data-tb-theme="dark"] .tb-preview-html,
+    :root[data-tb-theme="dark"] .tb-note-card-textarea,
+    :root[data-tb-theme="dark"] .tb-note-card-preview,
+    :root[data-tb-theme="dark"] .tb-monthly-log-panel,
+    :root[data-tb-theme="dark"] .tb-monthly-log-progress {
+      background: #0f172a;
+      border-color: #334155;
+      color: #e2e8f0;
+    }
+    :root[data-tb-theme="dark"] .tb-note-card,
+    :root[data-tb-theme="dark"] .tb-migration-selection,
+    :root[data-tb-theme="dark"] .tb-task-card,
+    :root[data-tb-theme="dark"] .tb-task-list-summary {
+      background: #1e293b;
+      border-color: #334155;
+      color: #e2e8f0;
+    }
+    :root[data-tb-theme="dark"] .tb-migration-selection-summary,
+    :root[data-tb-theme="dark"] .tb-migration-file-item {
+      color: #e2e8f0;
+    }
+    :root[data-tb-theme="dark"] .tb-note-card-header {
+      background: #172554;
+      border-color: #1e3a8a;
+    }
+    :root[data-tb-theme="dark"] .tb-note-card-title {
+      color: #93c5fd;
+    }
+    :root[data-tb-theme="dark"] .tb-batch-option,
+    :root[data-tb-theme="dark"] .tb-dry-run-result {
+      background: #172554;
+      border-color: #1e3a8a;
+      color: #bfdbfe;
+    }
+    :root[data-tb-theme="dark"] .tb-batch-option label {
+      color: #93c5fd;
+    }
+    :root[data-tb-theme="dark"] .tb-btn-secondary {
+      background: #1e293b;
+      color: #e2e8f0;
+      border-color: #334155;
+    }
+    :root[data-tb-theme="dark"] .tb-btn-secondary:hover:not(:disabled) {
+      background: #334155;
+      color: #f8fafc;
+    }
+    :root[data-tb-theme="dark"] .tb-suggestions,
+    :root[data-tb-theme="dark"] .tb-suggestions--inline {
+      background: #1e293b;
+      border-color: #334155;
+    }
+    :root[data-tb-theme="dark"] .tb-suggestion-item {
+      color: #e2e8f0;
+      border-color: #334155;
+    }
+    :root[data-tb-theme="dark"] .tb-suggestion-item:hover {
+      background: #334155;
+    }
+    :root[data-tb-theme="dark"] .tb-modal-loading {
+      background: rgba(15, 23, 42, 0.78);
+    }
+    :root[data-tb-theme="dark"] .tb-loading-text {
+      color: #93c5fd;
+    }
+    :root[data-tb-theme="dark"] .tb-monthly-log-table th {
+      background: #1e293b;
+      color: #cbd5e1;
+      border-color: #334155;
+    }
+    :root[data-tb-theme="dark"] .tb-monthly-log-table td {
+      border-color: #1e293b;
+      color: #e2e8f0;
+    }
+    :root[data-tb-theme="dark"] .tb-monthly-log-table tbody tr:nth-child(even):not(.tb-monthly-log-row-warning):not(.tb-result-row-success):not(.tb-result-row-partial) {
+      background: #131c31;
+    }
+    :root[data-tb-theme="dark"] .tb-bulk-activity-toolbar {
+      background: #0f172a;
+      border-color: #334155;
+    }
+    :root[data-tb-theme="dark"] .tb-bulk-activity-label {
+      color: #cbd5e1;
+    }
+    :root[data-tb-theme="dark"] .tb-settings-error-banner {
+      background-color: #451a03;
+      border-color: #b45309;
+    }
+    :root[data-tb-theme="dark"] .tb-settings-error-text,
+    :root[data-tb-theme="dark"] .tb-settings-error-close {
+      color: #fde68a !important;
+    }
+    :root[data-tb-theme="dark"] .tb-settings-error-link {
+      color: #38bdf8 !important;
     }
     @media (max-width: 760px) {
       .tb-modal-overlay {

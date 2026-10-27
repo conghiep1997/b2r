@@ -1,5 +1,18 @@
 # Changelog - Backlog2Redmine
 
+## [1.8.21] - 2026-10-27
+- **✨ Added**: Month picker (`YYYY-MM`) in the Redmine Monthly Log Time modal to preview, log, and delete spent time for any past or current month, plus `#b2r-monthly-log` deep-linking from the extension popup.
+- **✨ Added**: Dark-theme synchronization (`data-tb-theme="dark"`) for all injected Backlog/Redmine modals, tables, cards, and banners following `themePreference`.
+- **✨ Added**: Keyboard shortcuts (`Escape` to close, `Ctrl+Enter` / `Cmd+Enter` to confirm), debounced Redmine Issue ID lookup, styled migration file-selection cards, and interactive toasts (hover-to-pause, click-to-dismiss, ARIA live regions).
+- **✨ Added**: In-place language switching on the Options page without reloading the page or losing unsaved inputs, and Unicode/multi-word Backlog `@mention` autocomplete.
+- **🔧 Fixed**: Hardened `normalizeTranslationOutput` to preserve markdown numbered lists and inline `Result:` text, strip B2R sync markers upfront, and pass explicit fallback retry flags.
+- **🔧 Fixed**: Chunked `encryptData` base64 encoding to prevent call-stack overflow on large settings payloads and deduplicated concurrent `getUserStorageId` initialization.
+- **🔧 Fixed**: Tagged single-report time entries with `[B2R report:<id>]` so monthly deletion accurately cleans them up, and localized all report status badges and summary labels.
+- **🔧 Fixed**: Eliminated prefix collisions in Redmine issue-key search (`PROJ-1` vs `PROJ-10`) and migration markers (`_1` vs `_10`), escaped `$` replacement patterns in Redmine attachment markup, and ignored empty/deleted comments during sync dedup.
+- **🔧 Fixed**: Validated actual stored AI provider API keys in popup readiness checks, hidden unconfigured donation methods, isolated `baseSettings` in full-comment translation, and kept background settings cache valid across transient storage writes.
+- **📝 Docs**: Added unit test suites covering translation output normalization, large-payload encryption, sync marker stripping, Redmine attachment markup, comment sync deduplication, and migration marker matching.
+
+
 ## [1.8.20] - 2026-10-26
 - **✨ Added**: Project-scoped glossaries, saved issue mappings, migration preview with comment/file selection, and resumable migration checkpoints.
 - **✨ Added**: Configurable translation and reverse-sync modes, project-pair profiles, migration title/search rules, tracker aliases, and custom-field policies.

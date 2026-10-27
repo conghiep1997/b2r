@@ -156,6 +156,23 @@ test("pickBestRedmineSearchResult returns a strong match even when tracker diffe
   assert.equal(picked?.id, 3557);
 });
 
+test("pickBestRedmineSearchResult does not match a longer issue key sharing the same prefix", () => {
+  const { pickBestRedmineSearchResult, normalizeLoose } = createExtractor();
+
+  const results = [
+    { id: 19, subject: "Task #19 (New): CP-123 other issue", tracker: "Task" },
+    { id: 1, subject: "Task #1 (New): CP-12 target issue", tracker: "Task" },
+  ];
+
+  const picked = pickBestRedmineSearchResult(results, normalizeLoose("CP-12"), "", []);
+
+  assert.equal(picked?.id, 1);
+  assert.equal(
+    pickBestRedmineSearchResult(results.slice(0, 1), normalizeLoose("CP-12"), "", []),
+    null
+  );
+});
+
 test("pickBestRedmineSearchResult prefers tracker when summary match is too weak", () => {
   const { pickBestRedmineSearchResult, normalizeLoose } = createExtractor();
 

@@ -111,6 +111,7 @@
     fallback_no_fallback: "Không dùng dự phòng",
     backlog_lookup_failed: "Không tìm thấy Issue tương ứng trên Backlog.",
     backlog_post_failed: "Gửi bình luận lên Backlog thất bại.",
+    modal_no_mention_found: "Không có @mention nào",
   };
 
   let localeMessages = null;

@@ -275,3 +275,15 @@ test("migration checkpoints preserve the submitted selections during recovery", 
   await restarted.context.TB_MIGRATION.resume(settings, "DEMO-1");
   assert.deepEqual(first.remote.sends, ["first", "second"]);
 });
+
+test("bare migration marker for comment 1 does not falsely match comment 10", async () => {
+  const first = harness({}, undefined, { noRemoteWrite: true });
+  await first.migrate();
+  const record = await first.context.TB_SYNC_STATE.read(settings, "migration", "DEMO-1");
+  record.pendingComment = 1;
+  await first.context.TB_SYNC_STATE.write(settings, "migration", "DEMO-1", record);
+  // Remote journal has bare marker for index 10, not index 1
+  first.remote.issue.journals.push({ notes: `tenth\n\nB2R_MIGRATION_${record.id}_10` });
+  const restarted = harness(first.storage, first.remote);
+  await assert.rejects(restarted.migrate(), /uncertain result/);
+});

@@ -218,9 +218,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     themePreference.value = storedTheme || "system";
     applyTheme(themePreference.value);
   });
-  languagePreference.addEventListener("change", () => {
-    chrome.storage.local.set({ languagePreference: languagePreference.value });
-    window.location.reload();
+  languagePreference.addEventListener("change", async () => {
+    await chrome.storage.local.set({ languagePreference: languagePreference.value });
+    await localizeOptions();
+    localizeOptionsDetails();
+    document.dispatchEvent(new CustomEvent("options-localized", { detail: optionsMessages }));
+    updateOnboardingStatuses();
+    const { syncActivity = [] } = await chrome.storage.local.get("syncActivity");
+    renderSyncActivity(syncActivity);
   });
   themePreference.addEventListener("change", () => {
     chrome.storage.local.set({ themePreference: themePreference.value });
@@ -1927,7 +1932,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const loaded = await fetchProjects(key, defaultId, true);
       showProjectReloadResult(button, loaded);
     } else {
-      alert(om("options_save_redmine_key_first"));
+      setStatus(om("options_save_redmine_key_first"), true);
       showProjectReloadResult(button, false);
     }
   }

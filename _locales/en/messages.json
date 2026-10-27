@@ -2003,5 +2003,45 @@
   },
   "options_onboarding_help_title": {
     "message": "Open initial setup guide"
+  },
+  "modal_no_mention_found": {
+    "message": "No @mention found"
+  },
+  "report_total_label": {
+    "message": "Total:"
+  },
+  "report_badge_error": {
+    "message": "? Error"
+  },
+  "report_badge_duplicate": {
+    "message": "?? Duplicate ($hours$h)",
+    "placeholders": {
+      "hours": {
+        "content": "$1"
+      }
+    }
+  },
+  "report_badge_full": {
+    "message": "Full $hours$h",
+    "placeholders": {
+      "hours": {
+        "content": "$1"
+      }
+    }
+  },
+  "report_badge_empty": {
+    "message": "No tasks"
+  },
+  "report_badge_partial_existing": {
+    "message": "?? Partially logged"
+  },
+  "report_badge_ready": {
+    "message": "Ready"
+  },
+  "report_badge_partial_result": {
+    "message": "Partial"
+  },
+  "report_badge_logged_result": {
+    "message": "Logged"
   }
 }
