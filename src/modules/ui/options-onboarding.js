@@ -78,9 +78,17 @@ globalThis.TB_OPTIONS_ONBOARDING = Object.freeze({
     }
 
     async function handleBacklogConnectionTest() {
-      const button = document.getElementById("testBacklogConnectionBtn");
+      const buttons = [
+        document.getElementById("testBacklogConnectionBtn"),
+        document.getElementById("testBacklogTabBtn"),
+      ].filter(Boolean);
       const inputKey = backlogApiKeyInput.value.trim();
-      button.disabled = true;
+      buttons.forEach((b) => (b.disabled = true));
+      const tabStatus = document.getElementById("backlogTabStatus");
+      if (tabStatus) {
+        tabStatus.textContent = om("popup_checking", "Đang kiểm tra…");
+        tabStatus.className = "status";
+      }
       try {
         const stored = await chrome.storage.local.get(["backlogApiKey", "backlogDomain"]);
         const apiKey =
@@ -95,27 +103,38 @@ globalThis.TB_OPTIONS_ONBOARDING = Object.freeze({
         await chrome.storage.local.set({
           backlogConnectionVerified: await verificationFingerprint([domain, apiKey]),
         });
-        document.getElementById("onboardingStatus").textContent = om(
-          "options_test_backlog_success",
-          "Backlog connection successful."
-        );
-        if (result.userName) {
-          document.getElementById("onboardingStatus").textContent += ` (${result.userName})`;
+        const successMsg =
+          om("options_test_backlog_success", "Backlog connection successful.") +
+          (result.userName ? ` (${result.userName})` : "");
+        document.getElementById("onboardingStatus").textContent = successMsg;
+        if (tabStatus) {
+          tabStatus.textContent = `✓ ${successMsg}`;
+          tabStatus.className = "status status-success";
         }
+        return { ok: true, message: successMsg };
       } catch (error) {
         await chrome.storage.local.remove("backlogConnectionVerified");
-        document.getElementById("onboardingStatus").textContent = om(
+        const errorMsg = om(
           "options_test_backlog_failed",
           "Backlog connection failed: $error$"
         ).replace("$error$", error.message);
+        document.getElementById("onboardingStatus").textContent = errorMsg;
+        if (tabStatus) {
+          tabStatus.textContent = `❌ ${errorMsg}`;
+          tabStatus.className = "status status-error";
+        }
+        return { ok: false, error: errorMsg };
       } finally {
-        button.disabled = false;
+        buttons.forEach((b) => (b.disabled = false));
         updateOnboardingStatuses();
       }
     }
 
     async function handlePrimaryAiTest() {
-      const button = document.getElementById("testPrimaryAiBtn");
+      const buttons = [
+        document.getElementById("testPrimaryAiBtn"),
+        document.getElementById("testPrimaryAiTabBtn"),
+      ].filter(Boolean);
       const provider = primaryProviderSelect.value;
       if (
         provider !== "gemini" &&
@@ -133,7 +152,12 @@ globalThis.TB_OPTIONS_ONBOARDING = Object.freeze({
       const modelId = models[0] || getDefaultModel(provider);
       // Verify exactly the credentials used by this request, even if the form changes.
       const testedKeys = provider === "gemini" ? getGeminiKeys() : apiKey;
-      button.disabled = true;
+      buttons.forEach((b) => (b.disabled = true));
+      const tabStatus = document.getElementById("primaryAiTabStatus");
+      if (tabStatus) {
+        tabStatus.textContent = om("popup_checking", "Đang kiểm tra…");
+        tabStatus.className = "status";
+      }
       try {
         if (!apiKey) throw new Error(om("options_ai_key_missing"));
         const result =
@@ -149,14 +173,23 @@ globalThis.TB_OPTIONS_ONBOARDING = Object.freeze({
         await chrome.storage.local.set({
           aiConnectionVerified: await verificationFingerprint([provider, modelId, testedKeys]),
         });
-        document.getElementById("onboardingStatus").textContent = om(
-          "options_test_ai_success"
-        ).replace("$model$", modelId);
+        const successMsg = om("options_test_ai_success").replace("$model$", modelId);
+        document.getElementById("onboardingStatus").textContent = successMsg;
+        if (tabStatus) {
+          tabStatus.textContent = `✓ ${successMsg}`;
+          tabStatus.className = "status status-success";
+        }
+        return { ok: true, message: successMsg };
       } catch (error) {
         await chrome.storage.local.remove("aiConnectionVerified");
         document.getElementById("onboardingStatus").textContent = error.message;
+        if (tabStatus) {
+          tabStatus.textContent = `❌ ${error.message}`;
+          tabStatus.className = "status status-error";
+        }
+        return { ok: false, error: error.message };
       } finally {
-        button.disabled = false;
+        buttons.forEach((b) => (b.disabled = false));
         updateOnboardingStatuses();
       }
     }

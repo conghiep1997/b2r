@@ -19,6 +19,15 @@ test("translation defaults preserve Vietnamese translation and Japanese reverse 
   assert.throws(() => rules.normalize({ target: "auto" }), /language/);
   assert.throws(() => rules.normalize({ reverseTarget: "unknown" }), /language/);
   assert.throws(() => rules.normalize({ reverseMode: "invalid" }), /mode/);
+  assert.throws(() => rules.normalize({ tone: "unsupported" }), /tone/);
+
+  assert.equal(rules.normalize().tone, "technical");
+  assert.equal(rules.normalize({ tone: "formal" }).tone, "formal");
+  assert.equal(rules.normalize({ tone: "concise" }).tone, "concise");
+
+  assert.match(rules.prompt({ tone: "technical" }).system, /Technical/);
+  assert.match(rules.prompt({ tone: "formal" }).system, /Formal/);
+  assert.match(rules.prompt({ tone: "concise" }).system, /concise/i);
 });
 
 test("each provider receives the selected language instruction and comment attribution", async () => {

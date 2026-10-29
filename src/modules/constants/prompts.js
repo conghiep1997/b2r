@@ -61,12 +61,21 @@ ${text}
     es: "Spanish",
     pt: "Portuguese",
   });
+  const STYLE_GUIDELINES = Object.freeze({
+    technical:
+      "Style: Technical, clear, and action-oriented for Software Engineers & QA/Testers. Keep technical terms in English (e.g. API, endpoint, query, deploy, payload, database). Clearly distinguish current vs expected behavior.",
+    formal:
+      "Style: Formal, polite, and professional business language suitable for project managers and clients.",
+    concise:
+      "Style: Highly concise, action-focused checklist and bullet points. Eliminate all filler words.",
+  });
   const translationDefaults = Object.freeze({
     source: "ja",
     target: "vi",
     reverseMode: "extract",
     reverseSource: "vi",
     reverseTarget: "ja",
+    tone: "technical",
   });
   function normalizeTranslationRules(value = {}) {
     if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -81,6 +90,10 @@ ${text}
     if (!["extract", "translate", "original"].includes(rules.reverseMode)) {
       throw new TypeError("Invalid translation mode.");
     }
+    if (rules.tone && !["technical", "formal", "concise"].includes(rules.tone)) {
+      throw new TypeError("Invalid translation tone.");
+    }
+    rules.tone = rules.tone || "technical";
     return rules;
   }
   function safeNormalizeTranslationRules(value, fallbackSource, fallbackTarget) {
@@ -92,6 +105,7 @@ ${text}
       return normalizeTranslationRules({
         source: fallbackSource || translationDefaults.source,
         target: fallbackTarget || translationDefaults.target,
+        tone: translationDefaults.tone,
       });
     }
   }
@@ -108,6 +122,8 @@ ${text}
     if (reverse && rules.reverseMode === "extract") {
       builder.system = `Extract only original ${ENGLISH_LANGUAGE_NAMES[target]} passages from the input. Do not translate or paraphrase. Preserve markup and placeholders.`;
       builder.extract = true;
+    } else if (rules.tone && STYLE_GUIDELINES[rules.tone]) {
+      builder.system += ` ${STYLE_GUIDELINES[rules.tone]}`;
     }
     builder.attribution = attribution;
     builder.translationLabel = target.toUpperCase();
@@ -124,6 +140,7 @@ ${text}
       prompt: translationRulesPrompt,
       defaults: translationDefaults,
       languages: LANGUAGE_NAMES,
+      styles: STYLE_GUIDELINES,
     }),
     GLOSSARY: (entries, prompt) =>
       `<project-terminology>${JSON.stringify(entries).replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026")}</project-terminology>\n${prompt}`,

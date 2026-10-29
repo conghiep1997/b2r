@@ -229,6 +229,22 @@ async function translateText(
   const primaryModel = settings.primaryModel || TB.DEFAULT_PRIMARY_MODEL;
   const fallbackProvider = settings.fallbackProvider || TB.DEFAULT_FALLBACK_PROVIDER;
   const fallbackModel = settings.fallbackModel || TB.DEFAULT_FALLBACK_MODEL;
+
+  const enableCache = settings.enableTranslationCache !== false && !settings.bypassCache;
+  if (enableCache && globalThis.TB_TRANSLATION_CACHE) {
+    const cached = await globalThis.TB_TRANSLATION_CACHE.get(
+      sourceText,
+      languagePair.source,
+      languagePair.target,
+      settings.currentProjectKey,
+      reverse
+    );
+    if (cached) {
+      emitAIStatus({ phase: "success", provider: "cache", model: "0ms", cached: true }, onStatus);
+      return restoreGlossary(cached);
+    }
+  }
+
   emitAIStatus({ phase: "start", provider: primaryProvider, model: primaryModel }, onStatus);
 
   try {
@@ -242,6 +258,16 @@ async function translateText(
       onStatus,
       false
     );
+    if (enableCache && globalThis.TB_TRANSLATION_CACHE) {
+      globalThis.TB_TRANSLATION_CACHE.set(
+        sourceText,
+        languagePair.source,
+        languagePair.target,
+        settings.currentProjectKey,
+        reverse,
+        translated
+      );
+    }
     emitAIStatus({ phase: "success", provider: primaryProvider, model: primaryModel }, onStatus);
     return restoreGlossary(translated);
   } catch (error) {
@@ -268,6 +294,16 @@ async function translateText(
           onStatus,
           true
         );
+        if (enableCache && globalThis.TB_TRANSLATION_CACHE) {
+          globalThis.TB_TRANSLATION_CACHE.set(
+            sourceText,
+            languagePair.source,
+            languagePair.target,
+            settings.currentProjectKey,
+            reverse,
+            translated
+          );
+        }
         emitAIStatus(
           { phase: "success", provider: fallbackProvider, model: fallbackModel },
           onStatus

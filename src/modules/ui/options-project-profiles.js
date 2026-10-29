@@ -84,9 +84,10 @@
           input.disabled = inherited;
         });
     }
-    for (const field of ["source", "target"]) {
-      // Translation languages are valid policy settings even before a Redmine project is chosen.
-      el(`translation_${field}`).disabled = inherited;
+    for (const field of ["source", "target", "tone"]) {
+      // Translation languages and tone are valid policy settings even before a Redmine project is chosen.
+      const elem = el(`translation_${field}`);
+      if (elem) elem.disabled = inherited;
     }
     el("translationProjectStatus").hidden = true;
     for (const id of [
@@ -346,10 +347,15 @@
       );
     });
   });
+  function markDirty() {
+    policyDirty = true;
+    profilesDirty = true;
+  }
   global.TB_OPTIONS_PROJECT_PROFILES = Object.freeze({
     load,
     readGlobal,
     readProfiles,
     refresh: controls,
+    markDirty,
   });
 })(globalThis);

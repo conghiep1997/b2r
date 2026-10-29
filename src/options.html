@@ -71,13 +71,20 @@
         z-index: 200;
         display: flex;
         align-items: center;
-        justify-content: flex-end;
-        gap: 16px;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
         padding: 6px 20px;
         background: var(--panel);
         border-bottom: 1px solid var(--border);
         backdrop-filter: blur(10px);
         margin: -32px -20px 24px;
+      }
+
+      .options-top-bar__prefs {
+        display: flex;
+        align-items: center;
+        gap: 16px;
       }
 
       .hero {
@@ -334,6 +341,78 @@
         border-color: var(--primary);
       }
 
+      .options-search-wrap {
+        position: relative;
+        display: flex;
+        align-items: center;
+        flex: 1;
+        max-width: 320px;
+        margin: 0 16px;
+      }
+
+      .options-search-icon {
+        position: absolute;
+        left: 10px;
+        font-size: 13px;
+        pointer-events: none;
+        opacity: 0.55;
+      }
+
+      .options-search-input {
+        width: 100%;
+        padding: 6px 28px 6px 30px;
+        font-size: 13px;
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        background: var(--bg);
+        color: var(--text);
+        outline: none;
+        transition: all 0.2s ease;
+      }
+
+      .options-search-input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+      }
+
+      .options-search-clear {
+        position: absolute;
+        right: 8px;
+        background: none;
+        border: none;
+        color: var(--muted);
+        font-size: 13px;
+        cursor: pointer;
+        padding: 2px 6px;
+        border-radius: 50%;
+        line-height: 1;
+      }
+
+      .options-search-clear:hover {
+        color: var(--text);
+      }
+
+      .search-highlight-match {
+        background: rgba(254, 240, 138, 0.35) !important;
+        border-radius: 6px;
+        outline: 2px solid #f59e0b !important;
+        outline-offset: 2px;
+        transition:
+          background 0.2s ease,
+          outline 0.2s ease;
+      }
+
+      :root[data-theme="dark"] .search-highlight-match {
+        background: rgba(245, 158, 11, 0.18) !important;
+        outline: 2px solid #d97706 !important;
+      }
+
+      .search-dimmed {
+        opacity: 0.3 !important;
+        filter: grayscale(0.5);
+        transition: opacity 0.2s ease;
+      }
+
       .form-sticky-bar .status {
         margin: 0;
         flex: 1 1 auto;
@@ -551,6 +630,15 @@
       :root[data-theme="dark"] .secondary {
         color: var(--text);
         background: #1e293b;
+      }
+
+      :root[data-theme="dark"] .secondary:hover:not(:disabled) {
+        background: #334155;
+        border-color: #475569;
+      }
+
+      :root[data-theme="dark"] .secondary:active:not(:disabled) {
+        background: #0f172a;
       }
 
       :root[data-theme="dark"] details summary {
@@ -868,10 +956,45 @@
         background: var(--bg);
       }
 
-      .profile-manager h3 {
-        margin: 0 0 14px;
+      .profile-manager__header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+
+      .profile-manager__header h3 {
+        margin: 0;
         color: var(--text);
         font-size: 14px;
+      }
+
+      .profile-manager__toolbar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .btn-transfer {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+      }
+
+      .btn-transfer:hover {
+        transform: translateY(-1px);
+      }
+
+      .btn-transfer:active {
+        transform: translateY(0) scale(0.98);
       }
 
       #projectProfilesEditor {
@@ -982,27 +1105,75 @@
         font: inherit;
         font-weight: 700;
         cursor: pointer;
+        transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      button:active:not(:disabled) {
+        transform: scale(0.98);
+      }
+
+      button:disabled {
+        opacity: 0.65;
+        cursor: not-allowed;
       }
 
       .primary {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
         background: linear-gradient(180deg, #3b82f6, var(--primary));
         color: white;
-        box-shadow: 0 10px 20px rgba(37, 99, 235, 0.18);
+        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+        transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
       }
 
-      .primary:hover {
+      .primary:hover:not(:disabled) {
         background: linear-gradient(180deg, #2563eb, var(--primary-strong));
+        box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35);
+        transform: translateY(-1px);
+      }
+
+      .primary:active:not(:disabled) {
+        transform: translateY(1px) scale(0.98);
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+      }
+
+      .primary:disabled {
+        opacity: 0.65;
+        cursor: not-allowed;
+        filter: grayscale(20%);
+        box-shadow: none;
+        transform: none;
       }
 
       .secondary {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
         background: #f8fafc;
         color: #475569;
         border: 1px solid var(--border);
+        transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
       }
 
-      .secondary:hover {
+      .secondary:hover:not(:disabled) {
         background: #f1f5f9;
         border-color: #94a3b8;
+        transform: translateY(-1px);
+      }
+
+      .secondary:active:not(:disabled) {
+        transform: translateY(1px) scale(0.98);
+        background: #e2e8f0;
+      }
+
+      .secondary:disabled {
+        opacity: 0.65;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
       }
 
       .btn-sync {
@@ -1018,7 +1189,12 @@
         box-shadow: none;
         transition:
           color 140ms ease,
-          background-color 140ms ease;
+          background-color 140ms ease,
+          transform 140ms ease;
+      }
+
+      .btn-sync:active:not(:disabled) {
+        transform: scale(0.92);
       }
 
       .btn-sync svg {
@@ -1205,6 +1381,55 @@
         }
       }
 
+      .retry-queue-list {
+        display: grid;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .retry-queue-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 14px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--bg);
+      }
+
+      .retry-queue-item__info {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .retry-queue-item__title {
+        margin: 0 0 4px;
+        font-weight: 600;
+        font-size: 13px;
+        color: var(--text);
+        word-break: break-word;
+      }
+
+      .retry-queue-item__meta {
+        margin: 0;
+        font-size: 11px;
+        color: var(--muted);
+      }
+
+      .retry-queue-item__error {
+        margin: 4px 0 0;
+        font-size: 11px;
+        color: #ef4444;
+        word-break: break-word;
+      }
+
+      .retry-queue-item__actions {
+        display: flex;
+        gap: 6px;
+        flex-shrink: 0;
+      }
+
       #geminiModelsList button {
         background: #dbeafe;
         color: #1e40af;
@@ -1262,30 +1487,56 @@
   <body>
     <div class="wrap">
       <div class="options-top-bar">
-        <div class="pref-field">
-          <label for="languagePreference" data-i18n="options_language_label">Language</label>
-          <select id="languagePreference">
-            <option value="vi" data-i18n="options_language_vi">Vietnamese</option>
-            <option value="en" data-i18n="options_language_en">English</option>
-          </select>
-        </div>
         <button
           type="button"
           id="topBarHelpBtn"
           class="topbar-help-btn"
           data-i18n-title="options_onboarding_help_title"
-          title="Mở hướng dẫn thiết lập ban đầu"
+          title="Bật/tắt hướng dẫn thiết lập"
+          aria-expanded="true"
+          aria-controls="onboardingCard"
         >
           <span>❓</span>
           <span data-i18n="options_onboarding_help_btn">Hướng dẫn</span>
         </button>
-        <div class="pref-field">
-          <label for="themePreference" data-i18n="options_theme_label">Theme</label>
-          <select id="themePreference">
-            <option value="system" data-i18n="options_theme_system">Theo hệ thống</option>
-            <option value="light" data-i18n="options_theme_light">Sáng</option>
-            <option value="dark" data-i18n="options_theme_dark">Tối</option>
-          </select>
+        <div class="options-search-wrap">
+          <span class="options-search-icon">🔍</span>
+          <input
+            type="search"
+            id="optionsSearchInput"
+            class="options-search-input"
+            placeholder="Tìm cài đặt nhanh…"
+            data-i18n-placeholder="options_search_placeholder"
+            autocomplete="off"
+            aria-label="Tìm kiếm cài đặt"
+          />
+          <button
+            type="button"
+            id="clearSearchBtn"
+            class="options-search-clear"
+            title="Xóa tìm kiếm (Esc)"
+            data-i18n-title="options_search_clear_title"
+            hidden
+          >
+            ✕
+          </button>
+        </div>
+        <div class="options-top-bar__prefs">
+          <div class="pref-field">
+            <label for="languagePreference" data-i18n="options_language_label">Language</label>
+            <select id="languagePreference">
+              <option value="vi" data-i18n="options_language_vi">Vietnamese</option>
+              <option value="en" data-i18n="options_language_en">English</option>
+            </select>
+          </div>
+          <div class="pref-field">
+            <label for="themePreference" data-i18n="options_theme_label">Theme</label>
+            <select id="themePreference">
+              <option value="system" data-i18n="options_theme_system">Theo hệ thống</option>
+              <option value="light" data-i18n="options_theme_light">Sáng</option>
+              <option value="dark" data-i18n="options_theme_dark">Tối</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -1594,6 +1845,31 @@
                     data-i18n-placeholder="options_backlog_key_placeholder"
                   />
                 </div>
+                <div
+                  class="field"
+                  style="
+                    margin-top: 10px;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    flex-wrap: wrap;
+                  "
+                >
+                  <button
+                    id="testBacklogTabBtn"
+                    type="button"
+                    class="secondary"
+                    data-i18n="options_test_backlog"
+                  >
+                    Kiểm tra kết nối Backlog
+                  </button>
+                  <span
+                    id="backlogTabStatus"
+                    class="status"
+                    role="status"
+                    aria-live="polite"
+                  ></span>
+                </div>
               </div>
             </details>
           </div>
@@ -1746,6 +2022,77 @@
                     <a href="https://openrouter.ai/keys" target="_blank">OpenRouter Keys</a>. ðŸ’¡
                     Nhiá»u model miá»…n phÃ­ (suffix :free).
                   </p>
+                </div>
+
+                <div
+                  class="field"
+                  style="
+                    margin-top: 6px;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    flex-wrap: wrap;
+                  "
+                >
+                  <button
+                    id="testPrimaryAiTabBtn"
+                    type="button"
+                    class="secondary"
+                    data-i18n="options_test_ai"
+                  >
+                    Kiểm tra kết nối AI
+                  </button>
+                  <span
+                    id="primaryAiTabStatus"
+                    class="status"
+                    role="status"
+                    aria-live="polite"
+                  ></span>
+                </div>
+
+                <div
+                  class="field"
+                  style="
+                    margin-top: 10px;
+                    padding-top: 10px;
+                    border-top: 1px dashed var(--border);
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    flex-wrap: wrap;
+                    gap: 10px;
+                  "
+                >
+                  <label
+                    style="
+                      display: inline-flex;
+                      align-items: center;
+                      gap: 8px;
+                      margin: 0;
+                      font-size: 13px;
+                      font-weight: 500;
+                      cursor: pointer;
+                    "
+                  >
+                    <input
+                      type="checkbox"
+                      id="enableTranslationCache"
+                      checked
+                      style="width: auto; height: auto; margin: 0"
+                    />
+                    <span data-i18n="options_translation_cache_label"
+                      >Bật bộ nhớ đệm bản dịch (0ms, tiết kiệm quota API)</span
+                    >
+                  </label>
+                  <button
+                    id="clearTranslationCacheBtn"
+                    type="button"
+                    class="secondary"
+                    style="font-size: 11px; padding: 6px 12px"
+                    data-i18n="options_clear_translation_cache"
+                  >
+                    Xóa bộ nhớ đệm dịch
+                  </button>
                 </div>
               </div>
             </details>
@@ -1939,7 +2286,37 @@
                   <span id="policyProfileSingle" class="field-help" hidden></span>
                 </div>
                 <div class="profile-manager">
-                  <h3 data-i18n="options_profiles_manager">Project profiles</h3>
+                  <div class="profile-manager__header">
+                    <h3 data-i18n="options_profiles_manager">Project profiles</h3>
+                    <div class="profile-manager__toolbar">
+                      <button
+                        id="exportConfigBtn"
+                        type="button"
+                        class="secondary btn-transfer"
+                        data-i18n-title="options_export_config_title"
+                        title="Xuất cấu hình JSON để chia sẻ trong team"
+                      >
+                        <span>📤</span>
+                        <span data-i18n="options_export_config">Xuất cấu hình</span>
+                      </button>
+                      <button
+                        id="importConfigBtn"
+                        type="button"
+                        class="secondary btn-transfer"
+                        data-i18n-title="options_import_config_title"
+                        title="Nhập cấu hình JSON từ file"
+                      >
+                        <span>📥</span>
+                        <span data-i18n="options_import_config">Nhập cấu hình</span>
+                      </button>
+                      <input
+                        type="file"
+                        id="importConfigFileInput"
+                        accept=".json,application/json"
+                        style="display: none"
+                      />
+                    </div>
+                  </div>
                   <div id="projectProfilesEditor"></div>
                   <datalist id="profileProjects"></datalist>
                   <div class="profile-manager__actions">
@@ -2040,6 +2417,30 @@
                           >
                           <select id="translation_target"></select>
                         </div>
+                      </div>
+                      <div class="field">
+                        <label for="translation_tone" data-i18n="options_translation_tone_label"
+                          >Giọng văn dịch</label
+                        >
+                        <select id="translation_tone">
+                          <option
+                            value="technical"
+                            data-i18n="options_translation_tone_technical"
+                            selected
+                          >
+                            Kỹ thuật & Trực diện (Technical & Direct - Khuyên dùng)
+                          </option>
+                          <option value="formal" data-i18n="options_translation_tone_formal">
+                            Trang trọng & Nghiệp vụ (Formal & Business)
+                          </option>
+                          <option value="concise" data-i18n="options_translation_tone_concise">
+                            Tối giản & Checklist (Concise Bullet-points)
+                          </option>
+                        </select>
+                        <p class="field-help" data-i18n="options_translation_tone_help">
+                          Giữ nguyên thuật ngữ kỹ thuật tiếng Anh (API, DB, query...), câu văn ngắn
+                          gọn, rõ ràng cho Dev & Tester.
+                        </p>
                       </div>
                       <p
                         id="translationProjectStatus"
@@ -2206,7 +2607,10 @@
 
           <div class="form-sticky-bar">
             <div id="status" class="status"></div>
-            <button class="primary" type="submit" data-i18n="options_save">LÆ°u cáº¥u hÃ¬nh</button>
+            <button id="saveOptionsBtn" class="primary" type="submit">
+              <span class="btn-icon">💾</span>
+              <span class="btn-text" data-i18n="options_save">Lưu cấu hình</span>
+            </button>
           </div>
         </form>
 
@@ -2276,6 +2680,57 @@
                 >
                   Clear activity
                 </button>
+              </div>
+            </details>
+
+            <!-- Offline Retry Queue Section -->
+            <details class="policy-group" id="retryQueueGroup" open>
+              <summary id="retryQueueTitle" data-i18n="options_retry_queue_title">
+                📶 Hàng đợi thử lại khi rớt mạng (Offline / Retry Queue)
+              </summary>
+              <div class="policy-group__content">
+                <p
+                  style="margin: 0 0 12px; color: var(--muted); font-size: 13px"
+                  data-i18n="options_retry_queue_help"
+                >
+                  Tự động lưu nháp các thao tác đồng bộ bị lỗi mạng hoặc mất kết nối. Bạn có thể gửi
+                  lại khi mạng ổn định.
+                </p>
+                <div class="actions" style="margin-bottom: 12px">
+                  <button
+                    type="button"
+                    id="retryAllQueueBtn"
+                    class="primary"
+                    data-i18n="options_retry_all"
+                  >
+                    🔄 Thử lại tất cả
+                  </button>
+                  <button
+                    type="button"
+                    id="clearRetryQueueBtn"
+                    class="secondary"
+                    data-i18n="options_clear_queue"
+                  >
+                    🗑️ Xóa hàng đợi
+                  </button>
+                  <button
+                    type="button"
+                    id="refreshRetryQueueBtn"
+                    class="secondary"
+                    data-i18n="options_refresh_queue"
+                  >
+                    ↻ Làm mới
+                  </button>
+                </div>
+                <div id="retryQueueList" class="retry-queue-list"></div>
+                <p
+                  id="retryQueueEmpty"
+                  style="margin: 8px 0; color: var(--muted); font-size: 13px"
+                  data-i18n="options_retry_queue_empty"
+                >
+                  Hàng đợi trống. Không có tác vụ nào bị lỗi mạng.
+                </p>
+                <p id="retryQueueStatus" class="status" aria-live="polite"></p>
               </div>
             </details>
 
@@ -2466,6 +2921,8 @@
     <script src="modules/utils/sync-rules.js"></script>
     <script src="modules/utils/custom-fields.js"></script>
     <script src="modules/utils/project-profiles.js"></script>
+    <script src="modules/utils/config-transfer.js"></script>
+    <script src="modules/services/retry-queue.js"></script>
     <script src="modules/utils/logger.js"></script>
     <script src="modules/ui/options-policy-editors.js"></script>
     <script src="modules/ui/options-sync-rules.js"></script>

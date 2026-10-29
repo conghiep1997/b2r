@@ -281,12 +281,15 @@ function injectStyles() {
     .tb-modal-footer { padding: 10px 24px; background: #f8fafc; border-top: 1px solid #f1f5f9; display: flex; justify-content: flex-end; gap: 10px; }
 
     /* Buttons */
-    .tb-btn { padding: 10px 20px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; }
+    .tb-btn { padding: 10px 20px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s ease; border: none; }
+    .tb-btn:active:not(:disabled) { transform: scale(0.98); }
     .tb-btn-primary { background: #3b82f6; color: #fff; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3); }
-    .tb-btn-primary:hover { background: #2563eb; transform: translateY(-1px); }
+    .tb-btn-primary:hover:not(:disabled) { background: #2563eb; transform: translateY(-1px); }
+    .tb-btn-primary:active:not(:disabled) { transform: translateY(1px) scale(0.98); box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2); }
     .tb-btn-primary:disabled { background: #94a3b8; transform: none; box-shadow: none; cursor: not-allowed; }
     .tb-btn-secondary { background: #fff; color: #475569; border: 1px solid #e2e8f0; }
-    .tb-btn-secondary:hover { background: #f1f5f9; }
+    .tb-btn-secondary:hover:not(:disabled) { background: #f1f5f9; transform: translateY(-1px); }
+    .tb-btn-secondary:active:not(:disabled) { transform: translateY(1px) scale(0.98); background: #e2e8f0; }
     .tb-btn-secondary:disabled { background: #f8fafc; color: #94a3b8; border-color: #e2e8f0; box-shadow: none; cursor: not-allowed; opacity: 0.7; }
     .tb-btn-danger {
       background: #dc2626;
@@ -300,9 +303,18 @@ function injectStyles() {
       border-color: #b91c1c;
       transform: translateY(-1px);
     }
+    .tb-btn-danger:active:not(:disabled) {
+      transform: translateY(1px) scale(0.98);
+      box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2);
+    }
     .tb-btn-danger:disabled {
       background: #fca5a5;
       border-color: #fca5a5;
+      box-shadow: none;
+      opacity: 0.75;
+      cursor: not-allowed;
+      transform: none;
+    }
       box-shadow: none;
       opacity: 0.75;
       cursor: not-allowed;

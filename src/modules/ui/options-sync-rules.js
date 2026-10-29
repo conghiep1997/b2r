@@ -73,6 +73,8 @@ globalThis.TB_OPTIONS_SYNC_RULES = Object.freeze({
       select.value = rules[field];
     }
     document.getElementById("translation_reverseMode").value = rules.reverseMode;
+    const toneSelect = document.getElementById("translation_tone");
+    if (toneSelect) toneSelect.value = rules.tone || "technical";
     this.updateVisibility();
   },
   readTranslation() {
@@ -82,7 +84,14 @@ globalThis.TB_OPTIONS_SYNC_RULES = Object.freeze({
       Object.keys(defaults).map((field) => {
         const control = document.getElementById(`translation_${field}`);
         const value = control?.value;
-        const valid = Object.hasOwn(supported, value) && (field === "source" || value !== "auto");
+        let valid = false;
+        if (field === "reverseMode") {
+          valid = ["extract", "translate", "original"].includes(value);
+        } else if (field === "tone") {
+          valid = ["technical", "formal", "concise"].includes(value);
+        } else {
+          valid = Object.hasOwn(supported, value) && (field === "source" || value !== "auto");
+        }
         return [field, valid ? value : defaults[field]];
       })
     );

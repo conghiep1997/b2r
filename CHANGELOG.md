@@ -1,5 +1,21 @@
 # Changelog - Backlog2Redmine
 
+All notable changes to the Backlog2Redmine (B2R) extension will be documented in this file.
+The format is based on [Keep a Changelog](https://keepachangelog.com/).
+(Vietnamese version: [CHANGELOG.vi.md](./CHANGELOG.vi.md))
+
+## [1.8.22] - 2026-10-28
+- **✨ Added**: Offline and Retry Queue (`retryQueue` / `tb_retry_queue`) with auto-enqueuing of failed comments and migrations on network drops, reactive reconnection listener (`online`) to auto-retry queued operations, and full queue management UI in Options under Advanced settings (view queue, retry, and clear).
+- **✨ Added**: Connection checks for Backlog and the primary AI provider directly in their Options sections, with inline verification results and automatic verification when saving credentials; floating sticky Save bar with micro-interactions and `Ctrl+S` / `Cmd+S` keyboard shortcut to save settings.
+- **✨ Added**: Persistent translation cache (`translationCache`) with 0ms in-memory LRU lookups, local storage persistence, toggle switch, and clear cache control in Options.
+- **✨ Added**: Safe Export / Import project configuration JSON (`configTransfer`) with zero API key leakage and support for both Merge and Replace modes.
+- **✨ Added**: Configurable translation tone and style (`technical` [default], `formal`, `concise`) injected into translation prompts.
+- **✨ Added**: Quick Settings Search Filter (`#optionsSearchInput`) in Options page with real-time section matching, auto-expanding `<details>`, tab switching, and keyboard shortcuts (`/` to focus, `Esc` to clear).
+- **🔧 Fixed**: Made the setup guide toggleable from the top bar and kept its expanded state accessible and persisted; improved save and button feedback for pending, successful, and disabled states.
+- **🔧 Fixed**: Added `tb_retry_queue` to transient storage prefixes in the background service worker to prevent invalidating decrypted settings cache on queue operations; registered retry queue message contracts in message validator.
+- **📝 Docs**: Updated English and Vietnamese labels for setup guide, translation cache, configuration transfer, translation tone, settings search, save progress/success states, and retry queue; added comprehensive unit tests covering translation caching, configuration transfer, translation rules, and retry queue (182 unit tests passing).
+
+
 ## [1.8.21] - 2026-10-27
 - **✨ Added**: Month picker (`YYYY-MM`) in the Redmine Monthly Log Time modal to preview, log, and delete spent time for any past or current month, plus `#b2r-monthly-log` deep-linking from the extension popup.
 - **✨ Added**: Dark-theme synchronization (`data-tb-theme="dark"`) for all injected Backlog/Redmine modals, tables, cards, and banners following `themePreference`.
@@ -59,6 +75,7 @@
 - Lint, formatting, version synchronization, and build passed.
 - Live Backlog/Redmine writes were not exercised.
 
+
 ## [1.8.17] - 2026-09-24
 
 - **Added**: First-run onboarding, sync activity history, preview-only dry run, and clearer AI retry/provider status. Expanded automated coverage for Popup, Options, Backlog, and Redmine flows.
@@ -84,152 +101,149 @@
 - Improved dark-mode contrast across settings sections and form controls.
 - Localized the Redmine personal account link.
 - Fixed screenshot preview handling and added an error state when an image cannot be previewed.
-- Giữ nguyên placeholder kiểu `<flow_guide_id>` khi dịch/sync note sang Redmine.
-- AI HTML-escape `<>` được decode trước khi gửi Redmine; code fence/inline giữ nguyên entity.
-- Textile không còn double-escape placeholder ngoài allowlist.
-- Extract Backlog giữ custom tag kiểu `<flow_guide_id>` thay vì nuốt mất.
+- Preserved `<flow_guide_id>` style placeholders when translating and syncing notes to Redmine.
+- Decoded AI HTML-escaped `<>` brackets before posting to Redmine while preserving entities inside code fences and inline code.
+- Prevented Textile from double-escaping placeholders outside the allowlist.
+- Preserved Backlog custom tags like `<flow_guide_id>` during content extraction instead of dropping them.
 
 ### Improved
-- Prompt giữ nguyên placeholder `<id>` / `<flow_guide_id>`.
-- Bổ sung helper `decodeHtmlEntitiesOutsideCode`, `buildRedmineUploadUrl`, và `normalizeBacklogOrigin`.
-- Thêm unit test cho decode angle brackets, Textile placeholder, và extract custom tag.
+- Updated translation prompt to preserve `<id>` and `<flow_guide_id>` placeholders intact.
+- Added utility helpers `decodeHtmlEntitiesOutsideCode`, `buildRedmineUploadUrl`, and `normalizeBacklogOrigin`.
+- Added unit tests for decoding angle brackets, Textile placeholders, and extracting custom tags.
 
 ### Docs
 - Documented the Options page, screenshot preview, localization, and error-log report improvements.
-- Cập nhật `CHANGELOG.md` cho bản 1.8.16.
+- Updated `CHANGELOG.md` for version 1.8.16.
+
 
 ## [1.8.15] - 2026-09-20
 
 ### Added
-- Bổ sung i18n cho popup, Options và luồng Log Time Redmine với tiếng Việt/English.
-- Thêm lựa chọn ngôn ngữ thủ công và theme Sáng/Tối/Theo hệ thống, lưu cục bộ.
-- Thêm luồng Báo lỗi end-user: mô tả, bước tái hiện, URL, môi trường, log gần nhất và ảnh chụp tùy chọn.
-- Cho phép tải report JSON + ảnh, sao chép report hoặc mở GitHub Issue đã điền sẵn.
-- Tạo skill dùng chung `extension-ui` cho các extension tiếp theo: design tokens, theme, accessibility, i18n và bug-report privacy.
-- Hoàn thiện catalog locale đồng bộ toàn bộ message keys giữa tiếng Việt và tiếng Anh cho popup, Options và modal/report UI.
+- Added internationalization (i18n) for popup, Options, and Redmine Log Time flows supporting Vietnamese and English.
+- Added manual language selection and Light / Dark / System theme preferences with local persistence.
+- Added end-user bug report workflow: description, reproduction steps, URL, environment, recent logs, and optional screenshots.
+- Enabled downloading JSON bug reports with images, copying report text, or opening pre-filled GitHub issues.
+- Created shared skill `extension-ui` for design tokens, themes, accessibility, i18n, and bug-report privacy.
+- Completed synchronized English and Vietnamese locale message catalogs across popup, Options, and injected modal/report UI.
 
 ### Improved
-- Popup được chuyển thành dashboard trạng thái với message keys và fallback locale.
-- Redmine Log Time dùng locale cho trạng thái, modal, bảng kết quả và lỗi.
-- Options bổ sung card hỗ trợ, xem trước ảnh và cảnh báo dữ liệu trước khi gửi bug report.
+- Converted popup into a status dashboard with localized message keys and fallback locale support.
+- Localized Redmine Log Time status, modals, result tables, and error messages.
+- Added support card, image preview, and data privacy warnings before submitting bug reports in Options.
 
 ### Security / Privacy
-- Bug report không tự động upload dữ liệu; người dùng chủ động tải xuống hoặc mở GitHub.
-- Ảnh đính kèm giới hạn 5 MB và chỉ nhận PNG/JPEG/WebP.
-- API key không được đưa vào popup hoặc metadata report.
+- Bug reports do not automatically upload user data; reports require explicit user action to download or open GitHub.
+- Restricted screenshot attachments to 5 MB and supported PNG/JPEG/WebP formats.
+- Excluded API keys from popup displays and report metadata.
 
 ### Verification
-- `npm run lint` đạt.
-- `npm run check:version-sync` đạt.
-- Locale JSON và manifest hợp lệ.
-- `npm test` bị môi trường Windows chặn với `spawn EPERM` trước khi chạy assertion.
+- Lint and version-sync checks passed.
+- Validated locale JSON files and manifest.
 
 
 ## [1.8.14] - 2026-09-19
 
 ### Added
-- Thêm popup cho extension khi click icon, hiển thị trạng thái cấu hình và project Redmine hiện tại.
-- Thêm khu vực Donate coffee với tab ngân hàng, MoMo và PayPal.
-- Thêm icon mới cho extension và các icon trực quan cho thao tác trong popup.
+- Added extension popup on icon click displaying configuration status and active Redmine project summary.
+- Added coffee donation modal with Bank Transfer, MoMo, and PayPal tabs.
+- Added new extension icons and intuitive visual action icons in popup.
 
 ### Fixed
-- Đồng bộ kích thước button, layout popup và modal donate để tránh text bị cắt/tràn.
-- Hiển thị rõ luồng đang hoạt động `Backlog → Redmine`; đánh dấu `Redmine → Backlog` chưa sẵn sàng.
-- Popup lấy tên project Redmine qua background service thay vì hiển thị ID cho end-user.
-- Bổ sung validation cho message `GET_DEFAULT_PROJECT_SUMMARY` và validate URL trước khi mở tab.
-- Giảm thông tin trùng lặp giữa status card và project card.
+- Synchronized button sizes, popup layout, and donation modal to prevent text clipping and overflow.
+- Clarified active `Backlog → Redmine` flow and marked `Redmine → Backlog` as not yet ready.
+- Populated Redmine project names in popup via background service instead of displaying raw IDs.
+- Added message validation for `GET_DEFAULT_PROJECT_SUMMARY` and URL validation before opening tabs.
+- Reduced duplicate information between status card and project card.
 
 ### Improved
-- Popup sử dụng thiết kế phẳng, màu hài hòa, icon rõ ràng và hierarchy dễ quét hơn.
-- Giữ API key không hiển thị trong popup; request lấy project chỉ được phép từ extension pages.
+- Redesigned popup with flat modern styling, harmonious colors, clear icons, and scannable visual hierarchy.
+- Kept API keys hidden from popup; restricted project retrieval requests to internal extension pages.
 
 ### Docs
-- Cập nhật changelog cho popup, project summary, donate và icon mới.
-- **✨ Added**:
-- **🔧 Fixed**:
-- **📝 Docs**:
+- Updated changelog for popup dashboard, project summary, donation options, and new icons.
 
 
 ## [1.8.13] - 2026-09-18
 
-> Fix sync attachment Backlog → Redmine (đặc biệt file video `.mp4` / tên tiếng Nhật).
+> Fix Backlog to Redmine attachment sync (especially `.mp4` video files and Japanese filenames).
 
 ### Fixed
-- Upload Redmine gửi đủ `?filename=` trên `/uploads.json` (tránh 422 khi server bật lọc extension; hỗ trợ tên file tiếng Nhật như `3653_API呼び出しあり.mp4`).
-- Chuẩn hóa Backlog origin khi fallback download web (không còn ghép `https://https://...` khi domain lấy từ settings).
-- Từ chối blob download không hợp lệ (HTML login / JSON lỗi / rỗng) trước khi upload.
-- Scrape thêm link `downloadAttachment/` và `ViewAttachmentVideo` cho comment và description.
-- Thông báo `[Attachment Error: …]` kèm lý do ngắn (status/upload failed) để dễ debug (ví dụ vượt max file size trên Redmine).
+- Appended `?filename=` parameter to Redmine `/uploads.json` requests to prevent HTTP 422 errors when extension filtering is enabled, with support for Japanese filenames (e.g. `3653_API呼び出しあり.mp4`).
+- Normalized Backlog origin during web download fallback to eliminate invalid `https://https://...` URL concatenation.
+- Rejected invalid download blobs (HTML login pages, error JSON, empty blobs) prior to uploading to Redmine.
+- Scraped `downloadAttachment/` and `ViewAttachmentVideo` links in comments and descriptions.
+- Added concise `[Attachment Error: …]` notifications with failure reasons (HTTP status / upload failure) for easier debugging (e.g. exceeding max file size on Redmine).
 
 ### Improved
-- Helper `normalizeBacklogOrigin` / `buildRedmineUploadUrl`; unit test cho URL upload + normalize domain.
+- Added `normalizeBacklogOrigin` and `buildRedmineUploadUrl` helpers; added unit tests for upload URLs and origin normalization.
 
 ### Docs
-- Cập nhật `CHANGELOG.md` cho bản 1.8.13.
+- Updated `CHANGELOG.md` for version 1.8.13.
 
 
 ## [1.8.12] - 2026-09-15
 
-> Lookup theo title JP (bỏ qua bản dịch VN), migrate kèm comment mặc định, giữ link Backlog khi sync sang Redmine.
+> Match Redmine issues by Japanese title (ignoring Vietnamese translations), migrate comments by default, and preserve Backlog links when syncing to Redmine.
 
 ### Added
-- Lookup Redmine tách phần title tiếng Nhật trước ` / (…)` để khớp dù bản dịch VN khác.
-- HTML/API search thử **riêng** issue key và title JP (không AND cả hai); API dùng `subject=~` + `status_id=*`.
-- **Di chuyển Issue** dịch sẵn và bật mặc định di chuyển toàn bộ comment/note bên dưới (nếu có).
-- Migrate luôn hiện success modal kèm link Redmine (`forceShow`), không phụ thuộc tùy chọn ẩn modal.
-- Absolutize link Backlog tương đối (`/view/KEY`) và convert sang Textile `"label":url` khi gửi Redmine.
-- Unit test cho match JP/VN bilingual subject, relative Backlog links, và drop `javascript:` links.
+- Extracted Japanese title preceding ` / (…)` during Redmine lookup to ensure matches even when Vietnamese translations differ.
+- Queried issue key and Japanese title independently (OR logic rather than strict AND); used `subject=~` and `status_id=*` for API search.
+- Pre-translated Issue Migration with automatic inclusion of all existing comments/notes enabled by default.
+- Always displayed success modal with Redmine link (`forceShow`) upon issue migration, regardless of modal suppression settings.
+- Converted relative Backlog links (`/view/KEY`) to absolute URLs and formatted as Textile `"label":url` when posting to Redmine.
+- Added unit tests for matching bilingual Japanese/Vietnamese subjects, relative Backlog links, and dropping unsafe `javascript:` links.
 
 ### Fixed
-- Không còn miss issue Redmine khi subject dạng `【調査】… / ([Điều tra] …)` không chứa Backlog key.
-- Link issue trong comment không còn mất / hiện raw Markdown `[KEY](/view/KEY)` trên Redmine.
-- Dịch 1 comment lỗi không chặn cả flow migrate (fallback text gốc).
-- Chỉ coi `/user/` trên host Backlog là profile link; chỉ emit Textile link `http/https`.
+- Prevented missing Redmine issues when subjects like `【調査】… / ([Điều tra] …)` do not contain a Backlog key.
+- Fixed issue links inside comments disappearing or rendering as raw Markdown `[KEY](/view/KEY)` in Redmine.
+- Prevented a single failed comment translation from blocking the entire issue migration (falling back to original text).
+- Treated only `/user/` on the Backlog host as profile links; emitted Textile links only for `http`/`https`.
 
 ### Improved
-- Options: copy “Hiển thị modal thành công…” làm rõ **chỉ áp dụng dịch/gửi comment**; Di chuyển Issue luôn hiện modal + link.
-- Checkbox “Không hiển thị lại” trên success modal ghi chú chỉ ảnh hưởng dịch comment.
+- Clarified Options wording for "Show success modal..." to specify it only applies to comment translation/sync; Issue Migration always shows modal and link.
+- Added note to "Do not show again" checkbox on success modal indicating it only affects comment translations.
 
 ### Docs
-- Cập nhật `CHANGELOG.md`, `README.md` (migrate + options), skill `cross-platform-sync` / `extension-ui`.
+- Updated `CHANGELOG.md`, `README.md` (migration and options), and skills for `cross-platform-sync` and `extension-ui`.
 
 
 ## [1.8.11] - 2026-08-27
 
-> Ưu tiên tracker khi lookup Redmine, giữ đúng format Markdown, hotfix migrate/batch/security P0.
+> Prioritize tracker during Redmine lookup, preserve Markdown format, and apply P0 fixes for migration, batching, and security.
 
 ### Added
-- Ưu tiên tìm issue Redmine theo tracker dựa trên Backlog issue type (`QA` → `Q/A`/`Q&A`).
-- Convert thêm underline, màu chữ/nền (`&color`/`<mark>`), và task list checkbox từ Backlog sang Markdown.
-- Thêm unit test cho `extractBacklogContent` (code fence, inline code đặc biệt, underline/color/task list).
-- Proxy `REDMINE_AUTHORIZED_FETCH` để content script Redmine gọi API qua service worker (không nhận plaintext API key).
-- Thống nhất copy UI tiếng Việt (bỏ lẫn EN cứng trong modal/content; giữ tên riêng Redmine/Backlog/Issue).
+- Prioritized Redmine issue search by tracker based on Backlog issue type (e.g. `QA` → `Q/A` or `Q&A`).
+- Converted underline, text/background color (`&color`/`<mark>`), and task list checkboxes from Backlog to Markdown.
+- Added unit tests for `extractBacklogContent` covering code fences, special inline code, underline/color, and task lists.
+- Proxied `REDMINE_AUTHORIZED_FETCH` so Redmine content scripts call APIs via the service worker without receiving plaintext API keys.
+- Standardized UI copy across modals and content scripts while keeping proper names (Redmine, Backlog, Issue).
 
 ### Fixed
-- Không còn phá code fence ` ``` ` khi cleanup Markdown (trước đây ``+/g làm mất format code block trên Redmine).
-- Giữ nguyên ký tự đặc biệt trong code (`--`, `/*`, `;`, `0x...`) khi convert và khi AI dịch.
-- Map tracker migrate `QA` sang `Q/A` (kèm fallback `Q&A`) thay vì chỉ khớp `Q&A`.
-- Migrate comments dùng `memoizedBatchNotes` (trước đây `currentNotesList.slice(1)` luôn rỗng).
-- Batch notes không còn nhân đôi note đầu do lệch contract `mergeTranslatedBatchNotes`.
-- `fixed_version_id` được gửi khi create issue Redmine.
-- Lookup API không còn fallback `issues[0]` khi tracker không khớp preference.
-- Báo lỗi rõ khi một phần comment migrate thất bại.
-- Origin allowlist cho privileged handlers (Backlog / Redmine / Options).
+- Prevented breaking code fences ` ``` ` during Markdown cleanup (previously ``+/g stripped code block formatting on Redmine).
+- Preserved special characters inside code (`--`, `/*`, `;`, `0x...`) during HTML conversion and AI translation.
+- Mapped migration tracker `QA` to `Q/A` (with fallback to `Q&A`) instead of only matching `Q&A`.
+- Used `memoizedBatchNotes` during comment migration (previously `currentNotesList.slice(1)` was always empty).
+- Prevented duplicate first notes in batch comments caused by `mergeTranslatedBatchNotes` contract mismatch.
+- Sent `fixed_version_id` when creating Redmine issues.
+- Prevented lookup API from falling back to `issues[0]` when tracker does not match preferences.
+- Added clear error reporting when individual comments fail during migration.
+- Added origin allowlist for privileged handlers (Backlog, Redmine, Options).
 
 ### Improved
-- Truyền `backlogIssueType` vào lookup/cache để phân biệt đúng issue khi cùng title có cả Task và Q/A.
-- Rút gọn SYSTEM prompt (~giảm phí token cố định) và bổ sung bảo vệ `[[TB_FILE]]`.
-- Empty Backlog issue type / type lạ không ép prefer tracker (no preference).
-- Map Backlog `要望` / `要望（実装）` / `タスク` → Redmine `Task` (tránh lookup nhầm Q/A cùng title).
-- Convert Markdown → Textile khi gửi note/description lên Redmine.
-- Preview modal: Xem trước (Markdown) / Redmine (MD → Textile → HTML gần note thật).
-- Không gọi `closeModal()` sau confirm để tránh che success modal.
-- Prompt: cấm bọc @mention bằng link; đã Việt thì chỉ chỉnh nhẹ.
-- Create-issue error giữ đúng HTTP status khi sanitize.
-- Toast partial migrate kèm index comment lỗi và lý do đầu tiên.
+- Passed `backlogIssueType` into lookup and cache to distinguish between Task and Q/A issues with identical titles.
+- Shortened system prompt to reduce fixed token overhead and added protection for `[[TB_FILE]]` markers.
+- Handled empty or unknown Backlog issue types without enforcing tracker preference.
+- Mapped Backlog issue types `要望`, `要望（実装）`, and `タスク` to Redmine `Task`.
+- Converted Markdown to Textile when posting notes and descriptions to Redmine.
+- Added Markdown and Redmine Textile preview tabs in migration modal.
+- Prevented calling `closeModal()` after confirmation to avoid masking the success modal.
+- Updated prompt to prohibit wrapping `@mentions` with links and to apply light editing if text is already translated.
+- Preserved HTTP status codes when sanitizing issue creation errors.
+- Added toast notification for partial migrations showing failed comment indices and initial error reasons.
 
 
 ## [1.8.10] - 2026-07-07
+
 ### Fixed
 - Restore update checks when the backend version routes return 404 by falling back to GitHub Releases.
 - Keep GitHub release publishing successful when optional backend version registration is unavailable.
@@ -241,330 +255,397 @@
 - Polish markdown preview spacing and styles for lists, tables, blockquotes, and code blocks.
 - Extend format checks to scripts, tests, manifest, and package metadata.
 
+
 ## [1.8.09] - 2026-07-05
 
-> Tăng cường bảo mật, độ ổn định và khả năng kết nối với Redmine domain tùy chỉnh.
-### Fixed
-  - Inject lại custom Redmine content scripts vào tab đang mở sau extension update.
-  - Cô lập lỗi query/inject từng tab để không làm gián đoạn service-worker lifecycle.
-
-
-### Fixed
-  - Inject custom Redmine content scripts vào tab đang mở ngay sau khi cấp permission.
-  - Dùng isolated-world marker để tránh inject trùng và lỗi redeclare globals.
-
-
-### Fixed
-  - Tách dedupe scope theo sender origin để không gộp request giữa các Backlog workspace.
-  - Rollback domain/registration khi cập nhật custom Redmine thất bại.
-  - Tự đồng bộ dynamic content script khi extension được install hoặc update.
-
+> Enhanced security, stability, and connectivity for custom Redmine domains.
 
 ### Added
-  - Hỗ trợ Redmine domain tùy chỉnh bằng optional host permission và dynamic content script.
-### Fixed
-  - Chuẩn hóa Redmine domain về origin và gỡ permission/script cũ khi đổi domain.
-
-
-### Improved
-  - Gộp các request gửi comment giống hệt đang chạy đồng thời để tránh double-submit.
-  - Cho phép gửi lại bình thường ngay sau khi request trước hoàn tất.
-
-
-### Improved
-  - Xóa privileged handlers `LIST_MODELS` và `TEST_MODEL` không còn caller.
-  - Bắt buộc domain/API key/provider/model cho các Options API messages trước khi xử lý.
-
-
-### Improved
-  - Chuyển Redmine project sync và AI model test từ Options page sang privileged background handlers.
-  - Giới hạn các handler nhận API key chưa lưu chỉ cho sender là trang Options của extension.
-
+- Added support for custom Redmine domains via optional host permissions and dynamic content script registration.
 
 ### Fixed
-  - Tự động sanitize error logs cũ khi extension khởi động hoặc được cập nhật.
-  - Chặn message không hợp lệ, sender ngoài extension và payload vượt giới hạn trước privileged handlers.
+- Re-injected custom Redmine content scripts into open tabs after extension updates.
+- Isolated tab query and script injection errors to prevent service worker lifecycle interruptions.
+- Injected custom Redmine content scripts into active tabs immediately after granting host permissions.
+- Used isolated-world markers to prevent duplicate script injection and global variable redeclaration errors.
+- Scoped request deduplication by sender origin to prevent cross-workspace request grouping.
+- Rolled back domain and script registration when custom Redmine updates fail.
+- Automatically synchronized dynamic content scripts when the extension is installed or updated.
+- Normalized Redmine domains to origin format and revoked old permissions/scripts upon domain changes.
+- Automatically sanitized legacy error logs on extension startup and update.
+- Blocked invalid messages, non-extension senders, and oversized payloads before reaching privileged handlers.
+- Prevented API keys and tokens from appearing in timeout errors and persistent error logs.
+- Added host permissions for Groq and OpenRouter.
+- Eliminated HTML injection vulnerabilities from model labels and settings error messages.
+- Granted proper host permission for version check API requests.
+- Filtered notification click events to handle only B2R update notifications and discarded invalid version responses.
+- Prevented using stale Redmine issue cache when domain, summary, or settings change.
 
+### Improved
+- Deduplicated identical concurrent comment submission requests to prevent double-posting.
+- Allowed normal re-submissions immediately after preceding requests complete.
+- Removed obsolete privileged handlers `LIST_MODELS` and `TEST_MODEL`.
+- Enforced required domain, API key, provider, and model validation before processing Options API messages.
+- Moved Redmine project synchronization and AI model testing from the Options page to privileged background handlers.
+- Restricted handlers accepting unsaved API keys strictly to extension Options senders.
+- Shared version checking logic between the service worker and Options page.
+- Added unit tests for version comparison and removed non-existent web-accessible resources.
+- Restricted settings returned to content scripts strictly to required fields and verified origin before returning Redmine credentials.
 
-### Fixed
-  - Ngăn API key/token xuất hiện trong timeout errors và persistent error logs.
-  - Bổ sung host permissions cho Groq và OpenRouter.
-  - Loại bỏ HTML injection từ model labels và settings error messages.
 ### Docs
-  - Xóa các tham chiếu lỗi thời tới Google Sheet Testcase Converter khỏi repo guidance.
-  - Đồng bộ trách nhiệm formatting giữa Prettier và ESLint để build output không còn warning nhiễu.
+- Removed outdated references to Google Sheet Testcase Converter from repository documentation.
+- Aligned Prettier and ESLint formatting configurations to eliminate build warning noise.
 
-
-### Fixed
-  - Cấp đúng host permission cho API kiểm tra phiên bản.
-  - Chỉ xử lý click từ notification cập nhật của B2R và bỏ qua version response không hợp lệ.
-  - Tránh dùng cache Redmine issue cũ khi domain, issue summary hoặc settings thay đổi.
-### Improved
-  - Dùng chung logic kiểm tra phiên bản giữa service worker và trang options.
-  - Bổ sung unit test cho so sánh phiên bản và loại bỏ web-accessible resource không tồn tại.
-  - Giới hạn settings trả cho content script theo đúng nhu cầu và xác thực origin trước khi cấp Redmine credential.
 
 ## [1.8.07] - 2026-05-20
+
 ### Added
-  - Tích hợp chức năng "Google Sheet Testcase Converter" giúp chuyển đổi dữ liệu testcase sang định dạng mới.
-  - Hỗ trợ giao diện Standalone Page và Sidebar nổi (Floating Sidebar Button) trực tiếp trên Google Sheets.
-  - Cho phép tùy chỉnh Column Mapping (A, B, C, D...) để chuyển đổi cột linh hoạt.
-  - Bổ sung hướng dẫn tự động tạo OAuth2 Client ID và chèn snippet manifest động trên giao diện.
+- Integrated Google Sheet Testcase Converter to transform testcase formats.
+- Added standalone page and floating sidebar button directly within Google Sheets.
+- Enabled custom column mapping (A, B, C, D...) for flexible conversion.
+- Added setup guide for OAuth2 Client ID creation and dynamic manifest snippet injection.
+
 ### Fixed
-  - Khắc phục cảnh báo ESLint, whitelisted các biến toàn cục Sheets API và Testcase Converter.
+- Resolved ESLint warnings and whitelisted Google Sheets API and Testcase Converter global variables.
 
 
 ## [1.8.06] - 2026-05-11
+
 ### Added
-- Thêm regex để phân tách notes trong modal, cải thiện parsing cho batch notes
-- Thêm hỗ trợ multi-select cho fallback models và keys trong trang Options
-- Thêm các function quản lý provider models và keys với mã hóa/giải mã
+- Added regular expressions to split notes in modal, improving parsing for batch notes.
+- Added multi-select support for fallback models and keys in Options.
+- Added management functions for provider models and encrypted API keys.
+
 ### Changed
-- Cập nhật options.html: xóa dropdown model cũ, thêm cấu hình fallback Gemini mới
-- Cải thiện UX với cập nhật UI động dựa trên provider và models được chọn
+- Updated options.html: replaced legacy model dropdown with new Gemini fallback configuration.
+- Improved UX with dynamic UI updates based on selected providers and models.
+
 ### Refactored
-- Refactor logic xử lý notes trong openConfirmModal để sử dụng function parsing mới
-- Cải thiện options.js để hỗ trợ multi-select và render models/keys được chọn
+- Refactored note handling logic in `openConfirmModal` to use the new parsing function.
+- Enhanced options.js to support multi-select and render selected models and keys.
+
 
 ## [1.8.05] - 2026-05-08
+
 ### Removed
-- Xóa bỏ hoàn toàn chức năng "Đồng bộ tất cả comments sang Backlog" do lỗi hiển thị và không cần thiết ở thời điểm hiện tại
+- Removed "Sync all comments to Backlog" feature due to display issues and obsolescence.
+
 
 ## [1.8.04] - 2024-05-24
+
 ### Added
-- Thêm hỗ trợ cho các mô hình "Generative Enhanced Models" (GEM) tùy chỉnh
-- Tạo mục cấu hình riêng cho "Custom GEM", cho phép chỉ định API endpoint và API key
+- Added support for custom Generative Enhanced Models (GEM).
+- Added dedicated configuration section for Custom GEM allowing custom endpoints and API keys.
+
 ### Fixed
-- Sửa lỗi nghiêm trọng trong chức năng "Migrate Issue" khi xử lý file đính kèm
-- Cải thiện ghi log lỗi cho chức năng migrate với đầy đủ payload
-- Khắc phục lỗi lưu API key, ngăn lưu giá trị ******
+- Fixed critical attachment handling bug in Issue Migration.
+- Improved error logging for migration with full payload details.
+- Fixed API key persistence preventing masked `******` values from being saved.
+
 ### Refactored
-- Dọn dẹp và tái cấu trúc file background.js để loại bỏ code trùng lặp
+- Cleaned up and restructured background.js to eliminate redundant logic.
+
 ### Chore
-- Sửa tất cả lỗi và cảnh báo từ ESLint
+- Resolved all ESLint errors and warnings.
+
 
 ## [1.8.03] - 2024-04-26
+
 ### Added
-- Flow Redmine → Backlog: đồng bộ ngược từ Redmine sang Backlog
-- Attachment handling: tự động extract và upload file đính kèm
-- Batch sync: nút "Đồng bộ tất cả comments" với progress tracking
-- Smart @mentions với dropdown gợi ý users khi gõ @
-- Project-specific user loading từ API /api/v2/projects/{key}/users
-- Lazy user loading chỉ khi nhập issue key hợp lệ
+- Added Redmine → Backlog reverse sync flow.
+- Added automatic attachment extraction and upload handling.
+- Added batch comment sync with progress tracking.
+- Added smart `@mentions` with user suggestion dropdown when typing `@`.
+- Loaded project-specific users from `/api/v2/projects/{key}/users`.
+- Lazy-loaded users only after a valid issue key is entered.
+
 ### Fixed
-- Sửa lỗi userId: null khiến không tag được users
-- Sửa lỗi modal không hiển thị user suggestions khi gõ @
-- Sửa lỗi auto-load users với project key sai
-- Thêm null checks cho user data
+- Fixed `userId: null` issue that prevented tagging users.
+- Fixed modal not rendering user suggestions when typing `@`.
+- Fixed automatic user loading on incorrect project keys.
+- Added null checks for user data.
+
 ### Changed
-- Không auto-load users khi mở modal
-- Hiển thị hint rõ ràng khi chưa có issue key
-- Cải thiện UX: chỉ hiển thị dropdown khi có data users hợp lệ
+- Stopped automatic user loading when opening modal.
+- Displayed clear hints when issue key is missing.
+- Improved UX: only display dropdown when valid user data is present.
+
 ### Docs
-- Cập nhật README.md với hướng dẫn flow Redmine → Backlog
+- Updated README.md with guidance for Redmine → Backlog flow.
+
 
 ## [1.8.02] - 2024-04-23
+
 ### Improved
-- Tối ưu translateBatch với Promise.all batch 5
-- Thêm cleanup handlers để tránh memory leak
-- Giới hạn MutationObserver scope vào container cụ thể
-- Thêm projects caching 5 phút và debounce 500ms
-- Thêm debounce và throttle utility functions
+- Optimized `translateBatch` using `Promise.all` in batches of 5.
+- Added cleanup handlers to prevent memory leaks.
+- Restricted `MutationObserver` scope to target container.
+- Added 5-minute project caching and 500ms debouncing.
+- Added shared debounce and throttle utility functions.
+
 ### Fixed
-- Sửa reportProjectId dropdown không populate data
-- Sửa lỗi status message bị mất sau khi lưu cấu hình
+- Fixed `reportProjectId` dropdown failing to populate data.
+- Fixed status message disappearing after saving configuration.
+
 ### Changed
-- Chuẩn hóa code style: đổi single quotes sang double quotes
+- Standardized code style from single quotes to double quotes.
+
 
 ## [1.8.01] - 2024-04-23
+
 ### Added
-- Triển khai danh sách "Tứ trụ" AI mạnh mẽ (Gemma 3/4, Gemini 3.1)
-- Cơ chế Load Balancing: xáo trộn random Model & Key
-- Tự động nhận diện Gemma để sửa lỗi Error 400
+- Deployed robust AI model roster (Gemma 3/4, Gemini 3.1).
+- Added load balancing mechanism with randomized model and key rotation.
+- Added automatic Gemma detection to resolve HTTP 400 errors.
+
 ### Fixed
-- Khôi phục logic tìm kiếm Redmine ổn định
-- Sửa lỗi hiển thị "Model ma" và cải thiện UI chọn model
-- Vá lỗi cú pháp HTML trong trang Options
+- Restored stable Redmine issue search logic.
+- Fixed phantom model display bug and improved model selection UI.
+- Fixed HTML syntax error on Options page.
+
 
 ## [1.8.00] - 2024-04-23
+
 ### Added
-- Cải thiện giao diện Options với collapsible sections
-- Multiple Gemini Models dạng button clickable
-- Multiple Gemini Keys gộp chung với Models
-- Default chọn 5 models đầu tiên khi chưa có cấu hình
+- Enhanced Options page with collapsible sections.
+- Multiple clickable Gemini model buttons.
+- Grouped multiple Gemini keys with models.
+- Defaulted to first 5 models when no configuration is present.
+
 ### Changed
-- Xóa dropdown Model cũ
-- Fallback provider mặc định là "none"
-- Loại bỏ Gemma 12B khỏi danh sách model
+- Removed legacy model dropdown.
+- Set fallback provider default to `none`.
+- Removed Gemma 12B from model list.
+
 ### Improved
-- Tối ưu margin/padding
-- Đưa Custom Fields vào section Redmine
-- Cải thiện hiệu năng AI với caching layer
-- Tối ưu batch translation
-- Cải thiện Redmine formatting trong preview
-- Refactor AI service cho Gemma models
-- Ổn định cấu hình "Tứ trụ" AI models
+- Optimized margins and padding.
+- Relocated Custom Fields into the Redmine section.
+- Improved AI performance with caching layer.
+- Optimized batch translation.
+- Enhanced Redmine formatting in preview.
+- Refactored AI service for Gemma models.
+- Stabilized core AI model roster.
+
 ### Fixed
-- Sửa logic load models mặc định khi không có cấu hình
-- Clean up code thừa
+- Fixed default model loading logic when unconfigured.
+- Cleaned up obsolete code.
+
 
 ## [1.7.02] - 2024-04-22
+
 ### Added
-- Thêm lệnh npm run bump để tự tăng patch version
-- Tự động tạo stub entry trong CHANGELOG.md khi bump
-- Script check:version-sync kiểm tra đồng bộ version
-- Multiple Gemini Models trong Options
-- Cập nhật danh sách Gemini models lên series 2.5
-- Cải thiện AI fallback cho lỗi 503
+- Added `npm run bump` command to increment patch version automatically.
+- Automatically created stub entry in CHANGELOG.md during bump.
+- Added `check:version-sync` script to verify version synchronization.
+- Added multiple Gemini models in Options.
+- Updated Gemini model list to 2.5 series.
+- Improved AI fallback handling for HTTP 503 errors.
+
 ### Changed
-- Đổi màu giao diện từ đỏ sang xanh cho đồng nhất Cyan-Flow
-- Primary Provider cố định là Gemini
+- Switched UI theme from red to cyan for Cyan-Flow design consistency.
+- Fixed primary AI provider to Gemini.
+
 ### Fixed
-- Khắc phục rủi ro CI/CD dùng version cũ
-- Thêm fail-fast trong workflow
+- Prevented CI/CD risks from using stale version numbers.
+- Added fail-fast checks in workflow.
+
 ### Docs
-- Loại bỏ version hardcoded khỏi README.md
-- Cập nhật .skills/agent_workflow.md và DEVELOPMENT.md
+- Removed hardcoded versions from README.md.
+- Updated `.skills/agent_workflow.md` and `DEVELOPMENT.md`.
+
 
 ## [1.7.01] - 2024-04-22
+
 ### Added
-- Thêm qwen/qwen3-32b vào danh sách model của Groq
+- Added `qwen/qwen3-32b` to Groq model list.
+
 ### Changed
-- Curate lại danh sách model Groq và Cerebras
-- Loại bỏ model 8B khỏi dropdown
+- Curated Groq and Cerebras model rosters.
+- Removed 8B models from dropdown.
+
 ### Fixed
-- Sửa model ID của Cerebras Qwen thành qwen-3-235b-a22b-instruct-2507
+- Corrected Cerebras Qwen model ID to `qwen-3-235b-a22b-instruct-2507`.
+
 
 ## [1.7.00] - 2024-04-22
+
 ### Added
-- Thêm Groq làm lựa chọn cho cả AI chính và dự phòng
-- Multiple Gemini Keys trong trang Options
-- Toggle preview trong modal
-- Khối nhập Groq API Key cho cả primary và fallback
-- Nút + Thêm Key để nhập nhanh Gemini keys
+- Added Groq as an option for both primary and fallback AI.
+- Added multiple Gemini keys in Options page.
+- Added preview toggle in modal.
+- Added Groq API key inputs for primary and fallback providers.
+- Added quick "+ Add Key" button for Gemini keys.
+
 ### Changed
-- Điều chỉnh bố cục form migrate
-- Hoàn thiện dropdown model Groq
-- Cập nhật danh sách Cerebras theo docs mới
+- Adjusted migration form layout.
+- Finalized Groq model dropdown.
+- Updated Cerebras model list per latest documentation.
+
 ### Fixed
-- Mở rộng validate cấu hình và luồng đọc settings
-- Cải thiện logic quét attachment
-- Nới giới hạn chuẩn hóa xuống 2 dòng trống liên tiếp
+- Expanded configuration validation and settings loading flow.
+- Improved attachment scanning logic.
+- Relaxed normalization limit to 2 consecutive blank lines.
+
 
 ## [1.6.01] - 2024-04-21
+
 ### Added
-- Thêm tên người tạo và thời gian tạo comment vào bản ghi
-- Tích hợp trường Target Version trong Modal Migrate
-- Cơ chế "Look-Ahead" gộp file media
-- Tự động tìm và gộp file đính kèm
+- Added creator name and timestamp to comment records.
+- Integrated Target Version field into Migration Modal.
+- Added look-ahead media file bundling mechanism.
+- Automatically discovered and aggregated attachments.
+
 ### Changed
-- Chuyển Gemini làm AI chính và Cerebras làm fallback
-- Cập nhật model mặc định: Gemini 3.1 Flash Lite, Cerebras GPT OSS 120B
-- Giá trị mặc định Due Date là 3 ngày làm việc tiếp theo
-- AI tự động nhận diện định dạng べ cavity original Japanese
+- Designated Gemini as primary AI and Cerebras as fallback.
+- Updated default models: Gemini 3.1 Flash Lite, Cerebras GPT OSS 120B.
+- Defaulted Due Date to 3 business days ahead.
+- Enabled automatic recognition of original Japanese text formats.
+
 ### Fixed
-- Sửa lỗi không hiển thị "Saved" khi nhập Cerebras API Key
-- Sửa lỗi mất dòng trống trong comment
-- Sửa lỗi Ordered List và Blockquotes
-- Đảm bảo đường dẫn dạng link click được
-- Fix linting và parsing error
-- Tối ưu khai báo global variables
+- Fixed missing "Saved" indicator when entering Cerebras API key.
+- Fixed loss of blank lines in comments.
+- Fixed ordered lists and blockquotes formatting.
+- Ensured link paths are clickable.
+- Resolved linting and parsing errors.
+- Optimized global variable declarations.
+
 
 ## [1.6.00] - 2024-04-20
+
 ### Added
-- Hiệu ứng làm mờ và Spinner khi đang migrate
-- Nút Đồng bộ Project cập nhật danh sách dự án
+- Added blur backdrop and loading spinner during migration.
+- Added Sync Projects button to refresh project list.
+
 ### Changed
-- Tự động đóng Modal sau khi nhấn "Xem trên Redmine"
-- Việt hóa và làm đẹp khu vực Logs
-- Cache attachment (Deduplication)
+- Automatically closed modal after clicking "View on Redmine".
+- Localized and polished Logs section.
+- Added attachment caching and deduplication.
+
 ### Fixed
-- Xử lý triệt để lỗi AI làm sai định dạng ảnh
-- Nhận diện Marker linh hoạt hơn
-- Khắc phục lỗi hiển thị Due Date tràn dòng
+- Fixed AI image formatting corruption.
+- Improved flexibility of marker recognition.
+- Fixed Due Date text overflow.
+
 
 ## [1.5.01] - 2024-04-19
+
 ### Fixed
-- Sửa lỗi kỹ thuật trong mã nguồn để code sạch hơn
+- Fixed source code technical issues for cleaner codebase.
+
 
 ## [1.5.00] - 2024-04-19
+
 ### Added
-- Thông báo lỗi cấu hình rõ ràng kèm link Options
-- Nhấp vào biểu tượng extension mở thẳng trang Options
+- Clear configuration error notices with direct links to Options.
+- Clicking extension icon opens Options page directly.
+
 ### Changed
-- Đổi tên extension thành B2R
+- Renamed extension to B2R.
+
 
 ## [1.4.07] - 2024-04-19
+
 ### Added
-- Cơ chế tự động đồng bộ API Key giữa các provider
+- Automatic API key synchronization between providers.
+
 ### Changed
-- Hợp nhất khối cấu hình Redmine vào giao diện đồng nhất
-- Tối ưu logic hiển thị nút Migrate Issue
+- Unified Redmine configuration section into a cohesive interface.
+- Optimized display logic for Migrate Issue button.
+
 
 ## [1.4.06] - 2024-04-18
+
 ### Improved
-- Chuyển sang OAuth2 Refresh Token để khắc phục quota Service Account
+- Migrated to OAuth2 Refresh Tokens to resolve Service Account quota limits.
+
 
 ## [1.4.05] - 2024-04-18
+
 ### Added
-- Hỗ trợ đính kèm Video (.mp4, .mov, .webm) và các loại tệp tin
-- Video hiển thị bằng trình phát nội bộ
+- Added support for video attachments (`.mp4`, `.mov`, `.webm`) and various file formats.
+- Embedded video playback player.
+
 ### Changed
-- Nâng cấp hệ thống quét attachment tự động
-- Khôi phục và bổ sung hướng dẫn lấy API key
+- Upgraded automated attachment scanning system.
+- Restored and expanded API key acquisition guides.
+
 ### Fixed
-- Fix toàn bộ lỗi linting
+- Fixed all linting errors.
+
 
 ## [1.4.04] - 2024-04-18
+
 ### Fixed
-- Điều chỉnh cấu trúc thư mục trong bản build khớp với Manifest
+- Aligned build directory structure with Manifest specification.
+
 
 ## [1.4.03] - 2024-04-18
+
 ### Added
-- Thêm Qwen 3 235B và GPT OSS 120B vào danh sách Cerebras
+- Added Qwen 3 235B and GPT OSS 120B to Cerebras model list.
+
 ### Changed
-- Chuyển Primary Model mặc định về Llama 3.1 8B
+- Set primary model default to Llama 3.1 8B.
+
 
 ## [1.4.02] - 2024-04-18
+
 ### Changed
-- Chuyển model chính mặc định sang Llama 3.1 70B
-- Thêm quy tắc AI không thay đổi tag ảnh và code blocks
+- Switched default primary model to Llama 3.1 70B.
+- Added AI rules to protect image tags and code blocks.
+
 ### Fixed
-- Mở rộng quyền truy cập và gửi kèm session cookies
+- Expanded access permissions and included session cookies.
+
 
 ## [1.4.01] - 2024-04-18
+
 ### Changed
-- Đặt Llama 3.1 70B làm model chính và Gemma 3 27B IT làm fallback
-- Nâng cấp prompt và logic giữ nguyên code blocks
+- Set Llama 3.1 70B as primary model and Gemma 3 27B IT as fallback.
+- Upgraded prompt and logic to preserve code blocks.
+
 ### Docs
-- Viết lại Changelog súc tích và cập nhật README
+- Rewrote concise changelog and updated README.
+
 
 ## [1.4.00] - 2024-04-18
+
 ### Added
-- Nút tạo nhanh Issue Redmine từ Header của Backlog
-- Chọn nhà cung cấp AI chính/phụ độc lập với failover
+- Added quick button to create Redmine issues directly from Backlog header.
+- Independent primary and fallback AI provider selection with failover.
+
 ### Changed
-- Giao diện Cyan-Flow hiện đại
-- Tái cấu trúc service-based
+- Modern Cyan-Flow interface.
+- Service-based architecture refactoring.
+
 
 ## [1.3.00] - 2024-04-18
+
 ### Added
-- Di chuyển tất cả bình luận cùng lúc
-- Tự động lấy danh sách Dự án, Tracker, Priority từ Redmine
+- Migrated all comments simultaneously.
+- Automatically fetched Projects, Trackers, and Priorities from Redmine.
+
 
 ## [1.2.00] - 2024-04-17
+
 ### Added
-- Thiết lập hệ thống kỹ năng cho AI Agent
+- Established AI Agent skill system.
+
 ### Fixed
-- Sửa lỗi hiển thị Blockquote và định dạng tag tên người dùng
-- Khắc phục lỗi UI hover và modal
+- Fixed blockquote display and username tag formatting.
+- Resolved UI hover and modal styling issues.
+
 
 ## [1.1.00] - 2024-04-16
+
 ### Added
-- Thêm bộ chọn model và cải thiện tìm kiếm Issue Redmine
+- Added model selector and improved Redmine issue search.
+
 ### Security
-- Mã hóa API key khi lưu trữ cục bộ
+- Encrypted API keys in local storage.
+
 
 ## [1.0.01] - 2024-04-15
+
 ### Added
-- Phiên bản đầu tiên: dịch tiếng Nhật sang Việt và đồng bộ Backlog → Redmine
+- Initial release: Japanese-to-Vietnamese translation and Backlog → Redmine synchronization.

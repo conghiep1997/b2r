@@ -1228,6 +1228,117 @@
   "options_save": {
     "message": "Lưu cấu hình"
   },
+  "options_saving": {
+    "message": "Đang lưu…"
+  },
+  "options_saved_badge": {
+    "message": "Đã lưu!"
+  },
+  "options_translation_cache_label": {
+    "message": "Bật bộ nhớ đệm bản dịch (0ms, tiết kiệm quota API)"
+  },
+  "options_clear_translation_cache": {
+    "message": "Xóa bộ nhớ đệm dịch"
+  },
+  "options_translation_cache_cleared": {
+    "message": "Đã xóa bộ nhớ đệm bản dịch!"
+  },
+  "options_export_config": {
+    "message": "Xuất cấu hình"
+  },
+  "options_export_config_title": {
+    "message": "Xuất cấu hình JSON để chia sẻ trong team"
+  },
+  "options_import_config": {
+    "message": "Nhập cấu hình"
+  },
+  "options_import_config_title": {
+    "message": "Nhập cấu hình JSON từ file"
+  },
+  "options_export_success": {
+    "message": "Đã xuất cấu hình thành công ($count$ dự án)!",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "options_import_success": {
+    "message": "Đã nhập $count$ cấu hình dự án thành công!",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "options_import_choice": {
+    "message": "Bạn có muốn GHI ĐÈ toàn bộ cấu hình dự án hiện tại không?\n\n- Nhấn OK: Ghi đè toàn bộ (Replace all)\n- Nhấn Cancel: Gộp thêm cấu hình mới (Merge)"
+  },
+  "options_import_invalid_file": {
+    "message": "File JSON không hợp lệ hoặc sai cấu trúc cấu hình B2R."
+  },
+  "options_import_reading_file": {
+    "message": "Đang đọc file cấu hình…"
+  },
+  "options_translation_tone_label": {
+    "message": "Giọng văn dịch"
+  },
+  "options_translation_tone_technical": {
+    "message": "Kỹ thuật & Trực diện (Technical & Direct - Khuyên dùng)"
+  },
+  "options_translation_tone_formal": {
+    "message": "Trang trọng & Nghiệp vụ (Formal & Business)"
+  },
+  "options_translation_tone_concise": {
+    "message": "Tối giản & Checklist (Concise Bullet-points)"
+  },
+  "options_translation_tone_help": {
+    "message": "Giữ nguyên thuật ngữ kỹ thuật tiếng Anh (API, DB, query...), câu văn ngắn gọn, rõ ràng cho Dev & Tester."
+  },
+  "options_search_placeholder": {
+    "message": "Tìm cài đặt nhanh…"
+  },
+  "options_search_clear_title": {
+    "message": "Xóa tìm kiếm (Esc)"
+  },
+  "options_retry_queue_title": {
+    "message": "📶 Hàng đợi thử lại khi rớt mạng (Offline / Retry Queue)"
+  },
+  "options_retry_queue_help": {
+    "message": "Tự động lưu nháp các thao tác đồng bộ bị lỗi mạng hoặc mất kết nối. Bạn có thể gửi lại khi mạng ổn định."
+  },
+  "options_retry_all": {
+    "message": "🔄 Thử lại tất cả"
+  },
+  "options_clear_queue": {
+    "message": "🗑️ Xóa hàng đợi"
+  },
+  "options_refresh_queue": {
+    "message": "↻ Làm mới"
+  },
+  "options_retry_queue_empty": {
+    "message": "Hàng đợi trống. Không có tác vụ nào bị lỗi mạng."
+  },
+  "options_retry_item": {
+    "message": "Thử lại"
+  },
+  "options_remove_item": {
+    "message": "Xóa"
+  },
+  "options_retry_all_result": {
+    "message": "Đã xử lý hàng đợi: $success$ thành công, $failed$ thất bại.",
+    "placeholders": {
+      "success": {
+        "content": "$1"
+      },
+      "failed": {
+        "content": "$2"
+      }
+    }
+  },
+  "options_confirm_clear_queue": {
+    "message": "Xóa toàn bộ hàng đợi thử lại?"
+  },
   "options_bug_title": {
     "message": "🐞 Báo lỗi"
   },
@@ -2002,7 +2113,7 @@
     "message": "Hướng dẫn"
   },
   "options_onboarding_help_title": {
-    "message": "Mở hướng dẫn thiết lập ban đầu"
+    "message": "Bật/tắt hướng dẫn thiết lập"
   },
   "modal_no_mention_found": {
     "message": "Ch?a c? @mention"

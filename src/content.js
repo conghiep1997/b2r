@@ -331,6 +331,8 @@ async function handleTranslateAndOpenModal(actionsEl, button) {
     setButtonLoading(button, false);
     if (err.isSettingsError) {
       showSettingsErrorLink(err.error);
+    } else if (isNetworkError(err)) {
+      showToast("📶 Mất kết nối mạng. Đã lưu tác vụ vào hàng đợi để gửi lại khi có mạng.", "error");
     } else {
       showToast(err.error || err.message, "error");
     }
@@ -544,6 +546,8 @@ async function handleIssueMigration(button) {
     setButtonLoading(button, false);
     if (err.isSettingsError) {
       showSettingsErrorLink(err.error);
+    } else if (isNetworkError(err)) {
+      showToast("📶 Mất kết nối mạng. Đã lưu tác vụ vào hàng đợi để gửi lại khi có mạng.", "error");
     } else {
       showToast(err.error || err.message, "error");
     }
@@ -551,6 +555,33 @@ async function handleIssueMigration(button) {
 }
 
 // Helpers
+
+function isNetworkError(err) {
+  if (typeof navigator !== "undefined" && !navigator.onLine) return true;
+  const msg = String(err?.error || err?.message || "").toLowerCase();
+  return (
+    msg.includes("network") ||
+    msg.includes("fetch") ||
+    msg.includes("offline") ||
+    msg.includes("timeout") ||
+    msg.includes("failed to fetch")
+  );
+}
+
+window.addEventListener("online", async () => {
+  try {
+    const queue = await chrome.runtime.sendMessage({ type: "GET_RETRY_QUEUE" });
+    if (queue && queue.length > 0) {
+      showToast(`📶 Mạng đã khôi phục. Đang thử lại ${queue.length} tác vụ...`, "info");
+      const res = await chrome.runtime.sendMessage({ type: "PROCESS_RETRY_ALL" });
+      if (res && res.succeeded > 0) {
+        showToast(`✓ Đã gửi lại thành công ${res.succeeded} tác vụ!`, "success");
+      }
+    }
+  } catch (_e) {
+    // Ignore error
+  }
+});
 
 function showSettingsErrorLink(message) {
   let container = document.getElementById("tb-settings-error");

@@ -4,6 +4,7 @@ const path = require("path");
 const manifestPath = path.join(__dirname, "..", "manifest.json");
 const packageJsonPath = path.join(__dirname, "..", "package.json");
 const changelogPath = path.join(__dirname, "..", "CHANGELOG.md");
+const changelogViPath = path.join(__dirname, "..", "CHANGELOG.vi.md");
 
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, "utf-8"));
@@ -26,22 +27,65 @@ function ensureChangelogStub(version) {
 
   if (changelog.includes(heading)) {
     console.log(`OK: CHANGELOG already contains entry for ${version}`);
-    return;
-  }
-
-  const lines = changelog.split(/\r?\n/);
-  const date = formatDate();
-  const stub = [`${heading} - ${date}`, "- **✨ Added**:", "- **🔧 Fixed**:", "- **📝 Docs**:", ""];
-
-  if (lines.length > 0 && lines[0].startsWith("# ")) {
-    const updated = [lines[0], "", ...stub, ...lines.slice(1)].join("\n");
-    fs.writeFileSync(changelogPath, updated, "utf-8");
   } else {
-    const updated = ["# Nhật ký thay đổi (Changelog)", "", ...stub, ...lines].join("\n");
-    fs.writeFileSync(changelogPath, updated, "utf-8");
+    const lines = changelog.split(/\r?\n/);
+    const date = formatDate();
+    const stub = [
+      `${heading} - ${date}`,
+      "- **✨ Added**:",
+      "- **🔧 Fixed**:",
+      "- **📝 Docs**:",
+      "",
+    ];
+
+    if (lines.length > 0 && lines[0].startsWith("# ")) {
+      const updated = [lines[0], "", ...stub, ...lines.slice(1)].join("\n");
+      fs.writeFileSync(changelogPath, updated, "utf-8");
+    } else {
+      const updated = ["# Changelog - Backlog2Redmine", "", ...stub, ...lines].join("\n");
+      fs.writeFileSync(changelogPath, updated, "utf-8");
+    }
+
+    console.log(`OK: Added CHANGELOG stub entry for version ${version}`);
   }
 
-  console.log(`OK: Added CHANGELOG stub entry for version ${version}`);
+  if (fs.existsSync(changelogViPath)) {
+    const changelogVi = fs.readFileSync(changelogViPath, "utf-8");
+    if (changelogVi.includes(heading)) {
+      console.log(`OK: CHANGELOG.vi already contains entry for ${version}`);
+    } else {
+      const linesVi = changelogVi.split(/\r?\n/);
+      const date = formatDate();
+      const stubVi = [
+        `${heading} - ${date}`,
+        "- **✨ Thêm mới**:",
+        "- **🔧 Sửa lỗi**:",
+        "- **📝 Tài liệu**:",
+        "",
+      ];
+
+      // Find position of first version heading or insert after header
+      const firstVersionIdx = linesVi.findIndex((line) => line.startsWith("## ["));
+      if (firstVersionIdx !== -1) {
+        const updatedVi = [
+          ...linesVi.slice(0, firstVersionIdx),
+          ...stubVi,
+          ...linesVi.slice(firstVersionIdx),
+        ].join("\n");
+        fs.writeFileSync(changelogViPath, updatedVi, "utf-8");
+      } else {
+        const updatedVi = [
+          linesVi[0] || "# Nhật ký thay đổi (Changelog)",
+          "",
+          ...stubVi,
+          ...linesVi.slice(1),
+        ].join("\n");
+        fs.writeFileSync(changelogViPath, updatedVi, "utf-8");
+      }
+
+      console.log(`OK: Added CHANGELOG.vi stub entry for version ${version}`);
+    }
+  }
 }
 
 function isSemver(version) {

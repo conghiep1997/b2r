@@ -3,7 +3,7 @@
  * Loads modules and coordinates message handling between content scripts and external APIs.
  */
 
-/* global TB_LOGGER, TB_SYNC_ACTIVITY, TB_SYNC_STATE, TB_COMMENT_SYNC, TB_MIGRATION, TB_PROJECT_PROFILES, TB_GLOSSARY, TB_SYNC_RULES, TB_LOG_TIME_RULES, TB_CUSTOM_FIELDS, getUserStorageId, getBacklogIssueInfo, getBacklogUsers, testModelAvailability, deleteTimeEntry, updateTimeEntry */
+/* global TB_LOGGER, TB_SYNC_ACTIVITY, TB_SYNC_STATE, TB_COMMENT_SYNC, TB_MIGRATION, TB_PROJECT_PROFILES, TB_GLOSSARY, TB_SYNC_RULES, TB_LOG_TIME_RULES, TB_CUSTOM_FIELDS, TB_RETRY_QUEUE, getUserStorageId, getBacklogIssueInfo, getBacklogUsers, testModelAvailability, deleteTimeEntry, updateTimeEntry */
 
 importScripts(
   "modules/utils/version.js",
@@ -24,6 +24,8 @@ importScripts(
   "modules/utils/project-profiles.js",
   "modules/utils/logger.js",
   "modules/utils/markdown.js",
+  "modules/services/translation-cache.js",
+  "modules/services/retry-queue.js",
   "modules/services/ai.js",
   "modules/services/redmine.js",
   "modules/services/backlog.js",
@@ -253,6 +255,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       assertOptionsSender(sender);
       await TB_SYNC_ACTIVITY.clear();
     },
+    CLEAR_TRANSLATION_CACHE: async () => {
+      assertOptionsSender(sender);
+      if (globalThis.TB_TRANSLATION_CACHE) {
+        await globalThis.TB_TRANSLATION_CACHE.clear();
+      }
+      return { success: true };
+    },
+    GET_TRANSLATION_CACHE_STATS: async () => {
+      assertOptionsSender(sender);
+      return {
+        count: globalThis.TB_TRANSLATION_CACHE ? globalThis.TB_TRANSLATION_CACHE.size() : 0,
+      };
+    },
     LIST_SYNC_RECOVERY: async () => {
       assertOptionsSender(sender);
       const settings = await getSettings();
@@ -300,6 +315,60 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     REMOVE_ISSUE_MAPPING: async ({ issueKey }) => {
       assertOptionsSender(sender);
       await TB_SYNC_STATE.remove(await getSettings(), "mapping", issueKey);
+    },
+    GET_RETRY_QUEUE: async () => {
+      return globalThis.TB_RETRY_QUEUE.list();
+    },
+    ENQUEUE_RETRY_ITEM: async ({ item }) => {
+      return globalThis.TB_RETRY_QUEUE.enqueue(item);
+    },
+    REMOVE_RETRY_ITEM: async ({ itemId }) => {
+      return globalThis.TB_RETRY_QUEUE.remove(itemId);
+    },
+    CLEAR_RETRY_QUEUE: async () => {
+      return globalThis.TB_RETRY_QUEUE.clear();
+    },
+    PROCESS_RETRY_ITEM: async ({ itemId }) => {
+      const item = await globalThis.TB_RETRY_QUEUE.get(itemId);
+      if (!item) throw new Error("Item not found in retry queue");
+      const settings = await getSettings();
+      await globalThis.TB_RETRY_QUEUE.markStatus(itemId, "retrying");
+      try {
+        let result;
+        if (item.type === "SEND_TO_REDMINE" || item.type === "SEND_TO_BACKLOG") {
+          result = await TB_COMMENT_SYNC.send(settings, item.payload, sender);
+        } else if (item.type === "CREATE_REDMINE_ISSUE") {
+          result = await handleCreateRedmineIssue(item.payload, settings, sender);
+        } else {
+          throw new Error("Unsupported retry operation: " + item.type);
+        }
+        await globalThis.TB_RETRY_QUEUE.remove(itemId);
+        return { ok: true, data: result };
+      } catch (err) {
+        await globalThis.TB_RETRY_QUEUE.markStatus(itemId, "failed", err.message);
+        throw err;
+      }
+    },
+    PROCESS_RETRY_ALL: async () => {
+      const list = await globalThis.TB_RETRY_QUEUE.list();
+      let succeeded = 0;
+      let failed = 0;
+      const settings = await getSettings();
+      for (const item of list) {
+        try {
+          if (item.type === "SEND_TO_REDMINE" || item.type === "SEND_TO_BACKLOG") {
+            await TB_COMMENT_SYNC.send(settings, item.payload, sender);
+          } else if (item.type === "CREATE_REDMINE_ISSUE") {
+            await handleCreateRedmineIssue(item.payload, settings, sender);
+          }
+          await globalThis.TB_RETRY_QUEUE.remove(item.id);
+          succeeded++;
+        } catch (_e) {
+          await globalThis.TB_RETRY_QUEUE.markStatus(item.id, "failed", _e.message);
+          failed++;
+        }
+      }
+      return { total: list.length, succeeded, failed };
     },
     GET_DEFAULT_PROJECT_SUMMARY: async () => {
       const allowedUrls = [
@@ -595,6 +664,7 @@ async function getSettings() {
     "reportProjectId",
     "manualFields",
     "showRedmineSuccessModal",
+    "enableTranslationCache",
   ];
   const items = await chrome.storage.local.get(keys);
 
@@ -715,6 +785,7 @@ async function getSettings() {
     reportProjectId: items.reportProjectId || "",
     manualFields: items.manualFields || "",
     showRedmineSuccessModal: items.showRedmineSuccessModal !== false,
+    enableTranslationCache: items.enableTranslationCache !== false,
   };
 
   settingsCache = decryptedSettings;
@@ -726,7 +797,14 @@ async function getSettings() {
  * Clears the settings cache when storage is changed (ignoring sync-state / log / activity keys).
  */
 chrome.storage.onChanged.addListener((changes) => {
-  const transientPrefixes = ["b2r_sync_", "b2r_time_backup:", "tb_error_logs", "b2r_sync_activity"];
+  const transientPrefixes = [
+    "b2r_sync_",
+    "b2r_time_backup:",
+    "tb_error_logs",
+    "b2r_sync_activity",
+    "tb_translation_cache",
+    "tb_retry_queue",
+  ];
   const hasSettingsChange = Object.keys(changes || {}).some(
     (key) => !transientPrefixes.some((prefix) => key.startsWith(prefix))
   );

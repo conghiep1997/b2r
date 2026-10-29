@@ -314,13 +314,37 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("syncProjectsBtn")?.addEventListener("click", handleSyncProjects);
   document
     .getElementById("testBacklogConnectionBtn")
-    ?.addEventListener("click", handleBacklogConnectionTest);
-  document.getElementById("testPrimaryAiBtn")?.addEventListener("click", handlePrimaryAiTest);
+    ?.addEventListener("click", () => handleBacklogConnectionTest());
+  document
+    .getElementById("testBacklogTabBtn")
+    ?.addEventListener("click", () => handleBacklogConnectionTest());
+  document
+    .getElementById("testPrimaryAiBtn")
+    ?.addEventListener("click", () => handlePrimaryAiTest());
+  document
+    .getElementById("testPrimaryAiTabBtn")
+    ?.addEventListener("click", () => handlePrimaryAiTest());
   document.getElementById("clearSyncActivityBtn")?.addEventListener("click", async () => {
     try {
       await sendBackgroundRequest({ type: "CLEAR_SYNC_ACTIVITY" });
     } catch (error) {
       setStatus(error.message, true);
+    }
+  });
+  document.getElementById("clearTranslationCacheBtn")?.addEventListener("click", async (e) => {
+    const btn = e.currentTarget;
+    btn.disabled = true;
+    try {
+      await sendBackgroundRequest({ type: "CLEAR_TRANSLATION_CACHE" });
+      setStatus(om("options_translation_cache_cleared", "Đã xóa bộ nhớ đệm bản dịch!"));
+      btn.textContent = "✓";
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.textContent = om("options_clear_translation_cache", "Xóa bộ nhớ đệm dịch");
+      }, 1200);
+    } catch (err) {
+      setStatus(err.message, true);
+      btn.disabled = false;
     }
   });
   function switchTab(panelId) {
@@ -358,30 +382,165 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Onboarding card persistence & toggle
   chrome.storage.local.get("b2r_onboarding_dismissed", (result) => {
     const card = document.getElementById("onboardingCard");
+    const helpBtn = document.getElementById("topBarHelpBtn");
     if (card && result.b2r_onboarding_dismissed) {
       card.hidden = true;
+      if (helpBtn) helpBtn.setAttribute("aria-expanded", "false");
     }
   });
 
   document.getElementById("dismissOnboardingBtn")?.addEventListener("click", () => {
     const card = document.getElementById("onboardingCard");
+    const helpBtn = document.getElementById("topBarHelpBtn");
     if (card) {
       card.hidden = true;
     }
+    if (helpBtn) helpBtn.setAttribute("aria-expanded", "false");
     chrome.storage.local.set({ b2r_onboarding_dismissed: true });
   });
 
-  function showOnboardingGuide() {
+  function showOnboardingGuide(toggle = false) {
     const card = document.getElementById("onboardingCard");
-    if (card) {
-      card.hidden = false;
-      card.scrollIntoView({ behavior: "smooth", block: "start" });
+    const helpBtn = document.getElementById("topBarHelpBtn");
+    if (!card) return;
+
+    if (toggle && !card.hidden) {
+      card.hidden = true;
+      if (helpBtn) helpBtn.setAttribute("aria-expanded", "false");
+      chrome.storage.local.set({ b2r_onboarding_dismissed: true });
+      return;
     }
+
+    card.hidden = false;
+    if (helpBtn) helpBtn.setAttribute("aria-expanded", "true");
+    card.scrollIntoView({ behavior: "smooth", block: "start" });
+    card.classList.remove("highlight-target");
+    void card.offsetWidth;
+    card.classList.add("highlight-target");
+    setTimeout(() => card.classList.remove("highlight-target"), 1200);
     chrome.storage.local.set({ b2r_onboarding_dismissed: false });
   }
 
-  document.getElementById("topBarHelpBtn")?.addEventListener("click", showOnboardingGuide);
-  document.getElementById("reopenOnboardingBtn")?.addEventListener("click", showOnboardingGuide);
+  document
+    .getElementById("topBarHelpBtn")
+    ?.addEventListener("click", () => showOnboardingGuide(true));
+  document
+    .getElementById("reopenOnboardingBtn")
+    ?.addEventListener("click", () => showOnboardingGuide(false));
+
+  setupOptionsSearch();
+
+  function setupOptionsSearch() {
+    const searchInput = document.getElementById("optionsSearchInput");
+    const clearBtn = document.getElementById("clearSearchBtn");
+    if (!searchInput) return;
+
+    function clearSearch() {
+      searchInput.value = "";
+      if (clearBtn) clearBtn.hidden = true;
+      document.querySelectorAll(".search-highlight-match").forEach((elem) => {
+        elem.classList.remove("search-highlight-match");
+      });
+      document.querySelectorAll(".search-dimmed").forEach((elem) => {
+        elem.classList.remove("search-dimmed");
+      });
+      const activeBtn = document.querySelector(".tab-btn[aria-selected='true']");
+      const activePanelId = activeBtn?.getAttribute("data-panel") || "redmine";
+      switchTab(activePanelId);
+    }
+
+    function executeSearch() {
+      const query = searchInput.value.trim().toLowerCase();
+      if (!query) {
+        clearSearch();
+        return;
+      }
+
+      if (clearBtn) clearBtn.hidden = false;
+
+      document.querySelectorAll(".search-highlight-match").forEach((elem) => {
+        elem.classList.remove("search-highlight-match");
+      });
+      document.querySelectorAll(".search-dimmed").forEach((elem) => {
+        elem.classList.remove("search-dimmed");
+      });
+
+      const searchableItems = document.querySelectorAll(
+        ".tab-panel .field, .tab-panel .policy-group, .tab-panel .policy-editor, .tab-panel .settings-section"
+      );
+
+      const matchingPanels = new Set();
+      let firstMatchElement = null;
+
+      searchableItems.forEach((item) => {
+        const text = item.textContent?.toLowerCase() || "";
+        const inputs = Array.from(item.querySelectorAll("input, select, textarea, label"))
+          .map(
+            (i) =>
+              `${i.id || ""} ${i.name || ""} ${i.placeholder || ""} ${i.getAttribute("data-i18n") || ""}`
+          )
+          .join(" ")
+          .toLowerCase();
+
+        const isMatch = text.includes(query) || inputs.includes(query);
+
+        if (isMatch) {
+          item.classList.add("search-highlight-match");
+          if (!firstMatchElement) firstMatchElement = item;
+
+          let parent = item.parentElement;
+          while (parent && parent !== document.body) {
+            if (parent.tagName === "DETAILS") {
+              parent.open = true;
+            }
+            if (parent.classList?.contains("tab-panel")) {
+              const panelId = parent.id.replace("tab-panel-", "");
+              matchingPanels.add(panelId);
+            }
+            parent = parent.parentElement;
+          }
+        } else {
+          item.classList.add("search-dimmed");
+        }
+      });
+
+      const activeBtn = document.querySelector(".tab-btn[aria-selected='true']");
+      const currentActive = activeBtn?.getAttribute("data-panel");
+      if (matchingPanels.size > 0 && !matchingPanels.has(currentActive)) {
+        const firstPanelId = Array.from(matchingPanels)[0];
+        switchTab(firstPanelId);
+      }
+
+      if (firstMatchElement) {
+        firstMatchElement.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    }
+
+    searchInput.addEventListener("input", executeSearch);
+    clearBtn?.addEventListener("click", () => {
+      clearSearch();
+      searchInput.focus();
+    });
+
+    searchInput.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        clearSearch();
+        searchInput.blur();
+      }
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (
+        e.key === "/" &&
+        document.activeElement?.tagName !== "INPUT" &&
+        document.activeElement?.tagName !== "TEXTAREA"
+      ) {
+        e.preventDefault();
+        searchInput.focus();
+        searchInput.select();
+      }
+    });
+  }
 
   document.querySelectorAll("#onboardingCard a[href^='#']").forEach((link) => {
     link.addEventListener("click", () => {
@@ -424,7 +583,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     ?.addEventListener("click", () => chrome.tabs.create({ url: "https://hipppo.vercel.app/" }));
   document.getElementById("exportLogsBtn")?.addEventListener("click", handleExportLogs);
   document.getElementById("clearLogsBtn")?.addEventListener("click", handleClearLogs);
+  document.getElementById("exportConfigBtn")?.addEventListener("click", handleExportConfig);
+  document.getElementById("importConfigBtn")?.addEventListener("click", () => {
+    document.getElementById("importConfigFileInput")?.click();
+  });
+  document.getElementById("importConfigFileInput")?.addEventListener("change", (event) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      handleImportConfig(file);
+    }
+    event.target.value = "";
+  });
   setupBugReport();
+  setupRetryQueueUI();
 
   function setupBugReport() {
     const fileInput = document.getElementById("bugScreenshot");
@@ -462,6 +633,142 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("downloadBugReportBtn")?.addEventListener("click", downloadBugReport);
     document.getElementById("copyBugReportBtn")?.addEventListener("click", copyBugReport);
     document.getElementById("openGithubIssueBtn")?.addEventListener("click", openGithubIssue);
+  }
+
+  function setupRetryQueueUI() {
+    const listContainer = document.getElementById("retryQueueList");
+    const emptyNotice = document.getElementById("retryQueueEmpty");
+    const statusElem = document.getElementById("retryQueueStatus");
+    const retryAllBtn = document.getElementById("retryAllQueueBtn");
+    const clearBtn = document.getElementById("clearRetryQueueBtn");
+    const refreshBtn = document.getElementById("refreshRetryQueueBtn");
+    if (!listContainer) return;
+
+    function setQueueStatus(msg, isError = false) {
+      if (statusElem) {
+        statusElem.textContent = msg;
+        statusElem.style.color = isError ? "#ef4444" : "#10b981";
+        if (msg) {
+          setTimeout(() => {
+            if (statusElem.textContent === msg) statusElem.textContent = "";
+          }, 4000);
+        }
+      }
+    }
+
+    async function refreshQueue() {
+      try {
+        const queue = (await chrome.runtime.sendMessage({ type: "GET_RETRY_QUEUE" })) || [];
+        listContainer.replaceChildren();
+
+        if (emptyNotice) {
+          emptyNotice.hidden = queue.length > 0;
+        }
+        if (retryAllBtn) {
+          retryAllBtn.disabled = queue.length === 0;
+        }
+
+        queue.forEach((item) => {
+          const row = document.createElement("div");
+          row.className = "retry-queue-item";
+
+          const info = document.createElement("div");
+          info.className = "retry-queue-item__info";
+
+          const title = document.createElement("div");
+          title.className = "retry-queue-item__title";
+          title.textContent = item.label || item.type;
+
+          const meta = document.createElement("div");
+          meta.className = "retry-queue-item__meta";
+          const dateStr = new Date(item.timestamp).toLocaleString();
+          meta.textContent = `${dateStr} · Loại: ${item.type} · Đã thử lại: ${item.retryCount || 0}/${item.maxRetries || 3}`;
+
+          info.append(title, meta);
+
+          if (item.error) {
+            const errDiv = document.createElement("div");
+            errDiv.className = "retry-queue-item__error";
+            errDiv.textContent = `❌ ${item.error}`;
+            info.append(errDiv);
+          }
+
+          const actions = document.createElement("div");
+          actions.className = "retry-queue-item__actions";
+
+          const retryBtn = document.createElement("button");
+          retryBtn.type = "button";
+          retryBtn.className = "secondary";
+          retryBtn.textContent = om("options_retry_item", "Thử lại");
+          retryBtn.addEventListener("click", async () => {
+            retryBtn.disabled = true;
+            retryBtn.textContent = "⏳...";
+            try {
+              await chrome.runtime.sendMessage({ type: "PROCESS_RETRY_ITEM", itemId: item.id });
+              setQueueStatus(`✓ Đã gửi lại thành công: ${item.label}`);
+              await refreshQueue();
+            } catch (err) {
+              setQueueStatus(`❌ Lỗi gửi lại: ${err.message}`, true);
+              await refreshQueue();
+            }
+          });
+
+          const removeBtn = document.createElement("button");
+          removeBtn.type = "button";
+          removeBtn.className = "secondary";
+          removeBtn.textContent = om("options_remove_item", "Xóa");
+          removeBtn.addEventListener("click", async () => {
+            await chrome.runtime.sendMessage({ type: "REMOVE_RETRY_ITEM", itemId: item.id });
+            await refreshQueue();
+          });
+
+          actions.append(retryBtn, removeBtn);
+          row.append(info, actions);
+          listContainer.append(row);
+        });
+      } catch (err) {
+        console.warn("[OPTIONS] Refresh retry queue error:", err);
+      }
+    }
+
+    retryAllBtn?.addEventListener("click", async () => {
+      retryAllBtn.disabled = true;
+      const originalText = retryAllBtn.textContent;
+      retryAllBtn.textContent = "⏳ Đang gửi lại…";
+      try {
+        const result = await chrome.runtime.sendMessage({ type: "PROCESS_RETRY_ALL" });
+        const resText = om(
+          "options_retry_all_result",
+          "Đã xử lý hàng đợi: $success$ thành công, $failed$ thất bại."
+        )
+          .replace("$success$", String(result?.succeeded || 0))
+          .replace("$failed$", String(result?.failed || 0));
+        setQueueStatus(resText, Boolean(result?.failed));
+        await refreshQueue();
+      } catch (err) {
+        setQueueStatus(`❌ ${err.message}`, true);
+      } finally {
+        retryAllBtn.disabled = false;
+        retryAllBtn.textContent = originalText;
+      }
+    });
+
+    clearBtn?.addEventListener("click", async () => {
+      if (!confirm(om("options_confirm_clear_queue", "Xóa toàn bộ hàng đợi thử lại?"))) return;
+      await chrome.runtime.sendMessage({ type: "CLEAR_RETRY_QUEUE" });
+      setQueueStatus("Đã xóa sạch hàng đợi thử lại.");
+      await refreshQueue();
+    });
+
+    refreshBtn?.addEventListener("click", () => {
+      refreshQueue();
+    });
+
+    window.addEventListener("online", () => {
+      refreshQueue();
+    });
+
+    refreshQueue();
   }
 
   async function buildBugReport() {
@@ -568,6 +875,105 @@ document.addEventListener("DOMContentLoaded", async () => {
     setStatus(om("options_logs_deleted", "Đã xóa lịch sử log lỗi."));
   }
 
+  async function handleExportConfig() {
+    if (!globalThis.TB_CONFIG_TRANSFER) {
+      setStatus("Config transfer utility not available.", true);
+      return;
+    }
+    try {
+      const profiles = TB_OPTIONS_PROJECT_PROFILES.readProfiles();
+      const globalPolicy = TB_OPTIONS_PROJECT_PROFILES.readGlobal();
+      const backlogDomain =
+        document.getElementById("backlogDomain")?.value?.trim() || TB.BACKLOG_DOMAIN;
+      const redmineDomain =
+        document.getElementById("redmineDomain")?.value?.trim() || TB.REDMINE_DOMAIN;
+
+      const payload = globalThis.TB_CONFIG_TRANSFER.buildExportPayload({
+        profiles,
+        globalPolicy,
+        metadata: {
+          backlogDomain,
+          redmineDomain,
+        },
+      });
+
+      globalThis.TB_CONFIG_TRANSFER.downloadAsJson(payload);
+      setStatus(
+        om("options_export_success", "Đã xuất cấu hình thành công ($count$ dự án)!").replace(
+          "$count$",
+          String(profiles.length)
+        )
+      );
+    } catch (error) {
+      console.error("[OPTIONS] Export config failed:", error);
+      setStatus(error.message, true);
+    }
+  }
+
+  async function handleImportConfig(file) {
+    if (!file || !globalThis.TB_CONFIG_TRANSFER) return;
+    try {
+      setStatus(om("options_import_reading_file", "Đang đọc file cấu hình…"));
+      const text = await file.text();
+      const backlogDomain =
+        document.getElementById("backlogDomain")?.value?.trim() || TB.BACKLOG_DOMAIN;
+      const redmineDomain =
+        document.getElementById("redmineDomain")?.value?.trim() || TB.REDMINE_DOMAIN;
+
+      const validation = globalThis.TB_CONFIG_TRANSFER.parseAndValidate(text, {
+        backlogDomain,
+        redmineDomain,
+      });
+
+      const currentProfiles = TB_OPTIONS_PROJECT_PROFILES.readProfiles();
+      const currentGlobalPolicy = TB_OPTIONS_PROJECT_PROFILES.readGlobal();
+
+      let mode = "merge";
+      if (currentProfiles.length > 0) {
+        const replace = confirm(
+          om(
+            "options_import_choice",
+            "Bạn có muốn GHI ĐÈ toàn bộ cấu hình dự án hiện tại không?\n\n- Nhấn OK: Ghi đè toàn bộ (Replace all)\n- Nhấn Cancel: Gộp thêm cấu hình mới (Merge)"
+          )
+        );
+        mode = replace ? "replace" : "merge";
+      }
+
+      const mergedProfiles = globalThis.TB_CONFIG_TRANSFER.mergeProfiles(
+        currentProfiles,
+        validation.payload.projectProfiles,
+        mode
+      );
+
+      const mergedPolicy = validation.payload.globalPolicy
+        ? globalThis.TB_CONFIG_TRANSFER.mergeGlobalPolicy(
+            currentGlobalPolicy,
+            validation.payload.globalPolicy
+          )
+        : currentGlobalPolicy;
+
+      TB_OPTIONS_PROJECT_PROFILES.load(mergedProfiles, mergedPolicy);
+      TB_OPTIONS_PROJECT_PROFILES.markDirty();
+
+      setStatus(
+        om("options_import_success", "Đã nhập $count$ cấu hình dự án thành công!").replace(
+          "$count$",
+          String(validation.summary.profileCount)
+        )
+      );
+
+      if (typeof form?.requestSubmit === "function") {
+        form.requestSubmit();
+      }
+    } catch (error) {
+      console.error("[OPTIONS] Import config failed:", error);
+      setStatus(
+        `${om("options_import_invalid_file", "File JSON không hợp lệ:")} ${error.message}`,
+        true
+      );
+    }
+  }
+
   async function handleManualUpdateCheck() {
     const btn = document.getElementById("checkUpdateBtn");
     const statusDiv = document.getElementById("updateStatus");
@@ -621,6 +1027,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
+    const saveBtn =
+      document.getElementById("saveOptionsBtn") || form.querySelector("button[type='submit']");
+    const saveIcon = saveBtn?.querySelector(".btn-icon");
+    const saveText = saveBtn?.querySelector(".btn-text");
+    if (saveBtn?.disabled) return;
+    if (saveBtn) saveBtn.disabled = true;
+    if (saveIcon) saveIcon.textContent = "⏳";
+    if (saveText) saveText.textContent = om("options_saving", "Đang lưu…");
     try {
       let domainChange;
       try {
@@ -647,14 +1061,92 @@ document.addEventListener("DOMContentLoaded", async () => {
         domainChange.previousDomain,
         domainChange.currentDomain
       );
-      setStatus(om("options_save_success", "✅ Đã lưu cấu hình thành công!"));
+
+      // Auto-verify Backlog & Primary AI if configured and unverified
+      const autoTestTasks = [];
+      const testWarnings = [];
+
+      const backlogKey =
+        backlogApiKeyInput.value.trim() && backlogApiKeyInput.value.trim() !== "**********"
+          ? backlogApiKeyInput.value.trim()
+          : await decryptData(settings.backlogApiKey || "");
+      const backlogDomain =
+        document.getElementById("backlogDomain").value.trim() || TB.BACKLOG_DOMAIN;
+      if (backlogKey) {
+        const backlogFp = await verificationFingerprint([backlogDomain, backlogKey]);
+        const stored = await chrome.storage.local.get(["backlogConnectionVerified"]);
+        if (stored.backlogConnectionVerified !== backlogFp) {
+          autoTestTasks.push(
+            handleBacklogConnectionTest().then((res) => {
+              if (res && !res.ok) testWarnings.push(`Backlog: ${res.error || "Failed"}`);
+            })
+          );
+        }
+      }
+
+      const provider = primaryProviderSelect.value;
+      const primaryKey =
+        provider === "gemini" ? getFirstGeminiKey() : getProviderKeys("primary", provider)[0];
+      const modelId =
+        getSelectedModelsForProvider("primary", provider)[0] || getDefaultModel(provider);
+      const aiKeys = provider === "gemini" ? getGeminiKeys() : primaryKey;
+      if (primaryKey) {
+        const aiFp = await verificationFingerprint([provider, modelId, aiKeys]);
+        const storedAi = await chrome.storage.local.get(["aiConnectionVerified"]);
+        if (storedAi.aiConnectionVerified !== aiFp) {
+          autoTestTasks.push(
+            handlePrimaryAiTest().then((res) => {
+              if (res && !res.ok) testWarnings.push(`AI: ${res.error || "Failed"}`);
+            })
+          );
+        }
+      }
+
+      if (autoTestTasks.length > 0) {
+        await Promise.all(autoTestTasks);
+      }
+
+      if (testWarnings.length > 0) {
+        setStatus(
+          `${om("options_save_success", "✅ Đã lưu cấu hình thành công!")} (${testWarnings.join("; ")})`,
+          true
+        );
+      } else {
+        setStatus(om("options_save_success", "✅ Đã lưu cấu hình thành công!"));
+      }
+      if (saveIcon) saveIcon.textContent = "✓";
+      if (saveText) saveText.textContent = om("options_saved_badge", "Đã lưu!");
+      setTimeout(() => {
+        if (saveIcon) saveIcon.textContent = "💾";
+        if (saveText) saveText.textContent = om("options_save", "Lưu cấu hình");
+        if (saveBtn) saveBtn.disabled = false;
+      }, 1500);
       updateOnboardingStatuses();
       setTimeout(loadOptions, 200);
     } catch (error) {
+      if (saveIcon) saveIcon.textContent = "💾";
+      if (saveText) saveText.textContent = om("options_save", "Lưu cấu hình");
+      if (saveBtn) saveBtn.disabled = false;
       console.error("[OPTIONS] Save failed:", error);
       const message = error?.message || String(error) || "Unknown error";
       const errorTemplate = om("options_save_error", "❌ Lỗi khi lưu: $error$");
       setStatus(errorTemplate.replace("$error$", message), true);
+    }
+  });
+
+  // Keyboard shortcut: Ctrl+S (Cmd+S) to save settings
+  document.addEventListener("keydown", (event) => {
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
+      event.preventDefault();
+      const saveBtn =
+        document.getElementById("saveOptionsBtn") || form.querySelector("button[type='submit']");
+      if (saveBtn && !saveBtn.disabled) {
+        if (typeof form.requestSubmit === "function") {
+          form.requestSubmit();
+        } else {
+          form.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
+        }
+      }
     }
   });
 
@@ -680,6 +1172,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       reportProjectId: document.getElementById("defaultProjectId")?.value || "",
       manualFields: document.getElementById("manualFields")?.value?.trim() || "",
       showRedmineSuccessModal: showRedmineSuccessModalInput?.checked !== false,
+      enableTranslationCache: document.getElementById("enableTranslationCache")?.checked !== false,
     };
     const globalPolicy = TB_OPTIONS_PROJECT_PROFILES.readGlobal();
     const projectProfiles = TB_OPTIONS_PROJECT_PROFILES.readProfiles();
@@ -980,6 +1473,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       "reportProjectId",
       "manualFields",
       "showRedmineSuccessModal",
+      "enableTranslationCache",
     ];
 
     chrome.storage.local.get(keys, async (items) => {
@@ -1008,6 +1502,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       TB_OPTIONS_PROJECT_PROFILES.load(projectProfiles, policy);
       if (showRedmineSuccessModalInput) {
         showRedmineSuccessModalInput.checked = items.showRedmineSuccessModal !== false;
+      }
+      const cacheInput = document.getElementById("enableTranslationCache");
+      if (cacheInput) {
+        cacheInput.checked = items.enableTranslationCache !== false;
       }
 
       redmineApiKeyInput.value = items.redmineApiKey ? "**********" : "";
@@ -1083,6 +1581,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const legacyKey = await decryptData(items.geminiApiKey);
         renderGeminiKeysButtons(legacyKey ? [legacyKey] : []);
       }
+      updateOnboardingStatuses();
     });
   }
 
@@ -1196,9 +1695,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   async function handleBacklogConnectionTest() {
-    const button = document.getElementById("testBacklogConnectionBtn");
+    const buttons = [
+      document.getElementById("testBacklogConnectionBtn"),
+      document.getElementById("testBacklogTabBtn"),
+    ].filter(Boolean);
     const inputKey = backlogApiKeyInput.value.trim();
-    button.disabled = true;
+    buttons.forEach((b) => (b.disabled = true));
+    const tabStatus = document.getElementById("backlogTabStatus");
+    if (tabStatus) {
+      tabStatus.textContent = om("popup_checking", "Đang kiểm tra…");
+      tabStatus.className = "status";
+    }
     try {
       const stored = await chrome.storage.local.get(["backlogApiKey", "backlogDomain"]);
       const apiKey =
@@ -1215,33 +1722,50 @@ document.addEventListener("DOMContentLoaded", async () => {
       await chrome.storage.local.set({
         backlogConnectionVerified: await verificationFingerprint([domain, apiKey]),
       });
-      document.getElementById("onboardingStatus").textContent = om(
-        "options_test_backlog_success",
-        "Backlog connection successful."
-      );
-      if (result.userName) {
-        document.getElementById("onboardingStatus").textContent += ` (${result.userName})`;
+      const successMsg =
+        om("options_test_backlog_success", "Backlog connection successful.") +
+        (result.userName ? ` (${result.userName})` : "");
+      document.getElementById("onboardingStatus").textContent = successMsg;
+      if (tabStatus) {
+        tabStatus.textContent = `✓ ${successMsg}`;
+        tabStatus.className = "status status-success";
       }
+      return { ok: true, message: successMsg };
     } catch (error) {
       await chrome.storage.local.remove("backlogConnectionVerified");
-      document.getElementById("onboardingStatus").textContent = om(
+      const errorMsg = om(
         "options_test_backlog_failed",
         "Backlog connection failed: $error$"
       ).replace("$error$", error.message);
+      document.getElementById("onboardingStatus").textContent = errorMsg;
+      if (tabStatus) {
+        tabStatus.textContent = `❌ ${errorMsg}`;
+        tabStatus.className = "status status-error";
+      }
+      return { ok: false, error: errorMsg };
     } finally {
-      button.disabled = false;
+      buttons.forEach((b) => (b.disabled = false));
       updateOnboardingStatuses();
     }
   }
 
   async function handlePrimaryAiTest() {
-    const button = document.getElementById("testPrimaryAiBtn");
+    const buttons = [
+      document.getElementById("testPrimaryAiBtn"),
+      document.getElementById("testPrimaryAiTabBtn"),
+    ].filter(Boolean);
+    commitPendingKeyInputs();
     const provider = primaryProviderSelect.value;
     const models = getSelectedModelsForProvider("primary", provider);
     const apiKey =
       provider === "gemini" ? getFirstGeminiKey() : getProviderKeys("primary", provider)[0];
     const modelId = models[0] || getDefaultModel(provider);
-    button.disabled = true;
+    buttons.forEach((b) => (b.disabled = true));
+    const tabStatus = document.getElementById("primaryAiTabStatus");
+    if (tabStatus) {
+      tabStatus.textContent = om("popup_checking", "Đang kiểm tra…");
+      tabStatus.className = "status";
+    }
     try {
       if (!apiKey) throw new Error(om("options_keys_help", "Add an API key first."));
       const result =
@@ -1262,11 +1786,21 @@ document.addEventListener("DOMContentLoaded", async () => {
         ]),
       });
       document.getElementById("onboardingStatus").textContent = result.message;
+      if (tabStatus) {
+        tabStatus.textContent = `✓ ${result.message}`;
+        tabStatus.className = "status status-success";
+      }
+      return { ok: true, message: result.message };
     } catch (error) {
       await chrome.storage.local.remove("aiConnectionVerified");
       document.getElementById("onboardingStatus").textContent = error.message;
+      if (tabStatus) {
+        tabStatus.textContent = `❌ ${error.message}`;
+        tabStatus.className = "status status-error";
+      }
+      return { ok: false, error: error.message };
     } finally {
-      button.disabled = false;
+      buttons.forEach((b) => (b.disabled = false));
       updateOnboardingStatuses();
     }
   }

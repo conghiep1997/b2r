@@ -1155,6 +1155,117 @@
   "options_save": {
     "message": "Save settings"
   },
+  "options_saving": {
+    "message": "Saving…"
+  },
+  "options_saved_badge": {
+    "message": "Saved!"
+  },
+  "options_translation_cache_label": {
+    "message": "Enable translation cache (0ms instant response, save API quota)"
+  },
+  "options_clear_translation_cache": {
+    "message": "Clear translation cache"
+  },
+  "options_translation_cache_cleared": {
+    "message": "Translation cache cleared!"
+  },
+  "options_export_config": {
+    "message": "Export config"
+  },
+  "options_export_config_title": {
+    "message": "Export project configuration to JSON to share with team"
+  },
+  "options_import_config": {
+    "message": "Import config"
+  },
+  "options_import_config_title": {
+    "message": "Import configuration from JSON file"
+  },
+  "options_export_success": {
+    "message": "Configuration exported successfully ($count$ profiles)!",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "options_import_success": {
+    "message": "Successfully imported $count$ project profile(s)!",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "options_import_choice": {
+    "message": "Do you want to REPLACE all existing project profiles?\n\n- Click OK: Replace all\n- Click Cancel: Merge with existing"
+  },
+  "options_import_invalid_file": {
+    "message": "Invalid JSON file or unrecognized B2R configuration structure."
+  },
+  "options_import_reading_file": {
+    "message": "Reading configuration file…"
+  },
+  "options_translation_tone_label": {
+    "message": "Translation tone / style"
+  },
+  "options_translation_tone_technical": {
+    "message": "Technical & Action-Oriented (Recommended)"
+  },
+  "options_translation_tone_formal": {
+    "message": "Formal & Professional (Business-friendly)"
+  },
+  "options_translation_tone_concise": {
+    "message": "Concise & Bullet-points (Checklist)"
+  },
+  "options_translation_tone_help": {
+    "message": "Preserves English tech terms (API, DB, query...), clear action-oriented sentences for Devs & Testers."
+  },
+  "options_search_placeholder": {
+    "message": "Search settings quickly…"
+  },
+  "options_search_clear_title": {
+    "message": "Clear search (Esc)"
+  },
+  "options_retry_queue_title": {
+    "message": "📶 Offline / Retry Queue"
+  },
+  "options_retry_queue_help": {
+    "message": "Automatically saves sync operations interrupted by network dropouts. You can retry them when connection recovers."
+  },
+  "options_retry_all": {
+    "message": "🔄 Retry all"
+  },
+  "options_clear_queue": {
+    "message": "🗑️ Clear queue"
+  },
+  "options_refresh_queue": {
+    "message": "↻ Refresh"
+  },
+  "options_retry_queue_empty": {
+    "message": "Queue is empty. No pending network tasks."
+  },
+  "options_retry_item": {
+    "message": "Retry"
+  },
+  "options_remove_item": {
+    "message": "Remove"
+  },
+  "options_retry_all_result": {
+    "message": "Processed queue: $success$ succeeded, $failed$ failed.",
+    "placeholders": {
+      "success": {
+        "content": "$1"
+      },
+      "failed": {
+        "content": "$2"
+      }
+    }
+  },
+  "options_confirm_clear_queue": {
+    "message": "Clear all items in the retry queue?"
+  },
   "options_bug_title": {
     "message": "🐞 Report a bug"
   },
@@ -2002,7 +2113,7 @@
     "message": "Guide"
   },
   "options_onboarding_help_title": {
-    "message": "Open initial setup guide"
+    "message": "Toggle setup guide"
   },
   "modal_no_mention_found": {
     "message": "No @mention found"

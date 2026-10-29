@@ -247,7 +247,9 @@ npm run build:zip
 
 ## 📜 Nhật ký thay đổi
 
-Chi tiết các thay đổi qua từng phiên bản có thể được xem tại: **[CHANGELOG.md](./CHANGELOG.md)**
+Chi tiết các thay đổi qua từng phiên bản có thể được xem tại:
+- 🌐 Tiếng Anh (Chính thức): **[CHANGELOG.md](./CHANGELOG.md)**
+- 🇻🇳 Tiếng Việt: **[CHANGELOG.vi.md](./CHANGELOG.vi.md)**
 
 ---
 
