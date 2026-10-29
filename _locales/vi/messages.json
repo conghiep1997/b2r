@@ -785,7 +785,7 @@
     "message": "Tìm thấy"
   },
   "report_spent_time": {
-    "message": "Redmine spent time"
+    "message": "Thời gian ghi nhận Redmine"
   },
   "report_log_time_month": {
     "message": "Log time tháng"
@@ -1294,12 +1294,6 @@
   },
   "options_translation_tone_help": {
     "message": "Giữ nguyên thuật ngữ kỹ thuật tiếng Anh (API, DB, query...), câu văn ngắn gọn, rõ ràng cho Dev & Tester."
-  },
-  "options_search_placeholder": {
-    "message": "Tìm cài đặt nhanh…"
-  },
-  "options_search_clear_title": {
-    "message": "Xóa tìm kiếm (Esc)"
   },
   "options_retry_queue_title": {
     "message": "📶 Hàng đợi thử lại khi rớt mạng (Offline / Retry Queue)"
@@ -2116,16 +2110,16 @@
     "message": "Bật/tắt hướng dẫn thiết lập"
   },
   "modal_no_mention_found": {
-    "message": "Ch?a c? @mention"
+    "message": "Không có @mention nào"
   },
   "report_total_label": {
-    "message": "T?ng:"
+    "message": "Tổng:"
   },
   "report_badge_error": {
-    "message": "? L?i"
+    "message": "⚠️ Lỗi"
   },
   "report_badge_duplicate": {
-    "message": "?? Tr?ng ($hours$h)",
+    "message": "⚠️ Trùng ($hours$h)",
     "placeholders": {
       "hours": {
         "content": "$1"
@@ -2133,7 +2127,7 @@
     }
   },
   "report_badge_full": {
-    "message": "?? ?? $hours$h",
+    "message": "Đã đủ $hours$h",
     "placeholders": {
       "hours": {
         "content": "$1"
@@ -2141,18 +2135,27 @@
     }
   },
   "report_badge_empty": {
-    "message": "Kh?ng c? task"
+    "message": "Không có task"
   },
   "report_badge_partial_existing": {
-    "message": "?? ?? ghi 1 ph?n"
+    "message": "⚠️ Đã ghi 1 phần"
   },
   "report_badge_ready": {
-    "message": "S?n s?ng"
+    "message": "Sẵn sàng"
   },
   "report_badge_partial_result": {
-    "message": "M?t ph?n"
+    "message": "Một phần"
   },
   "report_badge_logged_result": {
-    "message": "?? log"
+    "message": "Đã log"
+  },
+  "report_logging_as": {
+    "message": "Người ghi:"
+  },
+  "report_user_loading": {
+    "message": "Đang kiểm tra tài khoản..."
+  },
+  "report_user_error": {
+    "message": "Không rõ tài khoản"
   }
 }

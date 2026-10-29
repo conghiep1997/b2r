@@ -1,5 +1,17 @@
 # Changelog - Backlog2Redmine
 
+## [1.8.23] - 2026-10-29
+- **✨ Added**: Display current logged-in user identity badge (`#tb-monthly-log-user`) in Redmine Monthly Log Time modal via `getCurrentUser()` with login/name and email tooltip.
+- **✨ Added**: Localized date formatting with day-of-week tags (`(T2)`-`(CN)` in VI, `(Mon)`-`(Sun)` in EN) and weekend row highlight (`.tb-row-weekend` / `.tb-cell-weekend`) in preview, result, and single-report sync tables.
+- **✨ Added**: Enforce browser date and month picker localization via `lang="${currentLanguage}"` attributes on modal containers and month inputs, overriding host page language.
+- **🔧 Fixed**: Fixed corrupted Vietnamese text across monthly log time statuses (`Sẵn sàng`, `⚠️ Trùng`, `Đã đủ`, `⚠️ Lỗi`, etc.) and added automated integrity test preventing broken characters in locale files.
+- **🔧 Fixed**: Improved report subject wrapping in monthly log tables using `word-break: keep-all; overflow-wrap: break-word` and 230px column width, preventing orphan single-character breaks (`日`).
+- **🔧 Fixed**: Redesigned Redmine project reload button (`#syncProjectsBtn`) into a unified flex row with `<select id="defaultProjectId">` featuring modern 46px sizing, icon, label, loading spinner, and dark theme support.
+- **🔧 Fixed**: Unified action buttons and status badges onto consistent flex rows across Options page (Primary AI actions and cache clear, Log Time activities, Sync Recovery mapping) with matching button heights and padding.
+- **🔧 Fixed**: Cleaned up Options header by completely removing redundant search filter and its unused locale strings for a cleaner, distraction-free top bar.
+- **📝 Docs**: Added test cases for day-of-week formatting and weekend detection, locale UTF-8 integrity check, and synchronized documentation (184 unit tests passing).
+
+
 All notable changes to the Backlog2Redmine (B2R) extension will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 (Vietnamese version: [CHANGELOG.vi.md](./CHANGELOG.vi.md))

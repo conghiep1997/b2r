@@ -712,7 +712,7 @@
     "message": "Found"
   },
   "report_spent_time": {
-    "message": "Redmine spent time"
+    "message": "Redmine Spent Time"
   },
   "report_log_time_month": {
     "message": "Log time this month"
@@ -1221,12 +1221,6 @@
   },
   "options_translation_tone_help": {
     "message": "Preserves English tech terms (API, DB, query...), clear action-oriented sentences for Devs & Testers."
-  },
-  "options_search_placeholder": {
-    "message": "Search settings quickly…"
-  },
-  "options_search_clear_title": {
-    "message": "Clear search (Esc)"
   },
   "options_retry_queue_title": {
     "message": "📶 Offline / Retry Queue"
@@ -2122,10 +2116,10 @@
     "message": "Total:"
   },
   "report_badge_error": {
-    "message": "? Error"
+    "message": "⚠️ Error"
   },
   "report_badge_duplicate": {
-    "message": "?? Duplicate ($hours$h)",
+    "message": "⚠️ Duplicate ($hours$h)",
     "placeholders": {
       "hours": {
         "content": "$1"
@@ -2144,7 +2138,7 @@
     "message": "No tasks"
   },
   "report_badge_partial_existing": {
-    "message": "?? Partially logged"
+    "message": "⚠️ Partially logged"
   },
   "report_badge_ready": {
     "message": "Ready"
@@ -2154,5 +2148,14 @@
   },
   "report_badge_logged_result": {
     "message": "Logged"
+  },
+  "report_logging_as": {
+    "message": "Logging as:"
+  },
+  "report_user_loading": {
+    "message": "Checking account..."
+  },
+  "report_user_error": {
+    "message": "Account unknown"
   }
 }

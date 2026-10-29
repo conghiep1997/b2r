@@ -10,6 +10,7 @@ globalThis.__B2R_REDMINE_LOADED__ = true;
 const BUTTON_CLASS = "tb-backlog-btn";
 const BACKLOG_ICON = TB?.ICONS?.BACKLOG;
 let reportMessages = null;
+let currentLanguage = "vi";
 const reportMessage = (key, values = {}) => {
   const template = reportMessages?.[key]?.message || chrome.i18n.getMessage(key) || key;
   return template.replace(/\$([a-z0-9_]+)\$/gi, (token, name) => {
@@ -17,6 +18,23 @@ const reportMessage = (key, values = {}) => {
     return val !== undefined ? String(val) : token;
   });
 };
+
+function formatMonthlyTableDate(dateText, lang = currentLanguage) {
+  if (!dateText || !/^\d{4}-\d{2}-\d{2}$/.test(dateText)) {
+    return { formatted: dateText || "", isWeekend: false };
+  }
+  const [year, month, day] = dateText.split("-").map(Number);
+  const d = new Date(Date.UTC(year, month - 1, day));
+  const dayOfWeek = d.getUTCDay();
+  const viDays = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+  const enDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const dayLabel = (lang === "en" ? enDays : viDays)[dayOfWeek];
+  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+  return {
+    formatted: `${dateText} (${dayLabel})`,
+    isWeekend,
+  };
+}
 
 let journalObserver = null;
 
@@ -29,6 +47,7 @@ async function initializeRedmineContent() {
   try {
     const { languagePreference } = await chrome.storage.local.get("languagePreference");
     const language = languagePreference || "en";
+    currentLanguage = language;
     const response = await fetch(chrome.runtime.getURL(`_locales/${language}/messages.json`));
     if (response.ok) {
       reportMessages = await response.json();
@@ -159,10 +178,12 @@ async function logTimeForMonth() {
   // API key stays in the service worker; pass empty key so redmine.js proxies requests.
   const redmineApiKey = "";
 
-  const currentMonthLabel = `${new Date().getMonth() + 1}/${new Date().getFullYear()}`;
+  const now = new Date();
+  const currentMonthLabel = `${String(now.getMonth() + 1).padStart(2, "0")}/${now.getFullYear()}`;
   openMonthlyLogModal({
     monthLabel: currentMonthLabel,
     redmineDomain,
+    redmineApiKey,
     onPreview: async (modalInstance) => {
       const {
         previewButton,
@@ -251,19 +272,27 @@ async function logTimeForMonth() {
           const taskCell = document.createElement("td");
           const statusCell = document.createElement("td");
 
-          dateCell.textContent = preview.date;
+          const dateInfo = formatMonthlyTableDate(preview.date);
+          dateCell.textContent = dateInfo.formatted;
+          if (dateInfo.isWeekend) {
+            dateCell.classList.add("tb-cell-weekend");
+            row.classList.add("tb-row-weekend");
+          }
 
           if (preview.reportIssueId) {
             const reportLink = document.createElement("a");
-            reportLink.className = "tb-issue-link";
+            reportLink.className = "tb-issue-link tb-report-link";
             reportLink.href = `/issues/${preview.reportIssueId}`;
             reportLink.target = "_blank";
             reportLink.rel = "noopener noreferrer";
             reportLink.textContent = `#${preview.reportIssueId}`;
-            reportCell.replaceChildren(
-              reportLink,
-              document.createTextNode(` ${preview.reportSubject || ""}`)
-            );
+            const subjectSpan = document.createElement("span");
+            subjectSpan.className = "tb-report-subject";
+            subjectSpan.textContent = preview.reportSubject ? ` ${preview.reportSubject}` : "";
+            reportCell.replaceChildren(reportLink, subjectSpan);
+            if (preview.reportSubject) {
+              reportCell.title = `#${preview.reportIssueId} ${preview.reportSubject}`;
+            }
           } else {
             reportCell.textContent = preview.reportSubject || "—";
           }
@@ -592,18 +621,27 @@ async function logTimeForMonth() {
         const tasksCell = document.createElement("td");
         const statusCell = document.createElement("td");
 
-        dateCell.textContent = result.date;
+        const dateInfo = formatMonthlyTableDate(result.date);
+        dateCell.textContent = dateInfo.formatted;
+        if (dateInfo.isWeekend) {
+          dateCell.classList.add("tb-cell-weekend");
+          row.classList.add("tb-row-weekend");
+        }
 
         if (result.report) {
           const match = result.report.match(/^#(\d+)\s*(.*)$/);
           if (match) {
             const reportLink = document.createElement("a");
-            reportLink.className = "tb-issue-link";
+            reportLink.className = "tb-issue-link tb-report-link";
             reportLink.href = `/issues/${match[1]}`;
             reportLink.target = "_blank";
             reportLink.rel = "noopener noreferrer";
             reportLink.textContent = `#${match[1]}`;
-            reportCell.replaceChildren(reportLink, document.createTextNode(` ${match[2]}`));
+            const subjectSpan = document.createElement("span");
+            subjectSpan.className = "tb-report-subject";
+            subjectSpan.textContent = match[2] ? ` ${match[2]}` : "";
+            reportCell.replaceChildren(reportLink, subjectSpan);
+            reportCell.title = result.report;
           } else {
             reportCell.textContent = result.report;
           }
@@ -1137,19 +1175,33 @@ function isSafeMonthlyDeleteEntry(entry, currentUser, spentOn) {
   );
 }
 
-function openMonthlyLogModal({ monthLabel, redmineDomain, onPreview, onStart, onDelete }) {
+function openMonthlyLogModal({
+  monthLabel,
+  redmineDomain,
+  redmineApiKey = "",
+  onPreview,
+  onStart,
+  onDelete,
+}) {
   const now = new Date();
   const initialMonthValue = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   const overlay = document.createElement("div");
   overlay.className = "tb-monthly-log-overlay";
+  overlay.lang = currentLanguage;
   overlay.innerHTML = `
-    <section class="tb-monthly-log-dialog" role="dialog" aria-modal="true" aria-labelledby="tb-monthly-log-title">
+    <section class="tb-monthly-log-dialog" role="dialog" aria-modal="true" aria-labelledby="tb-monthly-log-title" lang="${currentLanguage}">
       <header class="tb-monthly-log-header">
         <div>
-        <p class="tb-monthly-log-kicker">${reportMessage("report_spent_time")}</p>
+          <div class="tb-monthly-log-kicker-row">
+            <p class="tb-monthly-log-kicker">${reportMessage("report_spent_time")}</p>
+            <div id="tb-monthly-log-user" class="tb-monthly-log-user-badge">
+              <span class="tb-user-icon" aria-hidden="true">👤</span>
+              <span class="tb-user-name">${reportMessage("report_user_loading")}</span>
+            </div>
+          </div>
           <div class="tb-monthly-log-title-row">
             <h2 id="tb-monthly-log-title">${reportMessage("report_log_time_month")} ${monthLabel}</h2>
-            <input type="month" id="tb-monthly-log-month" class="tb-monthly-log-month-input" value="${initialMonthValue}" aria-label="${reportMessage("report_log_time_month")}">
+            <input type="month" id="tb-monthly-log-month" class="tb-monthly-log-month-input" value="${initialMonthValue}" lang="${currentLanguage}" aria-label="${reportMessage("report_log_time_month")}">
           </div>
           <p id="tb-monthly-log-status" class="tb-monthly-log-status">${reportMessage("report_ready_to_scan")}</p>
         </div>
@@ -1211,6 +1263,33 @@ function openMonthlyLogModal({ monthLabel, redmineDomain, onPreview, onStart, on
   `;
 
   document.body.appendChild(overlay);
+
+  const userBadgeEl = overlay.querySelector("#tb-monthly-log-user");
+  const userNameEl = overlay.querySelector(".tb-user-name");
+
+  getCurrentUser(redmineDomain, redmineApiKey)
+    .then((currentUser) => {
+      if (!currentUser) return;
+      const fullName = [currentUser.firstname, currentUser.lastname].filter(Boolean).join(" ");
+      const displayName = fullName
+        ? currentUser.login
+          ? `${fullName} (@${currentUser.login})`
+          : fullName
+        : currentUser.login || `ID: ${currentUser.id}`;
+      if (userNameEl) {
+        userNameEl.textContent = `${reportMessage("report_logging_as")} ${displayName}`;
+      }
+      if (userBadgeEl) {
+        userBadgeEl.title = currentUser.mail ? `${displayName} · ${currentUser.mail}` : displayName;
+        userBadgeEl.classList.add("tb-monthly-log-user-badge--loaded");
+      }
+    })
+    .catch((err) => {
+      console.warn("[B2R] Could not load current user for monthly log:", err);
+      if (userNameEl) {
+        userNameEl.textContent = reportMessage("report_user_error");
+      }
+    });
   overlay.querySelector("#tb-time-backups").onclick = async () => {
     try {
       const stored = await chrome.storage.local.get(null);
@@ -1271,7 +1350,7 @@ function openMonthlyLogModal({ monthLabel, redmineDomain, onPreview, onStart, on
 
   monthInput.onchange = () => {
     const { year, month } = getSelectedMonth();
-    titleEl.textContent = `${reportMessage("report_log_time_month")} ${month}/${year}`;
+    titleEl.textContent = `${reportMessage("report_log_time_month")} ${String(month).padStart(2, "0")}/${year}`;
     modalInstance.previewIssues = [];
     modalInstance.hasUnsafeReplacement = false;
     startButton.disabled = true;
@@ -1475,7 +1554,8 @@ function confirmReportSync(
     });
     const heading = document.createElement("h2");
     heading.id = "tb-report-sync-title";
-    heading.textContent = `${reportMessage("report_sync_title")} #${initialPreview.reportIssueId} — ${initialPreview.date}`;
+    const dateInfo = formatMonthlyTableDate(initialPreview.date, currentLanguage);
+    heading.textContent = `${reportMessage("report_sync_title")} #${initialPreview.reportIssueId} — ${dateInfo.formatted}`;
     dialog.setAttribute("aria-labelledby", heading.id);
     const hint = document.createElement("p");
     hint.textContent = reportMessage("report_sync_hint");

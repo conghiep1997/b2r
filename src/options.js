@@ -334,9 +334,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("clearTranslationCacheBtn")?.addEventListener("click", async (e) => {
     const btn = e.currentTarget;
     btn.disabled = true;
+    const tabStatus = document.getElementById("primaryAiTabStatus");
     try {
       await sendBackgroundRequest({ type: "CLEAR_TRANSLATION_CACHE" });
-      setStatus(om("options_translation_cache_cleared", "Đã xóa bộ nhớ đệm bản dịch!"));
+      const msg = om("options_translation_cache_cleared", "Đã xóa bộ nhớ đệm bản dịch!");
+      setStatus(msg);
+      if (tabStatus) {
+        tabStatus.textContent = `✓ ${msg}`;
+        tabStatus.className = "status status-success";
+      }
       btn.textContent = "✓";
       setTimeout(() => {
         btn.disabled = false;
@@ -344,6 +350,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       }, 1200);
     } catch (err) {
       setStatus(err.message, true);
+      if (tabStatus) {
+        tabStatus.textContent = `❌ ${err.message}`;
+        tabStatus.className = "status status-error";
+      }
       btn.disabled = false;
     }
   });
@@ -427,120 +437,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   document
     .getElementById("reopenOnboardingBtn")
     ?.addEventListener("click", () => showOnboardingGuide(false));
-
-  setupOptionsSearch();
-
-  function setupOptionsSearch() {
-    const searchInput = document.getElementById("optionsSearchInput");
-    const clearBtn = document.getElementById("clearSearchBtn");
-    if (!searchInput) return;
-
-    function clearSearch() {
-      searchInput.value = "";
-      if (clearBtn) clearBtn.hidden = true;
-      document.querySelectorAll(".search-highlight-match").forEach((elem) => {
-        elem.classList.remove("search-highlight-match");
-      });
-      document.querySelectorAll(".search-dimmed").forEach((elem) => {
-        elem.classList.remove("search-dimmed");
-      });
-      const activeBtn = document.querySelector(".tab-btn[aria-selected='true']");
-      const activePanelId = activeBtn?.getAttribute("data-panel") || "redmine";
-      switchTab(activePanelId);
-    }
-
-    function executeSearch() {
-      const query = searchInput.value.trim().toLowerCase();
-      if (!query) {
-        clearSearch();
-        return;
-      }
-
-      if (clearBtn) clearBtn.hidden = false;
-
-      document.querySelectorAll(".search-highlight-match").forEach((elem) => {
-        elem.classList.remove("search-highlight-match");
-      });
-      document.querySelectorAll(".search-dimmed").forEach((elem) => {
-        elem.classList.remove("search-dimmed");
-      });
-
-      const searchableItems = document.querySelectorAll(
-        ".tab-panel .field, .tab-panel .policy-group, .tab-panel .policy-editor, .tab-panel .settings-section"
-      );
-
-      const matchingPanels = new Set();
-      let firstMatchElement = null;
-
-      searchableItems.forEach((item) => {
-        const text = item.textContent?.toLowerCase() || "";
-        const inputs = Array.from(item.querySelectorAll("input, select, textarea, label"))
-          .map(
-            (i) =>
-              `${i.id || ""} ${i.name || ""} ${i.placeholder || ""} ${i.getAttribute("data-i18n") || ""}`
-          )
-          .join(" ")
-          .toLowerCase();
-
-        const isMatch = text.includes(query) || inputs.includes(query);
-
-        if (isMatch) {
-          item.classList.add("search-highlight-match");
-          if (!firstMatchElement) firstMatchElement = item;
-
-          let parent = item.parentElement;
-          while (parent && parent !== document.body) {
-            if (parent.tagName === "DETAILS") {
-              parent.open = true;
-            }
-            if (parent.classList?.contains("tab-panel")) {
-              const panelId = parent.id.replace("tab-panel-", "");
-              matchingPanels.add(panelId);
-            }
-            parent = parent.parentElement;
-          }
-        } else {
-          item.classList.add("search-dimmed");
-        }
-      });
-
-      const activeBtn = document.querySelector(".tab-btn[aria-selected='true']");
-      const currentActive = activeBtn?.getAttribute("data-panel");
-      if (matchingPanels.size > 0 && !matchingPanels.has(currentActive)) {
-        const firstPanelId = Array.from(matchingPanels)[0];
-        switchTab(firstPanelId);
-      }
-
-      if (firstMatchElement) {
-        firstMatchElement.scrollIntoView({ behavior: "smooth", block: "nearest" });
-      }
-    }
-
-    searchInput.addEventListener("input", executeSearch);
-    clearBtn?.addEventListener("click", () => {
-      clearSearch();
-      searchInput.focus();
-    });
-
-    searchInput.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-        clearSearch();
-        searchInput.blur();
-      }
-    });
-
-    document.addEventListener("keydown", (e) => {
-      if (
-        e.key === "/" &&
-        document.activeElement?.tagName !== "INPUT" &&
-        document.activeElement?.tagName !== "TEXTAREA"
-      ) {
-        e.preventDefault();
-        searchInput.focus();
-        searchInput.select();
-      }
-    });
-  }
 
   document.querySelectorAll("#onboardingCard a[href^='#']").forEach((link) => {
     link.addEventListener("click", () => {

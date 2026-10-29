@@ -72,8 +72,7 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 12px;
+        gap: 16px;
         padding: 6px 20px;
         background: var(--panel);
         border-bottom: 1px solid var(--border);
@@ -341,78 +340,6 @@
         border-color: var(--primary);
       }
 
-      .options-search-wrap {
-        position: relative;
-        display: flex;
-        align-items: center;
-        flex: 1;
-        max-width: 320px;
-        margin: 0 16px;
-      }
-
-      .options-search-icon {
-        position: absolute;
-        left: 10px;
-        font-size: 13px;
-        pointer-events: none;
-        opacity: 0.55;
-      }
-
-      .options-search-input {
-        width: 100%;
-        padding: 6px 28px 6px 30px;
-        font-size: 13px;
-        border: 1px solid var(--border);
-        border-radius: 20px;
-        background: var(--bg);
-        color: var(--text);
-        outline: none;
-        transition: all 0.2s ease;
-      }
-
-      .options-search-input:focus {
-        border-color: var(--primary);
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
-      }
-
-      .options-search-clear {
-        position: absolute;
-        right: 8px;
-        background: none;
-        border: none;
-        color: var(--muted);
-        font-size: 13px;
-        cursor: pointer;
-        padding: 2px 6px;
-        border-radius: 50%;
-        line-height: 1;
-      }
-
-      .options-search-clear:hover {
-        color: var(--text);
-      }
-
-      .search-highlight-match {
-        background: rgba(254, 240, 138, 0.35) !important;
-        border-radius: 6px;
-        outline: 2px solid #f59e0b !important;
-        outline-offset: 2px;
-        transition:
-          background 0.2s ease,
-          outline 0.2s ease;
-      }
-
-      :root[data-theme="dark"] .search-highlight-match {
-        background: rgba(245, 158, 11, 0.18) !important;
-        outline: 2px solid #d97706 !important;
-      }
-
-      .search-dimmed {
-        opacity: 0.3 !important;
-        filter: grayscale(0.5);
-        transition: opacity 0.2s ease;
-      }
-
       .form-sticky-bar .status {
         margin: 0;
         flex: 1 1 auto;
@@ -675,23 +602,16 @@
         line-height: 1.35;
       }
 
-      .field-heading {
-        position: relative;
-        min-height: 18px;
-        padding-right: 40px;
-        margin-bottom: 8px;
+      .field-control-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
       }
 
-      .field-heading label {
-        margin: 0;
-        line-height: 18px;
-      }
-
-      .field-heading .btn-sync {
-        position: absolute;
-        top: 50%;
-        right: 0;
-        transform: translateY(-50%);
+      .field-control-row select {
+        flex: 1;
+        min-width: 0;
       }
 
       .field input {
@@ -1177,39 +1097,66 @@
       }
 
       .btn-sync {
-        display: grid;
-        place-items: center;
-        width: 32px;
-        height: 32px;
-        border-radius: 8px;
-        padding: 0;
-        color: var(--muted);
-        background: transparent;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        height: 46px;
+        padding: 0 16px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text);
+        background: var(--panel);
         white-space: nowrap;
-        box-shadow: none;
+        flex-shrink: 0;
+        cursor: pointer;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
         transition:
           color 140ms ease,
           background-color 140ms ease,
+          border-color 140ms ease,
+          box-shadow 140ms ease,
           transform 140ms ease;
       }
 
-      .btn-sync:active:not(:disabled) {
-        transform: scale(0.92);
-      }
-
-      .btn-sync svg {
-        display: block;
-        width: 17px;
-        height: 17px;
-      }
-
       .btn-sync:hover:not(:disabled) {
-        color: var(--primary-strong);
+        color: var(--primary);
         background: #eff6ff;
+        border-color: #93c5fd;
+        box-shadow: 0 2px 6px rgba(37, 99, 235, 0.12);
+      }
+
+      .btn-sync:active:not(:disabled) {
+        transform: scale(0.97);
+      }
+
+      :root[data-theme="dark"] .btn-sync {
+        background: #1e293b;
+        border-color: #334155;
+        color: #f1f5f9;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
       }
 
       :root[data-theme="dark"] .btn-sync:hover:not(:disabled) {
         background: #1e3a5f;
+        border-color: #60a5fa;
+        color: #93c5fd;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      }
+
+      .btn-sync svg {
+        display: block;
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+      }
+
+      .btn-sync.is-loading {
+        opacity: 0.75;
+        cursor: wait;
       }
 
       .btn-sync.is-loading svg {
@@ -1218,10 +1165,36 @@
 
       .btn-sync.is-success {
         color: var(--success-text);
+        border-color: #86efac;
+        background: #f0fdf4;
+      }
+
+      :root[data-theme="dark"] .btn-sync.is-success {
+        color: #4ade80;
+        border-color: #166534;
+        background: rgba(22, 101, 52, 0.2);
       }
 
       .btn-sync.is-error {
         color: var(--danger-text);
+        border-color: #fca5a5;
+        background: #fef2f2;
+      }
+
+      :root[data-theme="dark"] .btn-sync.is-error {
+        color: #f87171;
+        border-color: #991b1b;
+        background: rgba(153, 27, 27, 0.2);
+      }
+
+      @media (max-width: 480px) {
+        .btn-sync span {
+          display: none;
+        }
+        .btn-sync {
+          padding: 0;
+          width: 46px;
+        }
       }
 
       @keyframes options-reload-spin {
@@ -1499,28 +1472,6 @@
           <span>❓</span>
           <span data-i18n="options_onboarding_help_btn">Hướng dẫn</span>
         </button>
-        <div class="options-search-wrap">
-          <span class="options-search-icon">🔍</span>
-          <input
-            type="search"
-            id="optionsSearchInput"
-            class="options-search-input"
-            placeholder="Tìm cài đặt nhanh…"
-            data-i18n-placeholder="options_search_placeholder"
-            autocomplete="off"
-            aria-label="Tìm kiếm cài đặt"
-          />
-          <button
-            type="button"
-            id="clearSearchBtn"
-            class="options-search-clear"
-            title="Xóa tìm kiếm (Esc)"
-            data-i18n-title="options_search_clear_title"
-            hidden
-          >
-            ✕
-          </button>
-        </div>
         <div class="options-top-bar__prefs">
           <div class="pref-field">
             <label for="languagePreference" data-i18n="options_language_label">Language</label>
@@ -1715,12 +1666,17 @@
                 </div>
 
                 <div class="field" style="margin-bottom: 12px">
-                  <div class="field-heading">
-                    <label for="defaultProjectId">
-                      <span data-i18n="options_default_project"
-                        >Dự án Redmine (di chuyển issue và báo cáo tháng)</span
-                      >
-                    </label>
+                  <label for="defaultProjectId" style="margin-bottom: 8px; display: block">
+                    <span data-i18n="options_default_project"
+                      >Dự án Redmine (di chuyển issue và báo cáo tháng)</span
+                    >
+                  </label>
+                  <div class="field-control-row">
+                    <select id="defaultProjectId">
+                      <option value="" data-i18n="options_save_api_first">
+                        -- Trước tiên cần lưu API Key --
+                      </option>
+                    </select>
                     <button
                       type="button"
                       id="syncProjectsBtn"
@@ -1739,24 +1695,9 @@
                           stroke-linejoin="round"
                         />
                       </svg>
+                      <span data-i18n="options_sync_projects">Tải lại dự án</span>
                     </button>
                   </div>
-                  <select
-                    id="defaultProjectId"
-                    style="
-                      width: 100%;
-                      box-sizing: border-box;
-                      border: 1px solid var(--border);
-                      border-radius: 12px;
-                      padding: 12px 14px;
-                      font: inherit;
-                      background: white;
-                    "
-                  >
-                    <option value="" data-i18n="options_save_api_first">
-                      -- Trước tiên cần lưu API Key --
-                    </option>
-                  </select>
                 </div>
 
                 <!-- Cáº¥u hÃ¬nh Custom Fields (JSON Mapping) -->
@@ -2025,9 +1966,19 @@
                 </div>
 
                 <div
+                  class="field check-field"
+                  style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border)"
+                >
+                  <input type="checkbox" id="enableTranslationCache" checked />
+                  <label for="enableTranslationCache" data-i18n="options_translation_cache_label"
+                    >Bật bộ nhớ đệm bản dịch (0ms, tiết kiệm quota API)</label
+                  >
+                </div>
+
+                <div
                   class="field"
                   style="
-                    margin-top: 6px;
+                    margin-top: 8px;
                     display: flex;
                     align-items: center;
                     gap: 10px;
@@ -2042,57 +1993,20 @@
                   >
                     Kiểm tra kết nối AI
                   </button>
+                  <button
+                    id="clearTranslationCacheBtn"
+                    type="button"
+                    class="secondary"
+                    data-i18n="options_clear_translation_cache"
+                  >
+                    Xóa bộ nhớ đệm dịch
+                  </button>
                   <span
                     id="primaryAiTabStatus"
                     class="status"
                     role="status"
                     aria-live="polite"
                   ></span>
-                </div>
-
-                <div
-                  class="field"
-                  style="
-                    margin-top: 10px;
-                    padding-top: 10px;
-                    border-top: 1px dashed var(--border);
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    flex-wrap: wrap;
-                    gap: 10px;
-                  "
-                >
-                  <label
-                    style="
-                      display: inline-flex;
-                      align-items: center;
-                      gap: 8px;
-                      margin: 0;
-                      font-size: 13px;
-                      font-weight: 500;
-                      cursor: pointer;
-                    "
-                  >
-                    <input
-                      type="checkbox"
-                      id="enableTranslationCache"
-                      checked
-                      style="width: auto; height: auto; margin: 0"
-                    />
-                    <span data-i18n="options_translation_cache_label"
-                      >Bật bộ nhớ đệm bản dịch (0ms, tiết kiệm quota API)</span
-                    >
-                  </label>
-                  <button
-                    id="clearTranslationCacheBtn"
-                    type="button"
-                    class="secondary"
-                    style="font-size: 11px; padding: 6px 12px"
-                    data-i18n="options_clear_translation_cache"
-                  >
-                    Xóa bộ nhớ đệm dịch
-                  </button>
                 </div>
               </div>
             </details>
@@ -2542,7 +2456,10 @@
                         >
                         <select id="logTime_testingActivityId"></select>
                       </div>
-                      <div class="field">
+                      <div
+                        class="field"
+                        style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap"
+                      >
                         <button
                           id="loadLogTimeActivities"
                           type="button"
@@ -2551,8 +2468,8 @@
                         >
                           Load Redmine activities
                         </button>
+                        <span id="logTimeStatus" class="status" aria-live="polite"></span>
                       </div>
-                      <p id="logTimeStatus" class="status" aria-live="polite"></p>
                     </div>
                   </div>
                 </details>
@@ -2854,7 +2771,10 @@
                   >
                   <input id="mappingDestination" inputmode="numeric" />
                 </div>
-                <div class="field">
+                <div
+                  class="field"
+                  style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap"
+                >
                   <button
                     id="saveIssueMapping"
                     type="button"
@@ -2863,8 +2783,8 @@
                   >
                     Save mapping
                   </button>
+                  <span id="syncRecoveryStatus" class="status" aria-live="polite"></span>
                 </div>
-                <p id="syncRecoveryStatus" class="status" aria-live="polite"></p>
               </div>
             </details>
 

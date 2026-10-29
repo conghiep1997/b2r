@@ -4,6 +4,17 @@ Tất cả các thay đổi đáng chú ý của dự án Backlog2Redmine (B2R) 
 Định dạng dựa trên [Keep a Changelog](https://keepachangelog.com/).
 (Bản tiếng Anh chính thức: [CHANGELOG.md](./CHANGELOG.md))
 
+## [1.8.23] - 2026-10-29
+- **✨ Thêm mới**: Hiển thị badge danh tính người dùng (`#tb-monthly-log-user`) trong modal Log time tháng Redmine qua `getCurrentUser()`, bao gồm tên, username và tooltip email.
+- **✨ Thêm mới**: Định dạng ngày tháng kèm thứ theo ngôn ngữ (`(T2)`-`(CN)` cho tiếng Việt, `(Mon)`-`(Sun)` cho tiếng Anh) và làm nổi bật/làm mờ ngày cuối tuần (`.tb-row-weekend` / `.tb-cell-weekend`) trong bảng preview, kết quả và modal xác nhận log time đơn lẻ.
+- **✨ Thêm mới**: Bắt buộc lịch và bộ chọn tháng của trình duyệt hiển thị đúng ngôn ngữ extension thông qua thuộc tính `lang="${currentLanguage}"`, khắc phục tình trạng thừa hưởng ngôn ngữ tiếng Nhật của trang Redmine gốc.
+- **🔧 Sửa lỗi**: Khắc phục triệt để lỗi ký tự tiếng Việt bị lỗi font (`Sẵn sàng`, `⚠️ Trùng`, `Đã đủ`, `⚠️ Lỗi`, v.v.) trong các trạng thái log time tháng và bổ sung bài kiểm thử tự động ngăn ngừa lỗi mã hóa ký tự.
+- **🔧 Sửa lỗi**: Khắc phục lỗi rớt chữ đơn lẻ (`日`) ở cột Report trong bảng log time tháng bằng cách mở rộng cột lên 230px và áp dụng `word-break: keep-all; overflow-wrap: break-word`.
+- **🔧 Sửa lỗi**: Thiết kế lại nút tải lại danh sách dự án Redmine (`#syncProjectsBtn`) nằm chung hàng chuẩn 46px với dropdown chọn dự án, bổ sung icon SVG, nhãn văn bản, hiệu ứng xoay loading và hỗ trợ Dark Mode.
+- **🔧 Sửa lỗi**: Chuẩn hóa các nút thao tác và badge trạng thái trên cùng 1 dòng xuyên suốt trang Options (cụm nút AI và xóa cache bản dịch, tải Redmine activities, lưu mapping khôi phục) với kích thước và chiều cao đồng nhất.
+- **🔧 Sửa lỗi**: Tối giản hóa header trang Options bằng cách gỡ bỏ hoàn toàn thanh tìm kiếm không cần thiết và các chuỗi i18n dư thừa, mang lại giao diện thoáng sạch.
+- **📝 Tài liệu**: Bổ sung unit test kiểm tra định dạng thứ/ngày, phát hiện cuối tuần và tính toàn vẹn ký tự tiếng Việt (184 unit tests đều vượt qua).
+
 ## [1.8.22] - 2026-10-28
 - **✨ Thêm mới**: Hàng đợi ngoại tuyến & tự động thử lại (`retryQueue` / `tb_retry_queue`) tự động lưu lại các bình luận và tác vụ di chuyển thất bại khi mất mạng, lắng nghe sự kiện `online` để tự động gửi lại khi có kết nối mạng, cùng giao diện quản lý queue trong tab Nâng cao của trang Options (xem danh sách chờ, thử lại thủ công, xóa hàng đợi).
 - **✨ Thêm mới**: Kiểm tra kết nối trực tiếp cho Backlog và nhà cung cấp AI chính ngay trong trang Cài đặt, hiển thị kết quả xác thực inline và tự động kiểm tra khi lưu thông tin đăng nhập; thanh Lưu (Save) dạng nổi cố định với hiệu ứng vi mô (đang lưu, đã lưu) và phím tắt `Ctrl+S` / `Cmd+S`.
