@@ -108,12 +108,12 @@ function createModernButton(text, onClick, options = {}) {
     height: height,
     display: "inline-flex",
     alignItems: "center",
-    background: "linear-gradient(135deg, #3b82f6, #06b6d4)",
+    background: "#3e5ba3",
     border: "none",
     borderRadius: "20px",
     cursor: "pointer",
-    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-    boxShadow: "0 2px 6px rgba(59, 130, 246, 0.15)",
+    transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+    boxShadow: "0 2px 6px rgba(62, 91, 163, 0.18)",
     overflow: "hidden",
   });
 
@@ -127,12 +127,12 @@ function createModernButton(text, onClick, options = {}) {
     display: "flex",
     alignItems: "center",
     padding: "0 12px",
-    transition: "background-color 0.3s ease",
+    transition: "background-color 0.25s ease",
   });
 
   innerWrap.innerHTML = `
     <span style="display:flex; align-items:center;">${REDMINE_ICON}</span>
-    <span class="tb-btn-text" style="margin-left:8px; font-weight:700; color:#1d4ed8; white-space:nowrap; font-size:${fontSize}; letter-spacing:0.2px;">${text}</span>
+    <span class="tb-btn-text" style="margin-left:8px; font-weight:700; color:#3e5ba3; white-space:nowrap; font-size:${fontSize}; letter-spacing:0.2px;">${text}</span>
   `;
 
   button.appendChild(innerWrap);
@@ -140,16 +140,16 @@ function createModernButton(text, onClick, options = {}) {
 
   button.onmouseover = () => {
     button.style.transform = "translateY(-1px)";
-    button.style.boxShadow = "0 4px 12px rgba(59, 130, 246, 0.3)";
+    button.style.boxShadow = "0 4px 12px rgba(62, 91, 163, 0.28)";
     innerWrap.style.backgroundColor = "transparent";
     textSpan.style.color = "#ffffff";
   };
 
   button.onmouseout = () => {
     button.style.transform = "translateY(0)";
-    button.style.boxShadow = "0 2px 6px rgba(59, 130, 246, 0.15)";
+    button.style.boxShadow = "0 2px 6px rgba(62, 91, 163, 0.18)";
     innerWrap.style.backgroundColor = "#ffffff";
-    textSpan.style.color = "#1d4ed8";
+    textSpan.style.color = "#3e5ba3";
   };
 
   button.onclick = (e) => {
@@ -341,7 +341,13 @@ async function handleTranslateAndOpenModal(actionsEl, button) {
 
 async function translateCommentBatch(commentsList) {
   const results = [];
+  const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
   for (let i = 0; i < commentsList.length; i += TRANSLATE_BATCH_SIZE) {
+    if (i > 0) {
+      // Nhẹ nhàng giãn cách nhịp gọi giữa các batch để tránh burst rate limit (429)
+      await delay(250);
+    }
     const batch = commentsList.slice(i, i + TRANSLATE_BATCH_SIZE);
     const batchResults = await Promise.all(
       batch.map(async (c) => {
@@ -842,9 +848,9 @@ function setButtonLoading(btn, isLoading) {
     const textSpanEl = btn.querySelector(".tb-btn-text");
     if (innerWrapEl && textSpanEl) {
       btn.style.transform = "translateY(0)";
-      btn.style.boxShadow = "0 2px 6px rgba(59, 130, 246, 0.15)";
+      btn.style.boxShadow = "0 2px 6px rgba(62, 91, 163, 0.18)";
       innerWrapEl.style.backgroundColor = "#ffffff";
-      textSpanEl.style.color = "#1d4ed8";
+      textSpanEl.style.color = "#3e5ba3";
     }
   }
 }

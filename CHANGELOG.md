@@ -1,5 +1,14 @@
 # Changelog - Backlog2Redmine
 
+## [1.8.24] - 2026-10-30
+- **✨ Added**: Editable task hours, month navigation, and live daily/monthly totals in the Redmine monthly Log Time preview.
+- **✨ Added**: Tiered Gemini model selection that prioritizes higher-quota Flash Lite models and supports daily quota cooldowns; provider errors now honor `Retry-After` where available.
+- **✨ Added**: Richer Markdown rendering and formatting support for translated comments.
+- **🔧 Fixed**: Reduced bursts of translation requests by adding a short pause between comment batches; retired Gemini models are excluded from fallback selection.
+- **🔧 Improved**: Refreshed provider/model settings and monthly Log Time interface with localized controls and clearer status feedback.
+- **📝 Docs**:
+
+
 ## [1.8.23] - 2026-10-29
 - **✨ Added**: Display current logged-in user identity badge (`#tb-monthly-log-user`) in Redmine Monthly Log Time modal via `getCurrentUser()` with login/name and email tooltip.
 - **✨ Added**: Localized date formatting with day-of-week tags (`(T2)`-`(CN)` in VI, `(Mon)`-`(Sun)` in EN) and weekend row highlight (`.tb-row-weekend` / `.tb-cell-weekend`) in preview, result, and single-report sync tables.

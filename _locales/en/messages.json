@@ -717,6 +717,15 @@
   "report_log_time_month": {
     "message": "Log time this month"
   },
+  "report_this_month": {
+    "message": "This Month"
+  },
+  "report_prev_month": {
+    "message": "Previous Month"
+  },
+  "report_next_month": {
+    "message": "Next Month"
+  },
   "report_ready_to_scan": {
     "message": "Ready to scan this month's reports."
   },
@@ -2114,6 +2123,9 @@
   },
   "report_total_label": {
     "message": "Total:"
+  },
+  "report_edit_hours_tooltip": {
+    "message": "Edit logged hours for this task"
   },
   "report_badge_error": {
     "message": "⚠️ Error"

@@ -120,13 +120,17 @@ async function executeReportTimeSync(
     ) {
       throw new Error("Redmine returned time entries outside the current user and report date.");
     }
+    const candidateTasks =
+      expectedPreview?.tasks?.length === tasks.length
+        ? tasks.map((t, idx) => ({ ...t, ...(expectedPreview.tasks[idx] || {}) }))
+        : tasks;
     const preview = planReportSync(
       {
         date: effectiveSpentOn,
         redmineDomain,
         reportIssueId: String(reportIssueId),
         userId: String(currentUser.id),
-        tasks,
+        tasks: candidateTasks,
         entries: existingDailyEntries,
         existingEntriesSnapshot: snapshotTimeEntries(existingDailyEntries),
       },
@@ -575,7 +579,18 @@ function planReportSync(preview, selectedEntryIds = [], rules = {}) {
     logTimeRules.allocation === "estimate"
       ? preview.tasks.map((task) => task.estimatedHours)
       : preview.tasks.map(() => 1);
-  const hours = preview.tasks.length ? globalThis.TB_LOG_TIME_RULES.allocate(budget, weights) : [];
+  const hasCustomHours = preview.tasks.some(
+    (task) => task.customHours !== undefined && Number.isFinite(Number(task.customHours))
+  );
+  const hours = hasCustomHours
+    ? preview.tasks.map((task) =>
+        task.customHours !== undefined && Number.isFinite(Number(task.customHours))
+          ? Math.max(0, Math.round(Number(task.customHours) * 100) / 100)
+          : 0
+      )
+    : preview.tasks.length
+      ? globalThis.TB_LOG_TIME_RULES.allocate(budget, weights)
+      : [];
   const available = [...managed];
   const operations = [];
   const tasks = preview.tasks.map((task, index) => {
@@ -598,7 +613,12 @@ function planReportSync(preview, selectedEntryIds = [], rules = {}) {
         });
       }
     } else if (entry) available.push(entry);
-    return { ...task, hours: hours[index], alreadyLogged: false };
+    return {
+      ...task,
+      hours: hours[index],
+      customHours: task.customHours !== undefined ? hours[index] : undefined,
+      alreadyLogged: false,
+    };
   });
   // An empty/unparsed report must never erase a day's entries.
   if (tasks.length) {

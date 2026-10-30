@@ -790,6 +790,15 @@
   "report_log_time_month": {
     "message": "Log time tháng"
   },
+  "report_this_month": {
+    "message": "Tháng này"
+  },
+  "report_prev_month": {
+    "message": "Tháng trước"
+  },
+  "report_next_month": {
+    "message": "Tháng sau"
+  },
   "report_ready_to_scan": {
     "message": "Sẵn sàng quét các report trong tháng hiện tại."
   },
@@ -2114,6 +2123,9 @@
   },
   "report_total_label": {
     "message": "Tổng:"
+  },
+  "report_edit_hours_tooltip": {
+    "message": "Sửa số giờ log cho task này"
   },
   "report_badge_error": {
     "message": "⚠️ Lỗi"

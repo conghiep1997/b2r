@@ -280,3 +280,74 @@ test("AI status reporter targets only the requesting tab and frame", async () =>
     ]
   );
 });
+
+test("Gemini tiered routing prioritizes Flash Lite (Tier 1) over Standard Flash (Tier 2)", async () => {
+  const context = vm.createContext({
+    console: { log() {}, warn() {}, error() {} },
+    TB: {
+      PROVIDERS: { GEMINI: "gemini" },
+      GEMINI_MODELS: [
+        { value: "gemini-3.5-flash-lite", tier: 1 },
+        { value: "gemini-3.5-flash", tier: 2 },
+      ],
+    },
+  });
+  vm.runInContext(source, context);
+
+  const calledModels = [];
+  context.callGeminiAPI = async (_key, _text, model) => {
+    calledModels.push(model);
+    return "translated";
+  };
+
+  const settings = {
+    geminiModels: ["gemini-3.5-flash-lite", "gemini-3.5-flash"],
+    geminiApiKeys: ["demo-key"],
+  };
+
+  // Repeated calls should stay within Tier 1 (Flash Lite) and never touch Tier 2
+  await context.callAIsByProvider(
+    "gemini",
+    "gemini-3.5-flash-lite",
+    settings,
+    "hello",
+    null,
+    () => "p"
+  );
+  await context.callAIsByProvider(
+    "gemini",
+    "gemini-3.5-flash-lite",
+    settings,
+    "world",
+    null,
+    () => "p"
+  );
+
+  assert.deepEqual(calledModels, ["gemini-3.5-flash-lite", "gemini-3.5-flash-lite"]);
+});
+
+test("Gemini daily quota exhaustion triggers long daily cooldown", () => {
+  const context = vm.createContext({
+    console: { log() {}, warn() {}, error() {} },
+    TB: {
+      PROVIDERS: { GEMINI: "gemini" },
+      GEMINI_MODELS: [{ value: "gemini-3.5-flash-lite", tier: 1 }],
+    },
+  });
+  vm.runInContext(`${source}\nthis.getCooldown = getGeminiCooldownDuration;`, context);
+
+  const dailyError = new Error(
+    "Quota exceeded for quota metric 'Requests' and limit 'Requests per day' of service 'generativelanguage.googleapis.com'"
+  );
+  dailyError.status = 429;
+
+  const cooldownMs = context.getCooldown(dailyError);
+  // Cooldown must be at least 4 hours (14,400,000 ms) instead of the 60s RPM cooldown
+  assert.ok(cooldownMs >= 4 * 60 * 60 * 1000);
+
+  const rpmError = new Error("Resource exhausted: Requests per minute exceeded");
+  rpmError.status = 429;
+  const rpmCooldownMs = context.getCooldown(rpmError);
+  // RPM cooldown must be 60 seconds (60,000 ms)
+  assert.equal(rpmCooldownMs, 60 * 1000);
+});

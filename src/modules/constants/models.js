@@ -6,35 +6,28 @@
     {
       value: "gemini-3.1-flash-lite",
       label: "Gemini 3.1 Flash Lite",
+      badge: "500 RPD",
+      tier: 1,
+      default: true,
+    },
+    {
+      value: "gemini-3.5-flash-lite",
+      label: "Gemini 3.5 Flash Lite",
+      badge: "500 RPD",
+      tier: 1,
       default: true,
     },
     {
       value: "gemini-3.5-flash",
       label: "Gemini 3.5 Flash",
+      badge: "20 RPD",
+      tier: 2,
     },
     {
-      value: "gemini-3.5-flash-lite",
-      label: "Gemini 3.5 Flash Lite",
-    },
-    {
-      value: "gemini-2.5-flash-lite",
-      label: "Gemini 2.5 Flash Lite",
-    },
-    {
-      value: "gemini-2.5-flash",
-      label: "Gemini 2.5 Flash",
-    },
-    {
-      value: "gemini-2.5-pro",
-      label: "Gemini 2.5 Pro",
-    },
-    {
-      value: "gemma-4-31b-it",
-      label: "Gemma 4 31B IT",
-    },
-    {
-      value: "gemma-4-26b-a4b-it",
-      label: "Gemma 4 26B A4B IT",
+      value: "gemini-3.8-flash",
+      label: "Gemini 3.8 Flash",
+      badge: "20 RPD",
+      tier: 2,
     },
   ];
 
@@ -90,7 +83,7 @@
     GROQ_MODELS,
     OPENROUTER_MODELS,
     GEMINI: "gemini-3.1-flash-lite",
-    GEMINI_FALLBACK: "gemma-4-31b-it",
+    GEMINI_FALLBACK: "gemini-3.5-flash-lite",
     CEREBRAS: "gpt-oss-120b",
     GROQ: "llama-3.3-70b-versatile",
     OPENROUTER: "openrouter/free",

@@ -13,7 +13,7 @@ description: Guidance for Backlog2Redmine popup and Options UI, injected Backlog
 
 ## Rules
 - Keep DOM injection scoped to matched pages and stable selectors.
-- Use existing UI helpers in `src/modules/ui/` before adding new patterns.
+- Centralize reusable UI components in `src/modules/ui/`: reuse existing helpers for routine updates, or modernize and evolve them directly when introducing new design systems or redesigns.
 - Keep options UI settings aligned with encrypted storage keys and background `getSettings`.
 - Avoid API/user/page data in `innerHTML`; sanitize, use `textContent`, `new Option`, or DOM nodes.
 - Keep markdown preview links limited to safe protocols.

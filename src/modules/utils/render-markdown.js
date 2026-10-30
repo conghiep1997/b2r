@@ -341,6 +341,15 @@ function renderTextileHtml(textile) {
   text = text.replace(/<mark>([\s\S]*?)<\/mark>/gi, (_m, body) =>
     protect(`<mark>${escapeHtml(body)}</mark>`)
   );
+  text = text.replace(/<kbd>([\s\S]*?)<\/kbd>/gi, (_m, body) =>
+    protect(`<kbd>${escapeHtml(body)}</kbd>`)
+  );
+  text = text.replace(/<sup>([\s\S]*?)<\/sup>/gi, (_m, body) =>
+    protect(`<sup>${escapeHtml(body)}</sup>`)
+  );
+  text = text.replace(/<sub>([\s\S]*?)<\/sub>/gi, (_m, body) =>
+    protect(`<sub>${escapeHtml(body)}</sub>`)
+  );
   text = text.replace(/<span\s+style="([^"]*)">([\s\S]*?)<\/span>/gi, (_m, style, body) => {
     const safeStyle = String(style).replace(/[<>'"`]/g, "");
     return protect(`<span style="${escapeHtml(safeStyle)}">${escapeHtml(body)}</span>`);

@@ -110,3 +110,23 @@ test("legacy activity lookup never falls back to project-specific IDs", () => {
     /unavailable/
   );
 });
+
+test("planReportSync honors custom task hours override instead of auto-allocating", () => {
+  const { context } = setup();
+  const preview = {
+    date: "2026-10-02",
+    entries: [],
+    tasks: [
+      { id: "1", customHours: 5, activityId: 42 },
+      { id: "2", customHours: 3, activityId: 42 },
+    ],
+  };
+  const planned = context.planReportSync(preview, [], { dailyHours: 8 });
+  assert.equal(planned.tasks[0].hours, 5);
+  assert.equal(planned.tasks[1].hours, 3);
+  assert.equal(planned.operations.length, 2);
+  const op1 = planned.operations.find((op) => op.taskId === "1");
+  const op2 = planned.operations.find((op) => op.taskId === "2");
+  assert.equal(op1.hours, 5);
+  assert.equal(op2.hours, 3);
+});

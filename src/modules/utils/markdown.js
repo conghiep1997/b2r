@@ -170,6 +170,36 @@ function extractBacklogContent(element) {
         return;
       }
 
+      // Keyboard key: <kbd> -> <kbd>Key</kbd>
+      if (tag === "kbd") {
+        result += "<kbd>";
+        for (const child of node.childNodes) {
+          walk(child, options);
+        }
+        result += "</kbd>";
+        return;
+      }
+
+      // Superscript: <sup> -> <sup>text</sup>
+      if (tag === "sup") {
+        result += "<sup>";
+        for (const child of node.childNodes) {
+          walk(child, options);
+        }
+        result += "</sup>";
+        return;
+      }
+
+      // Subscript: <sub> -> <sub>text</sub>
+      if (tag === "sub") {
+        result += "<sub>";
+        for (const child of node.childNodes) {
+          walk(child, options);
+        }
+        result += "</sub>";
+        return;
+      }
+
       // Colored / highlighted text from Backlog (&color(...), mark)
       if (tag === "mark") {
         result += "<mark>";
@@ -320,7 +350,7 @@ function extractBacklogContent(element) {
         return;
       }
 
-      // Blockquotes: <blockquote> -> > text
+      // Blockquotes: <blockquote> -> > text (supports nested blockquotes)
       if (tag === "blockquote") {
         if (result.length > 0 && !result.endsWith("\n")) {
           result += "\n";
@@ -335,9 +365,45 @@ function extractBacklogContent(element) {
           quoteText
             .trimEnd()
             .split("\n")
-            .map((line) => "> " + line.trimStart())
+            .map((line) => {
+              if (line.startsWith(">")) {
+                return ">" + line;
+              }
+              return "> " + line.trimStart();
+            })
             .join("\n");
         result += "\n\n";
+        return;
+      }
+
+      // Details / Collapsible sections: <details> -> {{collapse(summary)\nbody\n}}
+      if (tag === "details") {
+        if (result.length > 0 && !result.endsWith("\n")) {
+          result += "\n";
+        }
+        const summaryEl = Array.from(node.childNodes || []).find(
+          (c) => c.nodeType === Node.ELEMENT_NODE && c.tagName.toLowerCase() === "summary"
+        );
+        let summaryText = "";
+        if (summaryEl) {
+          const summaryStart = result.length;
+          for (const sChild of summaryEl.childNodes) {
+            walk(sChild, options);
+          }
+          summaryText = result.slice(summaryStart).trim();
+          result = result.slice(0, summaryStart);
+        }
+
+        const bodyStart = result.length;
+        for (const child of node.childNodes) {
+          if (child === summaryEl) continue;
+          walk(child, options);
+        }
+        const bodyText = result.slice(bodyStart).trim();
+        result = result.slice(0, bodyStart);
+
+        const collapseTitle = summaryText || "Chi tiết";
+        result += `{{collapse(${collapseTitle})\n${bodyText}\n}}\n\n`;
         return;
       }
 
@@ -369,31 +435,46 @@ function extractBacklogContent(element) {
           listInfo.counter++;
           result += `${indent}${listInfo.counter}. `;
         } else if (checkbox) {
-          result += `${indent}* [${checkbox.checked ? "x" : " "}] `;
+          result += `${indent}* [${isTaskItemChecked(node, checkbox) ? "x" : " "}] `;
         } else {
           result += `${indent}* `;
         }
 
         let skipLeadingWhitespace = Boolean(checkbox);
-        for (const child of node.childNodes) {
+        const walkListItemChild = (child) => {
           if (
             child.nodeType === Node.ELEMENT_NODE &&
             child.tagName.toLowerCase() === "input" &&
-            child.getAttribute("type") === "checkbox"
+            (child.getAttribute("type") || "").toLowerCase() === "checkbox"
           ) {
-            continue;
+            return;
+          }
+          if (
+            child.nodeType === Node.ELEMENT_NODE &&
+            child.tagName.toLowerCase() === "label" &&
+            checkbox &&
+            Array.from(child.childNodes || []).includes(checkbox)
+          ) {
+            for (const labelChild of child.childNodes) {
+              walkListItemChild(labelChild);
+            }
+            return;
           }
           if (skipLeadingWhitespace && child.nodeType === Node.TEXT_NODE) {
             const trimmed = child.textContent.replace(/^\s+/, "");
             if (!trimmed) {
-              continue;
+              return;
             }
             skipLeadingWhitespace = false;
             result += trimmed;
-            continue;
+            return;
           }
           skipLeadingWhitespace = false;
           walk(child, options);
+        };
+
+        for (const child of node.childNodes) {
+          walkListItemChild(child);
         }
         return;
       }
@@ -430,7 +511,7 @@ function extractBacklogContent(element) {
         return;
       }
 
-      // Table rows: <tr> -> extract cells
+      // Table rows: <tr> -> extract cells (recursively walk cell contents to preserve formatting)
       if (tag === "tr") {
         const currentRow = [];
         for (const child of node.childNodes) {
@@ -438,8 +519,16 @@ function extractBacklogContent(element) {
             child.nodeType === Node.ELEMENT_NODE &&
             ["td", "th"].includes(child.tagName.toLowerCase())
           ) {
-            const cellText = child.textContent.trim().replace(/\n/g, " ");
-            currentRow.push(cellText);
+            const cellStart = result.length;
+            for (const cellChild of child.childNodes) {
+              walk(cellChild, options);
+            }
+            const cellContent = result
+              .slice(cellStart)
+              .trim()
+              .replace(/\r?\n+/g, " ");
+            result = result.slice(0, cellStart);
+            currentRow.push(cellContent);
           }
         }
         if (currentRow.length > 0) {
@@ -531,21 +620,51 @@ function extractCssColor(style, property) {
 }
 
 /**
- * Find a direct-child checkbox inside a list item (task list).
+ * Find a task-list checkbox inside a list item (direct child or inside direct <label>).
  * @param {Element} listItem
  * @returns {HTMLInputElement|null}
  */
 function findDirectCheckbox(listItem) {
   for (const child of listItem.childNodes) {
-    if (
-      child.nodeType === Node.ELEMENT_NODE &&
-      child.tagName.toLowerCase() === "input" &&
-      (child.getAttribute("type") || "").toLowerCase() === "checkbox"
-    ) {
+    if (child.nodeType !== Node.ELEMENT_NODE) {
+      continue;
+    }
+    const tag = child.tagName.toLowerCase();
+    if (tag === "input" && (child.getAttribute("type") || "").toLowerCase() === "checkbox") {
       return child;
+    }
+    if (tag === "label") {
+      for (const labelChild of child.childNodes || []) {
+        if (
+          labelChild.nodeType === Node.ELEMENT_NODE &&
+          labelChild.tagName.toLowerCase() === "input" &&
+          (labelChild.getAttribute("type") || "").toLowerCase() === "checkbox"
+        ) {
+          return labelChild;
+        }
+      }
     }
   }
   return null;
+}
+
+/**
+ * Determine whether a task-list checkbox is checked.
+ * @param {Element} listItem
+ * @param {HTMLInputElement|null} checkbox
+ * @returns {boolean}
+ */
+function isTaskItemChecked(listItem, checkbox) {
+  if (!checkbox) {
+    return false;
+  }
+  if (listItem?.classList?.contains("checklist-checked")) {
+    return true;
+  }
+  if (typeof checkbox.checked === "boolean") {
+    return checkbox.checked;
+  }
+  return checkbox.getAttribute?.("checked") !== null;
 }
 
 /**
@@ -558,42 +677,88 @@ function findDirectCheckbox(listItem) {
  */
 const KNOWN_HTML_TAGS = new Set([
   "a",
+  "abbr",
+  "article",
+  "aside",
+  "audio",
   "b",
   "blockquote",
   "br",
+  "button",
+  "caption",
+  "cite",
   "code",
+  "col",
+  "colgroup",
+  "dd",
   "del",
+  "details",
+  "dfn",
   "div",
+  "dl",
+  "dt",
   "em",
+  "fieldset",
+  "figcaption",
+  "figure",
+  "footer",
   "font",
+  "form",
   "h1",
   "h2",
   "h3",
   "h4",
   "h5",
   "h6",
+  "header",
   "hr",
   "i",
   "img",
   "input",
   "ins",
+  "kbd",
+  "label",
+  "legend",
   "li",
+  "main",
   "mark",
+  "nav",
   "ol",
+  "option",
   "p",
+  "picture",
   "pre",
+  "q",
+  "rp",
+  "rt",
+  "ruby",
   "s",
+  "samp",
+  "section",
+  "select",
+  "small",
+  "source",
   "span",
   "strike",
   "strong",
+  "sub",
+  "summary",
+  "sup",
+  "svg",
   "table",
   "tbody",
   "td",
+  "textarea",
+  "tfoot",
   "th",
   "thead",
+  "time",
   "tr",
   "u",
   "ul",
+  "var",
+  "video",
+  "wbr",
 ]);
 
 function isKnownHtmlTag(tag) {
@@ -629,7 +794,9 @@ function escapeNonAllowlistedAngleBrackets(text) {
   // Keep entire pre/code blocks (body may contain &lt; breakout guards)
   result = result.replace(/<pre\b[^>]*>[\s\S]*?<\/pre>/gi, (m) => protect(m));
   result = result.replace(/<code\b[^>]*>[\s\S]*?<\/code>/gi, (m) => protect(m));
-  result = result.replace(/<\/?(?:u|ins|mark|span|notextile)(\s[^>]*)?>/gi, (m) => protect(m));
+  result = result.replace(/<\/?(?:u|ins|mark|span|notextile|kbd|sup|sub)(\s[^>]*)?>/gi, (m) =>
+    protect(m)
+  );
   result = result.replace(/</g, "&#60;").replace(/>/g, "&#62;");
 
   for (let i = protections.length - 1; i >= 0; i--) {
@@ -659,6 +826,9 @@ function markdownToTextile(markdown) {
         : String(markdown);
 
   // Protect Textile attachments / markers that must stay untouched
+  text = text.replace(/\{\{collapse\(([^)]*)\)\n?([\s\S]*?)\}\}/gi, (_m, title, body) =>
+    protect(`{{collapse(${title})\n${body.trim()}\n}}`)
+  );
   text = text.replace(/!([^!\s\n]+)!/g, (m) => protect(m));
   text = text.replace(/attachment:[^\s]+/gi, (m) => protect(m));
   text = text.replace(/\{\{video\([^)]+\)\}\}/gi, (m) => protect(m));

@@ -267,7 +267,7 @@ function ensureModalShell() {
       <div id="tb-confirm-modal" class="tb-modal-content" role="dialog" aria-modal="true" aria-labelledby="tb-modal-title">
         <div class="tb-modal-header">
           <h2 id="tb-modal-title" class="tb-modal-title">${TB.MESSAGES.MODAL.TITLE}</h2>
-          <button id="tb-modal-close" class="tb-modal-close" aria-label="${TB.MESSAGES.MODAL.CLOSE_ARIA}">&times;</button>
+          <button id="tb-modal-close" class="tb-modal-close" aria-label="${TB.MESSAGES.MODAL.CLOSE_ARIA}">${globalThis.TB_ICONS?.CLOSE || "&times;"}</button>
         </div>
         <div class="tb-modal-body">
           <p id="tb-modal-subtitle" class="tb-modal-subtitle" hidden></p>

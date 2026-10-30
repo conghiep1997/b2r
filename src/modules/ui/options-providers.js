@@ -121,12 +121,27 @@ globalThis.TB_OPTIONS_PROVIDERS = Object.freeze({
       handleProviderChange(fallbackProviderSelect);
     }
 
-    function setModelButtonContent(button, label) {
+    function setModelButtonContent(button, label, badge) {
       const text = document.createElement("span");
       text.className = "model-label";
       text.textContent = label.split(" (")[0];
-      button.title = text.textContent;
+      button.title = badge ? `${text.textContent} (${badge})` : text.textContent;
       button.replaceChildren(text);
+      if (badge) {
+        const badgeSpan = document.createElement("span");
+        badgeSpan.className = "model-quota-badge";
+        badgeSpan.textContent = badge;
+        Object.assign(badgeSpan.style, {
+          marginLeft: "6px",
+          fontSize: "10px",
+          fontWeight: "600",
+          opacity: "0.85",
+          padding: "1px 5px",
+          borderRadius: "4px",
+          background: "rgba(0, 0, 0, 0.25)",
+        });
+        button.appendChild(badgeSpan);
+      }
       button.setAttribute("aria-pressed", String(button.classList.contains("selected")));
     }
 
@@ -213,7 +228,9 @@ globalThis.TB_OPTIONS_PROVIDERS = Object.freeze({
     }
 
     function renderGeminiModelsTags(
-      selectedModels = (TB.GEMINI_MODELS || []).map((model) => model.value)
+      selectedModels = (TB.GEMINI_MODELS || [])
+        .filter((model) => model.default)
+        .map((model) => model.value)
     ) {
       const listEl = document.getElementById("geminiModelsList");
       listEl.innerHTML = "";
@@ -223,7 +240,7 @@ globalThis.TB_OPTIONS_PROVIDERS = Object.freeze({
         btn.dataset.modelId = model.value;
         btn.dataset.modelLabel = model.label;
         btn.className = selectedModels.includes(model.value) ? "selected" : "";
-        setModelButtonContent(btn, model.label);
+        setModelButtonContent(btn, model.label, model.badge);
         btn.onclick = () => {
           btn.classList.toggle("selected");
           btn.setAttribute("aria-pressed", String(btn.classList.contains("selected")));
@@ -257,7 +274,7 @@ globalThis.TB_OPTIONS_PROVIDERS = Object.freeze({
         btn.dataset.provider = provider;
         btn.dataset.modelId = model.value;
         btn.className = selectedModels.includes(model.value) ? "selected" : "";
-        setModelButtonContent(btn, model.label);
+        setModelButtonContent(btn, model.label, model.badge);
 
         btn.onclick = () => {
           btn.classList.toggle("selected");
@@ -347,10 +364,10 @@ globalThis.TB_OPTIONS_PROVIDERS = Object.freeze({
 
     function getProviderChipStyle(isSelected) {
       return {
-        background: isSelected ? "#10b981" : "#dbeafe",
-        color: isSelected ? "#fff" : "#1e40af",
-        border: `1px solid ${isSelected ? "#059669" : "#bfdbfe"}`,
-        borderRadius: "8px",
+        background: isSelected ? "#10b981" : "var(--primary-surface)",
+        color: isSelected ? "#fff" : "var(--primary)",
+        border: `1px solid ${isSelected ? "#059669" : "var(--border)"}`,
+        borderRadius: "var(--radius-sm)",
         padding: "6px 12px",
         cursor: "pointer",
         fontSize: "12px",
@@ -428,12 +445,29 @@ globalThis.TB_OPTIONS_PROVIDERS = Object.freeze({
         } else {
           icon.textContent = "❌";
           icon.style.animation = "";
-          setStatus(`❌ ${result.message || om("options_unknown_error")}`, true);
+          btn
+            .closest(".model-choice")
+            ?.querySelector("button[data-model-id]")
+            ?.classList.remove("selected");
+          document.getElementById("selectedModelCount").textContent = document.querySelectorAll(
+            "#geminiModelsList .selected"
+          ).length;
+          setStatus(
+            `❌ ${modelLabel}: ${result.message || om("options_unknown_error")} (Đã tự động bỏ chọn)`,
+            true
+          );
         }
       } catch (e) {
         icon.textContent = "❌";
         icon.style.animation = "";
-        setStatus(`❌ ${om("options_model_test_failed")}: ${e.message}`, true);
+        btn
+          .closest(".model-choice")
+          ?.querySelector("button[data-model-id]")
+          ?.classList.remove("selected");
+        document.getElementById("selectedModelCount").textContent = document.querySelectorAll(
+          "#geminiModelsList .selected"
+        ).length;
+        setStatus(`❌ ${modelLabel}: ${e.message} (Đã tự động bỏ chọn)`, true);
       }
     }
 
@@ -475,7 +509,9 @@ globalThis.TB_OPTIONS_PROVIDERS = Object.freeze({
     }
 
     function renderFallbackGeminiModelsTags(
-      selectedModels = (TB.GEMINI_MODELS || []).map((model) => model.value)
+      selectedModels = (TB.GEMINI_MODELS || [])
+        .filter((model) => model.default)
+        .map((model) => model.value)
     ) {
       const listEl = document.getElementById("fallbackGeminiModelsList");
       const countEl = document.getElementById("fallbackGeminiSelectedModelCount");
@@ -486,7 +522,7 @@ globalThis.TB_OPTIONS_PROVIDERS = Object.freeze({
         btn.type = "button";
         btn.dataset.modelId = model.value;
         btn.className = selectedModels.includes(model.value) ? "selected" : "";
-        setModelButtonContent(btn, model.label);
+        setModelButtonContent(btn, model.label, model.badge);
         btn.onclick = () => {
           btn.classList.toggle("selected");
           btn.setAttribute("aria-pressed", String(btn.classList.contains("selected")));

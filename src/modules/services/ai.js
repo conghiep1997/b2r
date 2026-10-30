@@ -5,6 +5,7 @@
 
 // Reserve each request's starting slot before awaiting the provider response.
 let lastUsedGeminiIndex = 0;
+let lastUsedGeminiTier2Index = 0;
 const geminiCooldownUntilByCombination = new Map();
 const geminiCooldownUntilByKey = new Map();
 const lastUsedProviderIndexByProvider = {};
@@ -12,7 +13,16 @@ const providerCooldownUntilByCombination = new Map();
 const GEMINI_RATE_LIMIT_COOLDOWN_MS = 60 * 1000;
 const GEMINI_OVERLOAD_COOLDOWN_MS = 30 * 1000;
 const GEMINI_UNAVAILABLE_COOLDOWN_MS = 5 * 60 * 1000;
-const RETIRED_GEMINI_MODELS = new Set(["gemini-2.0-flash", "gemini-2.0-flash-lite"]);
+const RETIRED_GEMINI_MODELS = new Set([
+  "gemini-2.0-flash",
+  "gemini-2.0-flash-lite",
+  "gemini-2.5-flash",
+  "gemini-2.5-flash-lite",
+  "gemini-2.5-pro",
+  "gemini-3.1-pro",
+  "gemma-4-31b-it",
+  "gemma-4-26b-a4b-it",
+]);
 const AI_TRANSLATION_TIMEOUT_MS = 15 * 1000;
 
 function getProviderSystemPrompt(promptFn) {
@@ -390,11 +400,11 @@ async function callAIsByProvider(
       ),
     ];
 
-    // Create a flat list of all [model, key] combinations
+    // Create a list of all [model, key] combinations with their quota tier
     const combinations = [];
     for (const m of models) {
       for (const key of apiKeys) {
-        combinations.push({ model: m, key });
+        combinations.push({ model: m, key, tier: getGeminiModelTier(m) });
       }
     }
 
@@ -402,16 +412,54 @@ async function callAIsByProvider(
       throw new Error("No Gemini models or API keys are configured.");
     }
 
+    const now = Date.now();
+    const isCombinationReady = (c) => {
+      const combinationId = getGeminiCombinationId(c.model, c.key);
+      const cooldownUntil = Math.max(
+        geminiCooldownUntilByCombination.get(combinationId) || 0,
+        geminiCooldownUntilByKey.get(c.key) || 0
+      );
+      return cooldownUntil <= now;
+    };
+
+    const rotateArray = (arr, offset) => {
+      if (arr.length <= 1) return arr;
+      const idx = ((offset % arr.length) + arr.length) % arr.length;
+      return [...arr.slice(idx), ...arr.slice(0, idx)];
+    };
+
+    const tier1 = combinations.filter((c) => c.tier === 1);
+    const tier2 = combinations.filter((c) => c.tier !== 1);
+
+    // Prioritize high-quota Tier 1 (Flash Lite: 500 RPD).
+    // Tier 2 (Standard Flash: 20 RPD) is preserved and only invoked when all Tier 1 models are cooling down.
+    let orderedCombinations = [];
+    if (tier1.length > 0 && tier2.length > 0) {
+      const hasReadyTier1 = tier1.some(isCombinationReady);
+      if (hasReadyTier1) {
+        const rotatedTier1 = rotateArray(tier1, lastUsedGeminiIndex);
+        lastUsedGeminiIndex = (lastUsedGeminiIndex + 1) % tier1.length;
+        orderedCombinations = [...rotatedTier1, ...tier2];
+      } else {
+        const rotatedTier2 = rotateArray(tier2, lastUsedGeminiTier2Index);
+        lastUsedGeminiTier2Index = (lastUsedGeminiTier2Index + 1) % tier2.length;
+        orderedCombinations = [...rotatedTier2, ...tier1];
+      }
+    } else if (tier1.length > 0) {
+      orderedCombinations = rotateArray(tier1, lastUsedGeminiIndex);
+      lastUsedGeminiIndex = (lastUsedGeminiIndex + 1) % tier1.length;
+    } else {
+      orderedCombinations = rotateArray(tier2, lastUsedGeminiTier2Index);
+      lastUsedGeminiTier2Index = (lastUsedGeminiTier2Index + 1) % tier2.length;
+    }
+
     let lastError = null;
     let skippedCooldowns = 0;
     let nextCooldownReadyAt = Infinity;
-    const startIndex = lastUsedGeminiIndex % combinations.length;
-    lastUsedGeminiIndex = (startIndex + 1) % combinations.length;
 
-    // Iterate through combinations in a round-robin fashion for failover
-    for (let i = 0; i < combinations.length; i++) {
-      const currentIndex = (startIndex + i) % combinations.length;
-      const { model: currentModel, key: currentKey } = combinations[currentIndex];
+    // Iterate through ordered combinations for tiered failover
+    for (let i = 0; i < orderedCombinations.length; i++) {
+      const { model: currentModel, key: currentKey } = orderedCombinations[i];
       const combinationId = getGeminiCombinationId(currentModel, currentKey);
       const cooldownUntil = Math.max(
         geminiCooldownUntilByCombination.get(combinationId) || 0,
@@ -452,7 +500,7 @@ async function callAIsByProvider(
           ? getGeminiCooldownDuration(error)
           : GEMINI_UNAVAILABLE_COOLDOWN_MS;
         const retryAt = Date.now() + cooldownMs;
-        if (isGeminiKeyUnavailable(error) || isGeminiKeyRateLimited(error)) {
+        if (isGeminiKeyUnavailable(error)) {
           geminiCooldownUntilByKey.set(currentKey, retryAt);
         } else {
           geminiCooldownUntilByCombination.set(combinationId, retryAt);
@@ -475,7 +523,7 @@ async function callAIsByProvider(
       }
     }
 
-    if (skippedCooldowns === combinations.length && Number.isFinite(nextCooldownReadyAt)) {
+    if (skippedCooldowns === orderedCombinations.length && Number.isFinite(nextCooldownReadyAt)) {
       const waitSeconds = Math.max(1, Math.ceil((nextCooldownReadyAt - Date.now()) / 1000));
       throw new Error(
         `All Gemini model/key combinations are cooling down. Try again in ${waitSeconds}s.`
@@ -661,7 +709,37 @@ function isGeminiKeyRateLimited(error) {
   return error?.status === 429 || message.includes("429") || message.includes("rate limit");
 }
 
+function getGeminiModelTier(modelId) {
+  const meta = (TB.GEMINI_MODELS || []).find((m) => m.value === modelId);
+  if (meta && typeof meta.tier === "number") return meta.tier;
+  if (typeof modelId === "string" && modelId.toLowerCase().includes("lite")) return 1;
+  return 2;
+}
+
+function isGeminiDailyQuotaExceeded(error) {
+  const message = (error?.message || "").toLowerCase();
+  return (
+    message.includes("requests per day") ||
+    message.includes("per-day") ||
+    message.includes("perday") ||
+    message.includes("daily request quota") ||
+    (message.includes("resource_exhausted") && message.includes("day"))
+  );
+}
+
+function getMsUntilMidnightUtc() {
+  const now = new Date();
+  const tomorrowMidnightUtc = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 30)
+  );
+  const diff = tomorrowMidnightUtc.getTime() - now.getTime();
+  return Math.max(diff, 4 * 60 * 60 * 1000);
+}
+
 function getGeminiCooldownDuration(error) {
+  if (isGeminiDailyQuotaExceeded(error)) {
+    return getMsUntilMidnightUtc();
+  }
   const baseDuration = isGeminiKeyRateLimited(error)
     ? GEMINI_RATE_LIMIT_COOLDOWN_MS
     : GEMINI_OVERLOAD_COOLDOWN_MS;
@@ -765,6 +843,14 @@ async function callGeminiAPI(
   return cleaned;
 }
 
+function extractRetryAfterDelay(response) {
+  const retryAfter = response.headers?.get("Retry-After");
+  if (!retryAfter) return null;
+  const seconds = Number(retryAfter);
+  const delay = Number.isFinite(seconds) ? seconds * 1000 : Date.parse(retryAfter) - Date.now();
+  return Number.isFinite(delay) && delay > 0 ? delay : null;
+}
+
 async function callCerebrasAPI(
   apiKey,
   commentText,
@@ -796,7 +882,13 @@ async function callCerebrasAPI(
 
   if (!response.ok) {
     const errorMsg = await readErrorMessage(response);
-    throw new Error(`Cerebras (${model}): ${sanitizeErrorMessage(errorMsg, response.status)}`);
+    const error = new Error(
+      `Cerebras (${model}): ${sanitizeErrorMessage(errorMsg, response.status)}`
+    );
+    error.status = response.status;
+    const retryDelay = extractRetryAfterDelay(response);
+    if (retryDelay) error.retryAfterMs = retryDelay;
+    throw error;
   }
 
   const data = await safeReadJson(response);
@@ -844,7 +936,11 @@ async function callGroqAPI(
 
   if (!response.ok) {
     const errorMsg = await readErrorMessage(response);
-    throw new Error(`Groq (${model}): ${sanitizeErrorMessage(errorMsg, response.status)}`);
+    const error = new Error(`Groq (${model}): ${sanitizeErrorMessage(errorMsg, response.status)}`);
+    error.status = response.status;
+    const retryDelay = extractRetryAfterDelay(response);
+    if (retryDelay) error.retryAfterMs = retryDelay;
+    throw error;
   }
 
   const data = await safeReadJson(response);
@@ -891,7 +987,13 @@ async function callOpenRouterAPI(
 
   if (!response.ok) {
     const errorMsg = await readErrorMessage(response);
-    throw new Error(`OpenRouter (${model}): ${sanitizeErrorMessage(errorMsg, response.status)}`);
+    const error = new Error(
+      `OpenRouter (${model}): ${sanitizeErrorMessage(errorMsg, response.status)}`
+    );
+    error.status = response.status;
+    const retryDelay = extractRetryAfterDelay(response);
+    if (retryDelay) error.retryAfterMs = retryDelay;
+    throw error;
   }
 
   const data = await safeReadJson(response);

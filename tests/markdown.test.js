@@ -242,3 +242,109 @@ test("extractBacklogContent preserves placeholder-like custom tags", () => {
   ]);
   assert.equal(extractBacklogContent(root), "flow_guide/display/<flow_guide_id>");
 });
+
+test("extractBacklogContent unwraps Backlog checklist labels without emitting <label> tags", () => {
+  const { extractBacklogContent } = createExtractor();
+  const uncheckedInput = createElement("input", {
+    type: "checkbox",
+    class: "checklist-item",
+    "data-index": "0",
+  });
+  uncheckedInput.checked = false;
+  const checkedInput = createElement("input", {
+    type: "checkbox",
+    class: "checklist-item",
+    "data-index": "1",
+  });
+  checkedInput.checked = false;
+
+  const root = createElement("ul", {}, [
+    createElement("li", { class: "checklist checklist-unchecked" }, [
+      createElement("label", { class: "checklist-content" }, [
+        uncheckedInput,
+        createTextNode("staging 全 API（破壊系除外後）に対し "),
+        createElement("code", { class: "prettyprint prettyprinted" }, [
+          createElement("span", { class: "pln" }, [createTextNode("scan_owasp_zap_scenario")]),
+        ]),
+        createTextNode(" が正常完了（RESOLVED）"),
+      ]),
+    ]),
+    createElement("li", { class: "checklist checklist-checked" }, [
+      createElement("label", { class: "checklist-content" }, [
+        checkedInput,
+        createTextNode("認証必須 API が 401 等で素通りせず、実際にスキャンされたことを確認"),
+      ]),
+    ]),
+  ]);
+
+  const markdown = extractBacklogContent(root);
+  assert.equal(
+    markdown,
+    [
+      "* [ ] staging 全 API（破壊系除外後）に対し `scan_owasp_zap_scenario` が正常完了（RESOLVED）",
+      "* [x] 認証必須 API が 401 等で素通りせず、実際にスキャンされたことを確認",
+    ].join("\n")
+  );
+  assert.doesNotMatch(markdown, /<\/?label>/i);
+});
+
+test("extractBacklogContent handles details/summary, formatted table cells, kbd, sup, sub, and nested quotes", () => {
+  const { extractBacklogContent, markdownToTextile } = createExtractor();
+
+  // 1. Details / summary
+  const details = createElement("details", {}, [
+    createElement("summary", {}, [createTextNode("Chi tiết lỗi")]),
+    createElement("p", {}, [createTextNode("Nội dung ẩn")]),
+  ]);
+  const detailsMd = extractBacklogContent(details);
+  assert.equal(detailsMd, "{{collapse(Chi tiết lỗi)\nNội dung ẩn\n}}");
+  assert.equal(markdownToTextile(detailsMd), "{{collapse(Chi tiết lỗi)\nNội dung ẩn\n}}");
+
+  // 2. Formatted table cells
+  const table = createElement("table", {}, [
+    createElement("tr", {}, [
+      createElement("th", {}, [createTextNode("Col 1")]),
+      createElement("th", {}, [createTextNode("Col 2")]),
+    ]),
+    createElement("tr", {}, [
+      createElement("td", {}, [
+        createElement("strong", {}, [createTextNode("Bold")]),
+        createTextNode(" and "),
+        createElement("code", {}, [createTextNode("code")]),
+      ]),
+      createElement("td", {}, [
+        createElement("a", { href: "https://example.com" }, [createTextNode("Link")]),
+      ]),
+    ]),
+  ]);
+  const tableMd = extractBacklogContent(table);
+  assert.match(
+    tableMd,
+    /\|\s+\*\*Bold\*\* and `code`\s+\|\s+\[Link\]\(https:\/\/example\.com\)\s+\|/
+  );
+
+  // 3. kbd, sup, sub
+  const inlineEl = createElement("p", {}, [
+    createElement("kbd", {}, [createTextNode("Ctrl")]),
+    createTextNode("+"),
+    createElement("kbd", {}, [createTextNode("C")]),
+    createTextNode(", 10"),
+    createElement("sup", {}, [createTextNode("2")]),
+    createTextNode(", H"),
+    createElement("sub", {}, [createTextNode("2")]),
+    createTextNode("O"),
+  ]);
+  const inlineMd = extractBacklogContent(inlineEl);
+  assert.equal(inlineMd, "<kbd>Ctrl</kbd>+<kbd>C</kbd>, 10<sup>2</sup>, H<sub>2</sub>O");
+  const inlineTextile = markdownToTextile(inlineMd);
+  assert.equal(inlineTextile, "<kbd>Ctrl</kbd>+<kbd>C</kbd>, 10<sup>2</sup>, H<sub>2</sub>O");
+
+  // 4. Nested blockquote
+  const nestedQuote = createElement("blockquote", {}, [
+    createElement("blockquote", {}, [createTextNode("Level 2 quote")]),
+    createTextNode("Level 1 quote"),
+  ]);
+  const quoteMd = extractBacklogContent(nestedQuote);
+  assert.match(quoteMd, />> Level 2 quote/);
+  assert.match(quoteMd, /> Level 1 quote/);
+});

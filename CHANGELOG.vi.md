@@ -4,6 +4,14 @@ Tất cả các thay đổi đáng chú ý của dự án Backlog2Redmine (B2R) 
 Định dạng dựa trên [Keep a Changelog](https://keepachangelog.com/).
 (Bản tiếng Anh chính thức: [CHANGELOG.md](./CHANGELOG.md))
 
+## [1.8.24] - 2026-10-30
+- **✨ Thêm mới**: Cho phép chỉnh số giờ từng task, điều hướng tháng và xem tổng giờ theo ngày/toàn tháng trong phần xem trước Log time tháng trên Redmine.
+- **✨ Thêm mới**: Phân tầng lựa chọn model Gemini, ưu tiên Flash Lite có hạn mức cao hơn và hỗ trợ cooldown khi hết quota ngày; lỗi từ provider sử dụng `Retry-After` nếu có.
+- **✨ Thêm mới**: Bổ sung khả năng định dạng và hiển thị Markdown cho comment đã dịch.
+- **🔧 Sửa lỗi**: Giảm các đợt gọi dịch dồn dập bằng cách thêm khoảng nghỉ ngắn giữa các batch comment; loại model Gemini đã ngừng hỗ trợ khỏi danh sách dự phòng.
+- **🔧 Cải thiện**: Làm mới giao diện cấu hình provider/model và Log time tháng, bổ sung điều khiển đã bản địa hóa cùng trạng thái rõ ràng hơn.
+- **📝 Tài liệu**:
+
 ## [1.8.23] - 2026-10-29
 - **✨ Thêm mới**: Hiển thị badge danh tính người dùng (`#tb-monthly-log-user`) trong modal Log time tháng Redmine qua `getCurrentUser()`, bao gồm tên, username và tooltip email.
 - **✨ Thêm mới**: Định dạng ngày tháng kèm thứ theo ngôn ngữ (`(T2)`-`(CN)` cho tiếng Việt, `(Mon)`-`(Sun)` cho tiếng Anh) và làm nổi bật/làm mờ ngày cuối tuần (`.tb-row-weekend` / `.tb-cell-weekend`) trong bảng preview, kết quả và modal xác nhận log time đơn lẻ.

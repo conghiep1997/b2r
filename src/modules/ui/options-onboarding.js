@@ -44,7 +44,9 @@ globalThis.TB_OPTIONS_ONBOARDING = Object.freeze({
       try {
         if (syncBtn) {
           syncBtn.disabled = true;
-          syncBtn.textContent = `⌛ ${om("options_loading", "Đang tải...")}`;
+          syncBtn.classList.add("is-loading");
+          const label = syncBtn.querySelector("span");
+          if (label) label.textContent = om("options_loading", "Đang tải...");
         }
         setProjectPlaceholder(defaultProjectSelect, "options_loading");
         const projects = await sendBackgroundRequest({
@@ -72,7 +74,9 @@ globalThis.TB_OPTIONS_ONBOARDING = Object.freeze({
       } finally {
         if (syncBtn) {
           syncBtn.disabled = false;
-          syncBtn.textContent = om("options_sync_projects", "🔄 Đồng bộ Project");
+          syncBtn.classList.remove("is-loading");
+          const label = syncBtn.querySelector("span");
+          if (label) label.textContent = om("options_sync_projects", "Tải lại dự án");
         }
       }
     }

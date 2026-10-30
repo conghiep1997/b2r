@@ -198,6 +198,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const form = document.getElementById("optionsForm");
   const languagePreference = document.getElementById("languagePreference");
   const themePreference = document.getElementById("themePreference");
+  const themeToggleBtns = document.querySelectorAll(".theme-toggle-btn");
   const redmineApiKeyInput = document.getElementById("redmineApiKey");
   const backlogApiKeyInput = document.getElementById("backlogApiKey");
   const groqApiKeyInput = document.getElementById("groqApiKey");
@@ -211,12 +212,23 @@ document.addEventListener("DOMContentLoaded", async () => {
   const fallbackProviderSelect = document.getElementById("fallbackProvider");
   const showRedmineSuccessModalInput = document.getElementById("showRedmineSuccessModal");
   const statusEl = document.getElementById("status");
+
+  function syncThemeToggleUI(theme) {
+    themeToggleBtns.forEach((btn) => {
+      const isActive = btn.dataset.themeVal === theme;
+      btn.classList.toggle("active", isActive);
+      btn.setAttribute("aria-checked", isActive ? "true" : "false");
+    });
+  }
+
   chrome.storage.local.get(["languagePreference", "themePreference"], (settings) => {
     const storedLanguage = settings.languagePreference;
     const storedTheme = settings.themePreference;
     languagePreference.value = storedLanguage || "en";
-    themePreference.value = storedTheme || "system";
-    applyTheme(themePreference.value);
+    const initialTheme = storedTheme || "system";
+    themePreference.value = initialTheme;
+    syncThemeToggleUI(initialTheme);
+    applyTheme(initialTheme);
   });
   languagePreference.addEventListener("change", async () => {
     await chrome.storage.local.set({ languagePreference: languagePreference.value });
@@ -228,8 +240,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderSyncActivity(syncActivity);
   });
   themePreference.addEventListener("change", () => {
+    syncThemeToggleUI(themePreference.value);
     chrome.storage.local.set({ themePreference: themePreference.value });
     applyTheme(themePreference.value);
+  });
+  themeToggleBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const selected = btn.dataset.themeVal;
+      if (!selected || themePreference.value === selected) return;
+      themePreference.value = selected;
+      syncThemeToggleUI(selected);
+      chrome.storage.local.set({ themePreference: selected });
+      applyTheme(selected);
+    });
   });
 
   function applyTheme(theme) {
@@ -894,8 +917,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       if (isNewer) {
         statusDiv.innerHTML = `
-          <p style="margin: 0; color: #f59e0b; font-weight: 600;">
-            ${om("options_new_version", "🚀 Có phiên bản mới:")} <span style="color: #d97706">v${latestVersion}</span>
+          <p style="margin: 0; color: var(--primary); font-weight: 700;">
+            ${om("options_new_version", "🚀 Có phiên bản mới:")} <span>v${latestVersion}</span>
           </p>
           <p style="margin: 4px 0 0; font-size: 13px; color: #6b7280;">
             ${om("options_current_version_label", "Phiên bản hiện tại:")} v${currentVersion}.
@@ -1010,17 +1033,21 @@ document.addEventListener("DOMContentLoaded", async () => {
       } else {
         setStatus(om("options_save_success", "✅ Đã lưu cấu hình thành công!"));
       }
+      const defaultSaveIconSvg =
+        '<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" aria-hidden="true"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>';
       if (saveIcon) saveIcon.textContent = "✓";
       if (saveText) saveText.textContent = om("options_saved_badge", "Đã lưu!");
       setTimeout(() => {
-        if (saveIcon) saveIcon.textContent = "💾";
+        if (saveIcon) saveIcon.innerHTML = defaultSaveIconSvg;
         if (saveText) saveText.textContent = om("options_save", "Lưu cấu hình");
         if (saveBtn) saveBtn.disabled = false;
       }, 1500);
       updateOnboardingStatuses();
       setTimeout(loadOptions, 200);
     } catch (error) {
-      if (saveIcon) saveIcon.textContent = "💾";
+      const defaultSaveIconSvg =
+        '<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" aria-hidden="true"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>';
+      if (saveIcon) saveIcon.innerHTML = defaultSaveIconSvg;
       if (saveText) saveText.textContent = om("options_save", "Lưu cấu hình");
       if (saveBtn) saveBtn.disabled = false;
       console.error("[OPTIONS] Save failed:", error);
@@ -1449,13 +1476,15 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
       }
 
+      const validGeminiModelValues = new Set((TB.GEMINI_MODELS || []).map((model) => model.value));
       const defaultGeminiModels = (TB.GEMINI_MODELS || [])
         .filter((model) => model.default)
         .map((model) => model.value);
       if (items.geminiModels) {
         try {
           const modelsStr = await decryptData(items.geminiModels);
-          const modelsList = modelsStr ? modelsStr.split("\n").filter(Boolean) : [];
+          const rawModelsList = modelsStr ? modelsStr.split("\n").filter(Boolean) : [];
+          const modelsList = rawModelsList.filter((m) => validGeminiModelValues.has(m));
           renderGeminiModelsTags(modelsList.length > 0 ? modelsList : defaultGeminiModels);
         } catch (e) {
           console.error("[OPTIONS] Error decrypting geminiModels:", e);
@@ -1664,15 +1693,65 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     try {
       if (!apiKey) throw new Error(om("options_keys_help", "Add an API key first."));
-      const result =
-        provider === "gemini"
-          ? await testGeminiKeysForModel(modelId)
-          : await sendBackgroundRequest({
-              type: "TEST_MODEL_WITH_KEY",
-              provider,
-              modelId,
-              apiKey,
-            });
+      let result;
+      if (provider === "gemini") {
+        const keys = getGeminiKeys();
+        if (keys.length === 0) {
+          throw new Error(om("options_enter_gemini_key", "Add an API key first."));
+        }
+        const modelList = models.length > 0 ? models : [getDefaultModel(provider)];
+        const failedModels = [];
+        const successModels = [];
+        const listEl = document.getElementById("geminiModelsList");
+
+        for (const mId of modelList) {
+          const btn = listEl?.querySelector(`button[data-model-id="${mId}"]`);
+          const icon = btn?.querySelector(".test-icon");
+          if (icon) {
+            icon.textContent = "⏳";
+            icon.style.animation = "spin 1s linear infinite";
+          }
+          const res = await testGeminiKeysForModel(mId);
+          if (res.ok) {
+            successModels.push(mId);
+            if (icon) {
+              icon.textContent = "✅";
+              icon.style.animation = "";
+            }
+          } else {
+            failedModels.push(mId);
+            if (icon) {
+              icon.textContent = "❌";
+              icon.style.animation = "";
+            }
+            btn?.classList.remove("selected");
+          }
+        }
+
+        if (listEl) {
+          document.getElementById("selectedModelCount").textContent =
+            listEl.querySelectorAll(".selected").length;
+        }
+
+        if (successModels.length === 0) {
+          throw new Error(
+            om("options_model_test_failed", "Tất cả mô hình đã kiểm tra đều không phản hồi.")
+          );
+        }
+
+        let summaryMsg = om("options_gemini_keys_test_ok").replace("$count$", String(keys.length));
+        if (failedModels.length > 0) {
+          summaryMsg += ` (Đã tự động loại bỏ ${failedModels.length} mô hình lỗi)`;
+        }
+        result = { ok: true, message: summaryMsg };
+      } else {
+        result = await sendBackgroundRequest({
+          type: "TEST_MODEL_WITH_KEY",
+          provider,
+          modelId,
+          apiKey,
+        });
+      }
       if (!result.ok) throw new Error(result.message || "Model test failed.");
       await chrome.storage.local.set({
         aiConnectionVerified: await verificationFingerprint([
@@ -1925,7 +2004,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }, 3000);
   }
 
-  function setModelButtonContent(button, label) {
+  function setModelButtonContent(button, label, badge) {
     const icon = document.createElement("span");
     icon.className = "test-icon";
     icon.textContent = "🧪";
@@ -1934,7 +2013,26 @@ document.addEventListener("DOMContentLoaded", async () => {
       opacity: "0.6",
       cursor: "pointer",
     });
-    button.replaceChildren(document.createTextNode(`${label} `), icon);
+    const labelSpan = document.createElement("span");
+    labelSpan.className = "model-label";
+    labelSpan.textContent = label;
+    button.replaceChildren(labelSpan);
+    if (badge) {
+      const badgeSpan = document.createElement("span");
+      badgeSpan.className = "model-quota-badge";
+      badgeSpan.textContent = badge;
+      Object.assign(badgeSpan.style, {
+        marginLeft: "6px",
+        fontSize: "10px",
+        fontWeight: "600",
+        opacity: "0.85",
+        padding: "1px 5px",
+        borderRadius: "4px",
+        background: "rgba(0, 0, 0, 0.25)",
+      });
+      button.appendChild(badgeSpan);
+    }
+    button.appendChild(icon);
   }
 
   function renderGeminiModelsTags(selectedModels = []) {
@@ -1946,7 +2044,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       btn.dataset.modelId = model.value;
       btn.dataset.modelLabel = model.label;
       btn.className = selectedModels.includes(model.value) ? "selected" : "";
-      setModelButtonContent(btn, model.label);
+      setModelButtonContent(btn, model.label, model.badge);
       btn.onclick = (e) => {
         if (e.target.classList.contains("test-icon")) {
           e.stopPropagation();
@@ -1980,10 +2078,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       setModelButtonContent(btn, model.label);
 
       Object.assign(btn.style, {
-        background: btn.classList.contains("selected") ? "#10b981" : "#dbeafe",
-        color: btn.classList.contains("selected") ? "#fff" : "#1e40af",
-        border: `1px solid ${btn.classList.contains("selected") ? "#059669" : "#bfdbfe"}`,
-        borderRadius: "8px",
+        background: btn.classList.contains("selected") ? "#10b981" : "var(--primary-surface)",
+        color: btn.classList.contains("selected") ? "#fff" : "var(--primary)",
+        border: `1px solid ${btn.classList.contains("selected") ? "#059669" : "var(--border)"}`,
+        borderRadius: "var(--radius-sm)",
         padding: "6px 12px",
         cursor: "pointer",
         fontSize: "12px",
@@ -1998,9 +2096,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         } else {
           btn.classList.toggle("selected");
           const isSelected = btn.classList.contains("selected");
-          btn.style.background = isSelected ? "#10b981" : "#dbeafe";
-          btn.style.color = isSelected ? "#fff" : "#1e40af";
-          btn.style.borderColor = isSelected ? "#059669" : "#bfdbfe";
+          btn.style.background = isSelected ? "#10b981" : "var(--primary-surface)";
+          btn.style.color = isSelected ? "#fff" : "var(--primary)";
+          btn.style.borderColor = isSelected ? "#059669" : "var(--border)";
           countEl.textContent = listEl.querySelectorAll(".selected").length;
         }
       };
@@ -2084,10 +2182,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       btn.setAttribute("aria-label", btn.title);
       btn.textContent = `${key.slice(0, 8)}... ×`;
       Object.assign(btn.style, {
-        background: "#dbeafe",
-        color: "#1e40af",
-        border: "1px solid #bfdbfe",
-        borderRadius: "8px",
+        background: "var(--primary-surface)",
+        color: "var(--primary)",
+        border: "1px solid var(--border)",
+        borderRadius: "var(--radius-sm)",
         padding: "6px 12px",
         cursor: "pointer",
         fontFamily: "monospace",
@@ -2104,10 +2202,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function getProviderChipStyle(isSelected) {
     return {
-      background: isSelected ? "#10b981" : "#dbeafe",
-      color: isSelected ? "#fff" : "#1e40af",
-      border: `1px solid ${isSelected ? "#059669" : "#bfdbfe"}`,
-      borderRadius: "8px",
+      background: isSelected ? "#10b981" : "var(--primary-surface)",
+      color: isSelected ? "#fff" : "var(--primary)",
+      border: `1px solid ${isSelected ? "#059669" : "var(--border)"}`,
+      borderRadius: "var(--radius-sm)",
       padding: "6px 12px",
       cursor: "pointer",
       fontSize: "12px",
@@ -2184,12 +2282,27 @@ document.addEventListener("DOMContentLoaded", async () => {
       } else {
         icon.textContent = "❌";
         icon.style.animation = "";
-        setStatus(`❌ ${result.message || om("options_unknown_error")}`, true);
+        btn.classList.remove("selected");
+        const listEl = document.getElementById("geminiModelsList");
+        if (listEl) {
+          document.getElementById("selectedModelCount").textContent =
+            listEl.querySelectorAll(".selected").length;
+        }
+        setStatus(
+          `❌ ${modelLabel}: ${result.message || om("options_unknown_error")} (Đã tự động bỏ chọn)`,
+          true
+        );
       }
     } catch (e) {
       icon.textContent = "❌";
       icon.style.animation = "";
-      setStatus(`❌ ${om("options_model_test_failed")}: ${e.message}`, true);
+      btn.classList.remove("selected");
+      const listEl = document.getElementById("geminiModelsList");
+      if (listEl) {
+        document.getElementById("selectedModelCount").textContent =
+          listEl.querySelectorAll(".selected").length;
+      }
+      setStatus(`❌ ${modelLabel}: ${e.message} (Đã tự động bỏ chọn)`, true);
     }
   }
 
@@ -2381,15 +2494,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     button.title = message;
     button.setAttribute("aria-label", message);
     icon.innerHTML = success
-      ? '<path d="m5 12 4 4L19 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />'
-      : '<path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />';
+      ? '<path d="m5 12 4 4L19 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none" />'
+      : '<path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none" />';
     button.dataset.resultTimer = String(
       setTimeout(() => {
         button.classList.remove("is-success", "is-error");
         button.title = om("options_sync_projects", "Reload projects");
         button.setAttribute("aria-label", button.title);
         icon.innerHTML =
-          '<path d="M20 7v5h-5M4 17v-5h5m10.2-1A7.5 7.5 0 0 0 6.3 6.3L4 8m16 8-2.3 1.7A7.5 7.5 0 0 1 4.8 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />';
+          '<path d="M12 20q-3.35 0-5.675-2.325T4 12t2.325-5.675T12 4q1.725 0 3.3.712T18 6.75V4h2v7h-7V9h4.2q-.8-1.4-2.187-2.2T12 6Q9.5 6 7.75 7.75T6 12t1.75 4.25T12 18q1.925 0 3.475-1.1T17.65 14h2.1q-.7 2.65-2.85 4.325T12 20" fill="currentColor" />';
         delete button.dataset.resultTimer;
       }, 1600)
     );

@@ -264,6 +264,50 @@ async function logTimeForMonth() {
         modalInstance.hasUnsafeReplacement = previews.some(
           (preview) => preview.willReplaceDailyEntries
         );
+
+        const updateMonthTotals = () => {
+          const activePreviews = previews.filter(
+            (preview) => !preview.error && !preview.dayAlreadyFull && preview.tasks?.length
+          );
+          const totalHours = activePreviews.reduce((sum, preview) => {
+            return (
+              sum + preview.tasks.reduce((taskSum, task) => taskSum + (Number(task.hours) || 0), 0)
+            );
+          }, 0);
+          const roundedHours = Math.round(totalHours * 100) / 100;
+          const formattedHours = Number.isInteger(roundedHours)
+            ? `${roundedHours}h`
+            : `${roundedHours.toFixed(1)}h`;
+          const totalDays = activePreviews.length;
+          const daysLabel = currentLanguage === "en" ? (totalDays === 1 ? "day" : "days") : "ngày";
+
+          if (totalHours > 0) {
+            if (modalInstance.totalSummary) {
+              modalInstance.totalHoursVal.textContent = formattedHours;
+              modalInstance.totalDaysVal.textContent = `(${totalDays} ${daysLabel})`;
+              modalInstance.totalSummary.hidden = false;
+            }
+            if (modalInstance.tableFooter) {
+              modalInstance.tableTotalHours.textContent = `∑ ${formattedHours}`;
+              modalInstance.tableTotalDays.textContent = `${totalDays} ${daysLabel}`;
+              modalInstance.tableFooter.hidden = false;
+            }
+          } else {
+            if (modalInstance.totalSummary) modalInstance.totalSummary.hidden = true;
+            if (modalInstance.tableFooter) modalInstance.tableFooter.hidden = true;
+          }
+
+          const blocked = previews.every(
+            (preview) => preview.error || preview.dayAlreadyFull || !preview.tasks.length
+          );
+          startButton.disabled = blocked;
+          if (!blocked && totalHours > 0) {
+            startButton.textContent = `${reportMessage("report_confirm_logging")} (${formattedHours})`;
+          } else {
+            startButton.textContent = reportMessage("report_confirm_logging");
+          }
+        };
+
         for (const preview of previews) {
           const row = document.createElement("tr");
           row.className = preview.willReplaceDailyEntries ? "tb-monthly-log-row-warning" : "";
@@ -324,7 +368,7 @@ async function logTimeForMonth() {
                 nameEl.textContent = task.subject || "—";
               }
 
-              // Row 2: Activity select (left) + Hours badge (right)
+              // Row 2: Activity select (left) + Hours input (right)
               const metaRow = document.createElement("div");
               metaRow.className = "tb-task-meta-row";
 
@@ -351,32 +395,74 @@ async function logTimeForMonth() {
                 preview.operations = updated.operations;
               });
 
-              const badge = document.createElement("div");
-              badge.className = "tb-hours-badge";
-              badge.textContent =
-                task.hours !== null && task.hours !== undefined
-                  ? `${Number.isInteger(task.hours) ? task.hours : task.hours.toFixed(1)}h`
-                  : "—";
+              // Editable hours input
+              const hoursWrapper = document.createElement("div");
+              hoursWrapper.className = "tb-hours-input-wrapper";
+              hoursWrapper.title = reportMessage("report_edit_hours_tooltip");
 
-              metaRow.append(actSelect, badge);
+              const hoursInput = document.createElement("input");
+              hoursInput.type = "number";
+              hoursInput.className = "tb-hours-input";
+              hoursInput.step = "0.25";
+              hoursInput.min = "0";
+              hoursInput.max = "24";
+              hoursInput.value =
+                task.hours !== null && task.hours !== undefined ? String(task.hours) : "0";
+              hoursInput.setAttribute("aria-label", reportMessage("report_edit_hours_tooltip"));
+
+              const hoursUnit = document.createElement("span");
+              hoursUnit.className = "tb-hours-unit";
+              hoursUnit.textContent = "h";
+
+              hoursWrapper.append(hoursInput, hoursUnit);
+              metaRow.append(actSelect, hoursWrapper);
               card.append(nameEl, metaRow);
               taskList.appendChild(card);
             }
 
             // For multi-task days, show summary total row at the end of task list
+            let daySummaryEl = null;
             if (preview.tasks.length > 1) {
-              const total = preview.tasks.reduce((s, t) => s + (t.hours || 0), 0);
+              const total = preview.tasks.reduce((s, t) => s + (Number(t.hours) || 0), 0);
               const summaryRow = document.createElement("div");
               summaryRow.className = "tb-task-list-summary";
               const label = document.createElement("span");
               label.className = "tb-task-summary-label";
               label.textContent = reportMessage("report_total_label");
-              const totalEl = document.createElement("span");
-              totalEl.className = "tb-hours-total";
-              totalEl.textContent = `∑ ${Number.isInteger(total) ? total : total.toFixed(1)}h`;
-              summaryRow.append(label, totalEl);
+              daySummaryEl = document.createElement("span");
+              daySummaryEl.className = "tb-hours-total";
+              daySummaryEl.textContent = `∑ ${Number.isInteger(total) ? total : total.toFixed(1)}h`;
+              summaryRow.append(label, daySummaryEl);
               taskList.appendChild(summaryRow);
             }
+
+            // Attach hours change listener to all inputs in this preview
+            const inputs = taskList.querySelectorAll(".tb-hours-input");
+            inputs.forEach((inputEl, taskIdx) => {
+              const taskObj = preview.tasks[taskIdx];
+              const onHourChange = () => {
+                const parsed = parseFloat(inputEl.value);
+                const validatedHours =
+                  isNaN(parsed) || parsed < 0 ? 0 : Math.round(parsed * 100) / 100;
+                taskObj.customHours = validatedHours;
+                taskObj.hours = validatedHours;
+                const updated = planReportSync(
+                  preview,
+                  preview.selectedEntryIds || [],
+                  settings.logTimeRules
+                );
+                preview.operations = updated.operations;
+
+                if (daySummaryEl) {
+                  const dTotal = preview.tasks.reduce((s, t) => s + (Number(t.hours) || 0), 0);
+                  const roundedDTotal = Math.round(dTotal * 100) / 100;
+                  daySummaryEl.textContent = `∑ ${Number.isInteger(roundedDTotal) ? roundedDTotal : roundedDTotal.toFixed(1)}h`;
+                }
+                updateMonthTotals();
+              };
+              inputEl.addEventListener("input", onHourChange);
+              inputEl.addEventListener("change", onHourChange);
+            });
 
             taskCell.appendChild(taskList);
           }
@@ -424,6 +510,8 @@ async function logTimeForMonth() {
           resultBody.appendChild(row);
         }
 
+        updateMonthTotals();
+
         if (previews.length === 0) {
           statusText.textContent = reportMessage("report_not_found");
           updateProgress(reportMessage("report_no_matching_issue"), "skip");
@@ -441,7 +529,6 @@ async function logTimeForMonth() {
           const blocked = previews.every(
             (preview) => preview.error || preview.dayAlreadyFull || !preview.tasks.length
           );
-          startButton.disabled = blocked;
           updateProgress(
             reportMessage("report_preview_confirm_hint"),
             blocked ? "skip" : "success"
@@ -576,6 +663,9 @@ async function logTimeForMonth() {
         modalInstance.previewIssues = [];
         modalInstance.hasUnsafeReplacement = false;
         startButton.disabled = true;
+        startButton.textContent = reportMessage("report_confirm_logging");
+        if (modalInstance.totalSummary) modalInstance.totalSummary.hidden = true;
+        if (modalInstance.tableFooter) modalInstance.tableFooter.hidden = true;
         previewButton.disabled = false;
         deleteButton.disabled = false;
         closeButton.disabled = false;
@@ -598,7 +688,10 @@ async function logTimeForMonth() {
         bulkActivityToolbar,
       } = modalInstance;
       if (bulkActivityToolbar) bulkActivityToolbar.hidden = true;
+      if (modalInstance.totalSummary) modalInstance.totalSummary.hidden = true;
+      if (modalInstance.tableFooter) modalInstance.tableFooter.hidden = true;
       startButton.disabled = true;
+      startButton.textContent = reportMessage("report_logging_now");
       modalInstance.previewButton.disabled = true;
       modalInstance.deleteButton.disabled = true;
       closeButton.disabled = true;
@@ -779,8 +872,12 @@ async function logTimeForMonth() {
               null,
               settings
             );
+            const candidateTasks = fresh.tasks.map((t, idx) => ({
+              ...t,
+              ...(issue.tasks?.[idx] || {}),
+            }));
             const currentPlan = planReportSync(
-              fresh,
+              { ...fresh, tasks: candidateTasks },
               issue.selectedEntryIds || [],
               settings.logTimeRules
             );
@@ -885,6 +982,35 @@ async function logTimeForMonth() {
             : reportMessage("report_no_tasks");
         if (resultsForSheet.length) {
           updateProgress(reportMessage("report_complete_timesheet"));
+
+          let totalLoggedHours = 0;
+          for (const res of resultsForSheet) {
+            if (res.hours) {
+              const matches = String(res.hours).match(/[\d.]+/g);
+              if (matches) {
+                for (const m of matches) totalLoggedHours += Number(m) || 0;
+              }
+            }
+          }
+          if (totalLoggedHours > 0) {
+            const roundedLoggedHours = Math.round(totalLoggedHours * 100) / 100;
+            const formattedLoggedHours = Number.isInteger(roundedLoggedHours)
+              ? `${roundedLoggedHours}h`
+              : `${roundedLoggedHours.toFixed(1)}h`;
+            const loggedDays = resultsForSheet.length;
+            const daysLabel =
+              currentLanguage === "en" ? (loggedDays === 1 ? "day" : "days") : "ngày";
+            if (modalInstance.totalSummary) {
+              modalInstance.totalHoursVal.textContent = formattedLoggedHours;
+              modalInstance.totalDaysVal.textContent = `(${loggedDays} ${daysLabel})`;
+              modalInstance.totalSummary.hidden = false;
+            }
+            if (modalInstance.tableFooter) {
+              modalInstance.tableTotalHours.textContent = `∑ ${formattedLoggedHours}`;
+              modalInstance.tableTotalDays.textContent = `${loggedDays} ${daysLabel}`;
+              modalInstance.tableFooter.hidden = false;
+            }
+          }
         }
 
         copyButton.disabled = resultsForSheet.length === 0;
@@ -1195,17 +1321,22 @@ function openMonthlyLogModal({
           <div class="tb-monthly-log-kicker-row">
             <p class="tb-monthly-log-kicker">${reportMessage("report_spent_time")}</p>
             <div id="tb-monthly-log-user" class="tb-monthly-log-user-badge">
-              <span class="tb-user-icon" aria-hidden="true">👤</span>
+              <span class="tb-user-icon" aria-hidden="true">${globalThis.TB_ICONS?.PERSON || "👤"}</span>
               <span class="tb-user-name">${reportMessage("report_user_loading")}</span>
             </div>
           </div>
           <div class="tb-monthly-log-title-row">
             <h2 id="tb-monthly-log-title">${reportMessage("report_log_time_month")} ${monthLabel}</h2>
-            <input type="month" id="tb-monthly-log-month" class="tb-monthly-log-month-input" value="${initialMonthValue}" lang="${currentLanguage}" aria-label="${reportMessage("report_log_time_month")}">
+            <div class="tb-month-picker-wrapper">
+              <button type="button" id="tb-month-prev" class="tb-month-nav-btn" title="${reportMessage("report_prev_month")}" aria-label="${reportMessage("report_prev_month")}">‹</button>
+              <input type="month" id="tb-monthly-log-month" class="tb-monthly-log-month-input" value="${initialMonthValue}" required lang="${currentLanguage}" aria-label="${reportMessage("report_log_time_month")}">
+              <button type="button" id="tb-month-next" class="tb-month-nav-btn" title="${reportMessage("report_next_month")}" aria-label="${reportMessage("report_next_month")}">›</button>
+              <button type="button" id="tb-month-today" class="tb-month-today-btn" title="${reportMessage("report_this_month")}">${reportMessage("report_this_month")}</button>
+            </div>
           </div>
           <p id="tb-monthly-log-status" class="tb-monthly-log-status">${reportMessage("report_ready_to_scan")}</p>
         </div>
-        <button type="button" class="tb-monthly-log-close" aria-label="${reportMessage("modal_close_aria")}">&times;</button>
+        <button type="button" class="tb-monthly-log-close" aria-label="${reportMessage("modal_close_aria")}">${globalThis.TB_ICONS?.CLOSE || "&times;"}</button>
       </header>
       <div class="tb-monthly-log-body">
         <div class="tb-monthly-log-grid">
@@ -1219,10 +1350,18 @@ function openMonthlyLogModal({
           </section>
           <section class="tb-monthly-log-panel">
             <div class="tb-monthly-log-panel-title">
-              <span>${reportMessage("report_preview_title")}</span>
+              <div class="tb-preview-title-wrap">
+                <span>${reportMessage("report_preview_title")}</span>
+                <div id="tb-monthly-total-summary" class="tb-monthly-total-summary" hidden>
+                  <span class="tb-total-icon">${globalThis.TB_ICONS?.SCHEDULE || "⏱️"}</span>
+                  <span>${reportMessage("report_total_label")}</span>
+                  <strong id="tb-total-hours-val" class="tb-total-hours-val">0h</strong>
+                  <span id="tb-total-days-val" class="tb-total-days-val">(0)</span>
+                </div>
+              </div>
               <div id="tb-bulk-activity-toolbar" class="tb-bulk-activity-toolbar" hidden>
                 <label for="tb-bulk-activity-select" class="tb-bulk-activity-label">
-                  <span class="tb-bulk-activity-icon">⚡</span>
+                  <span class="tb-bulk-activity-icon">${globalThis.TB_ICONS?.BOLT || "⚡"}</span>
                   <span>${reportMessage("report_bulk_activity_label")}</span>
                 </label>
                 <select id="tb-bulk-activity-select" class="tb-bulk-activity-select"></select>
@@ -1247,6 +1386,15 @@ function openMonthlyLogModal({
                     </td>
                   </tr>
                 </tbody>
+                <tfoot id="tb-monthly-log-tfoot" hidden>
+                  <tr class="tb-monthly-log-total-row">
+                    <td colspan="2" class="tb-cell-total-label">${reportMessage("report_total_label")}</td>
+                    <td class="tb-cell-total-hours">
+                      <span class="tb-hours-total" id="tb-table-total-hours">0h</span>
+                    </td>
+                    <td class="tb-cell-total-days" id="tb-table-total-days">0</td>
+                  </tr>
+                </tfoot>
               </table>
             </div>
           </section>
@@ -1319,9 +1467,42 @@ function openMonthlyLogModal({
   const previewButton = overlay.querySelector("#tb-monthly-log-preview");
   const startButton = overlay.querySelector("#tb-monthly-log-start");
   const monthInput = overlay.querySelector("#tb-monthly-log-month");
+  const prevMonthBtn = overlay.querySelector("#tb-month-prev");
+  const nextMonthBtn = overlay.querySelector("#tb-month-next");
+  const todayMonthBtn = overlay.querySelector("#tb-month-today");
   const titleEl = overlay.querySelector("#tb-monthly-log-title");
+  let currentValidMonth = initialMonthValue;
+
+  const enforceValidMonth = () => {
+    const raw = String(monthInput?.value || "").trim();
+    if (!/^\d{4}-\d{2}$/.test(raw)) {
+      if (monthInput) monthInput.value = currentValidMonth;
+      setTimeout(() => {
+        if (monthInput && !/^\d{4}-\d{2}$/.test(monthInput.value)) {
+          monthInput.value = currentValidMonth;
+        }
+      }, 0);
+    } else {
+      currentValidMonth = raw;
+    }
+  };
+
   const getSelectedMonth = () => {
-    const match = String(monthInput?.value || "").match(/^(\d{4})-(\d{2})$/);
+    let rawValue = String(monthInput?.value || "").trim();
+    let match = rawValue.match(/^(\d{4})-(\d{2})$/);
+    if (!match) {
+      rawValue =
+        currentValidMonth || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+      if (monthInput) monthInput.value = rawValue;
+      setTimeout(() => {
+        if (monthInput && !monthInput.value) {
+          monthInput.value = rawValue;
+        }
+      }, 0);
+      match = rawValue.match(/^(\d{4})-(\d{2})$/);
+    } else {
+      currentValidMonth = rawValue;
+    }
     const year = match ? Number(match[1]) : now.getFullYear();
     const month = match ? Number(match[2]) : now.getMonth() + 1;
     return {
@@ -1343,12 +1524,18 @@ function openMonthlyLogModal({
     progressList: overlay.querySelector("#tb-monthly-log-progress"),
     resultBody: overlay.querySelector("#tb-monthly-log-results"),
     table: overlay.querySelector("#timesheet-results-table"),
+    totalSummary: overlay.querySelector("#tb-monthly-total-summary"),
+    totalHoursVal: overlay.querySelector("#tb-total-hours-val"),
+    totalDaysVal: overlay.querySelector("#tb-total-days-val"),
+    tableFooter: overlay.querySelector("#tb-monthly-log-tfoot"),
+    tableTotalHours: overlay.querySelector("#tb-table-total-hours"),
+    tableTotalDays: overlay.querySelector("#tb-table-total-days"),
     bulkActivityToolbar: overlay.querySelector("#tb-bulk-activity-toolbar"),
     bulkActivitySelect: overlay.querySelector("#tb-bulk-activity-select"),
     bulkActivityApply: overlay.querySelector("#tb-bulk-activity-apply"),
   };
 
-  monthInput.onchange = () => {
+  const handleMonthChange = () => {
     const { year, month } = getSelectedMonth();
     titleEl.textContent = `${reportMessage("report_log_time_month")} ${String(month).padStart(2, "0")}/${year}`;
     modalInstance.previewIssues = [];
@@ -1357,6 +1544,8 @@ function openMonthlyLogModal({
     startButton.textContent = reportMessage("report_confirm_logging");
     modalInstance.copyButton.disabled = true;
     if (modalInstance.bulkActivityToolbar) modalInstance.bulkActivityToolbar.hidden = true;
+    if (modalInstance.totalSummary) modalInstance.totalSummary.hidden = true;
+    if (modalInstance.tableFooter) modalInstance.tableFooter.hidden = true;
     modalInstance.statusText.textContent = reportMessage("report_ready_to_scan");
     const readyProgress = document.createElement("div");
     readyProgress.className = "tb-monthly-log-progress-item tb-monthly-log-progress-item--info";
@@ -1370,6 +1559,54 @@ function openMonthlyLogModal({
     emptyRow.appendChild(emptyCell);
     modalInstance.resultBody.replaceChildren(emptyRow);
   };
+
+  monthInput.onchange = () => {
+    enforceValidMonth();
+    handleMonthChange();
+  };
+  monthInput.oninput = () => {
+    if (!monthInput.value) {
+      enforceValidMonth();
+      handleMonthChange();
+    }
+  };
+  monthInput.onblur = () => {
+    enforceValidMonth();
+  };
+  monthInput.addEventListener("invalid", (e) => {
+    e.preventDefault();
+    enforceValidMonth();
+  });
+
+  const setMonthValue = (year, month) => {
+    const padded = String(month).padStart(2, "0");
+    const val = `${year}-${padded}`;
+    currentValidMonth = val;
+    monthInput.value = val;
+    handleMonthChange();
+  };
+
+  if (prevMonthBtn) {
+    prevMonthBtn.onclick = () => {
+      const { year, month } = getSelectedMonth();
+      const prevDate = new Date(year, month - 2, 1);
+      setMonthValue(prevDate.getFullYear(), prevDate.getMonth() + 1);
+    };
+  }
+
+  if (nextMonthBtn) {
+    nextMonthBtn.onclick = () => {
+      const { year, month } = getSelectedMonth();
+      const nextDate = new Date(year, month, 1);
+      setMonthValue(nextDate.getFullYear(), nextDate.getMonth() + 1);
+    };
+  }
+
+  if (todayMonthBtn) {
+    todayMonthBtn.onclick = () => {
+      setMonthValue(now.getFullYear(), now.getMonth() + 1);
+    };
+  }
 
   function onKeyDown(event) {
     if (event.key === "Escape" && !closeButton.disabled) {

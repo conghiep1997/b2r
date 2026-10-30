@@ -7,42 +7,70 @@
     <style>
       :root {
         color-scheme: light;
-        --bg: #f5f7fb;
+        --bg: #f8fafc;
         --panel: #ffffff;
-        --text: #1f2937;
-        --muted: #6b7280;
-        --border: #d7dde7;
-        --primary: #2563eb;
-        --primary-strong: #1d4ed8;
-        --success-bg: #ecfdf3;
+        --panel-subtle: #f1f5f9;
+        --text: #0f172a;
+        --muted: #64748b;
+        --border: #e2e8f0;
+        --border-hover: #cbd5e1;
+        --primary: #3e5ba3;
+        --primary-hover: #324b88;
+        --primary-active: #273c6f;
+        --primary-strong: #324b88;
+        --primary-surface: #eef2f9;
+        --on-primary: #ffffff;
+        --success: #16a34a;
+        --success-bg: #dcfce7;
         --success-border: #86efac;
-        --success-text: #166534;
-        --danger-bg: #fef2f2;
-        --danger-border: #fecaca;
-        --danger-text: #991b1b;
-        --warning-bg: #fff7ed;
-        --warning-border: #fed7aa;
-        --warning-text: #9a3412;
+        --success-text: #16a34a;
+        --danger: #dc2626;
+        --danger-bg: #fee2e2;
+        --danger-border: #fca5a5;
+        --danger-text: #dc2626;
+        --warning: #b45309;
+        --warning-bg: #fef3c7;
+        --warning-border: #fcd34d;
+        --warning-text: #b45309;
+        --radius-sm: 8px;
+        --radius-md: 12px;
+        --radius-lg: 16px;
+        --radius-pill: 9999px;
+        --shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
+        --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+        --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
       }
 
       :root[data-theme="dark"] {
         color-scheme: dark;
         --bg: #0f172a;
-        --panel: #172033;
-        --text: #e5edf8;
-        --muted: #a8b4c5;
+        --panel: #1e293b;
+        --panel-subtle: #27354a;
+        --text: #f8fafc;
+        --muted: #94a3b8;
         --border: #334155;
-        --primary: #60a5fa;
-        --primary-strong: #93c5fd;
-        --success-bg: #123326;
-        --success-border: #276749;
-        --success-text: #a7f3d0;
-        --danger-bg: #3a1b24;
-        --danger-border: #7f1d1d;
-        --danger-text: #fecaca;
-        --warning-bg: #3a2815;
-        --warning-border: #92400e;
-        --warning-text: #fed7aa;
+        --border-hover: #475569;
+        --primary: #3e5ba3;
+        --primary-hover: #4a6bb8;
+        --primary-active: #324b88;
+        --primary-strong: #4a6bb8;
+        --primary-surface: rgba(62, 91, 163, 0.2);
+        --on-primary: #ffffff;
+        --success: #4ade80;
+        --success-bg: rgba(74, 222, 128, 0.15);
+        --success-border: #22c55e;
+        --success-text: #4ade80;
+        --danger: #f87171;
+        --danger-bg: rgba(248, 113, 113, 0.15);
+        --danger-border: #ef4444;
+        --danger-text: #f87171;
+        --warning: #fbbf24;
+        --warning-bg: rgba(251, 191, 36, 0.15);
+        --warning-border: #eab308;
+        --warning-text: #fbbf24;
+        --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.35);
+        --shadow-md: 0 4px 12px 0 rgba(0, 0, 0, 0.4);
+        --shadow-lg: 0 12px 24px -4px rgba(0, 0, 0, 0.5);
       }
 
       body {
@@ -56,12 +84,15 @@
           sans-serif;
         background: var(--bg);
         color: var(--text);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
       }
 
       .wrap {
-        max-width: 860px;
+        max-width: 920px;
         margin: 0 auto;
-        padding: 32px 20px 48px;
+        padding: 28px 24px 60px;
       }
 
       /* Top Bar */
@@ -73,17 +104,24 @@
         align-items: center;
         justify-content: space-between;
         gap: 16px;
-        padding: 6px 20px;
-        background: var(--panel);
+        padding: 12px 24px;
+        background: rgba(248, 250, 252, 0.88);
         border-bottom: 1px solid var(--border);
-        backdrop-filter: blur(10px);
-        margin: -32px -20px 24px;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        margin: -28px -24px 28px;
+        box-shadow: var(--shadow-sm);
+      }
+
+      :root[data-theme="dark"] .options-top-bar {
+        background: rgba(15, 23, 42, 0.88);
+        border-color: var(--border);
       }
 
       .options-top-bar__prefs {
         display: flex;
         align-items: center;
-        gap: 16px;
+        gap: 12px;
       }
 
       .hero {
@@ -92,16 +130,18 @@
 
       .hero h1 {
         margin: 0 0 8px;
-        font-size: clamp(24px, 3.5vw, 36px);
-        font-weight: 800;
+        font-size: clamp(22px, 3vw, 32px);
+        font-weight: 750;
         letter-spacing: -0.02em;
+        color: var(--text);
       }
 
       .hero p {
         margin: 0;
         color: var(--muted);
         font-size: 14px;
-        line-height: 1.5;
+        line-height: 1.6;
+        max-width: 640px;
       }
 
       .pref-field {
@@ -119,68 +159,152 @@
       }
 
       .pref-field select {
-        min-height: 36px;
-        padding: 6px 10px;
+        min-height: 34px;
+        padding: 4px 12px;
         color: var(--text);
-        background: var(--bg);
+        background: var(--panel);
         border: 1px solid var(--border);
-        border-radius: 8px;
+        border-radius: var(--radius-md);
         font: inherit;
-        font-size: 13px;
+        font-size: 12.5px;
         font-weight: 500;
         cursor: pointer;
+        transition: all 0.16s ease;
+        box-shadow: var(--shadow-sm);
+      }
+
+      .pref-field select:hover {
+        border-color: var(--border-hover);
+      }
+
+      .pref-field select:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(62, 91, 163, 0.15);
+      }
+
+      /* Theme Toggle Group */
+      .theme-toggle-group {
+        display: inline-flex;
+        align-items: center;
+        background: var(--panel-subtle);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-pill);
+        padding: 2px;
+        gap: 2px;
+        box-sizing: border-box;
+      }
+
+      .theme-toggle-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 28px;
+        border-radius: var(--radius-pill);
+        border: 1px solid transparent;
+        background: transparent;
+        color: var(--muted);
+        cursor: pointer;
+        padding: 0;
+        transition: all 0.16s ease;
+      }
+
+      .theme-toggle-btn:hover {
+        color: var(--text);
+        background: rgba(0, 0, 0, 0.05);
+      }
+
+      :root[data-theme="dark"] .theme-toggle-btn:hover {
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .theme-toggle-btn.active {
+        background: var(--panel);
+        color: var(--primary);
+        border-color: var(--border);
+        box-shadow: var(--shadow-sm);
+      }
+
+      .theme-toggle-btn:focus-visible {
+        outline: 2px solid var(--primary);
+        outline-offset: 1px;
+      }
+
+      .theme-toggle-btn svg {
+        pointer-events: none;
       }
 
       /* Tab Bar */
       .options-tab-bar {
         display: flex;
         flex-wrap: wrap;
-        gap: 4px;
-        margin-bottom: 20px;
-        padding: 6px;
-        background: var(--panel);
+        gap: 6px;
+        margin-bottom: 24px;
+        padding: 5px;
+        background: var(--panel-subtle);
         border: 1px solid var(--border);
-        border-radius: 14px;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+        border-radius: var(--radius-pill);
+      }
+
+      :root[data-theme="dark"] .options-tab-bar {
+        background: var(--panel-subtle);
+        border-color: var(--border);
       }
 
       .tab-btn {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        padding: 8px 16px;
+        gap: 8px;
+        padding: 8px 18px;
         border: 1px solid transparent;
-        border-radius: 10px;
+        border-radius: var(--radius-pill);
         background: transparent;
         color: var(--muted);
         font: inherit;
-        font-size: 13px;
-        font-weight: 600;
+        font-size: 13.5px;
+        font-weight: 500;
         cursor: pointer;
-        transition: all 160ms ease;
+        transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
         white-space: nowrap;
+        user-select: none;
       }
 
       .tab-btn:hover {
-        background: var(--bg);
+        background: rgba(62, 91, 163, 0.08);
         color: var(--text);
-        border-color: var(--border);
+      }
+
+      :root[data-theme="dark"] .tab-btn:hover {
+        background: rgba(155, 180, 245, 0.12);
+        color: var(--text);
       }
 
       .tab-btn[aria-selected="true"] {
-        background: var(--primary);
-        color: #fff;
-        border-color: var(--primary);
-        font-weight: 700;
+        background: var(--primary-surface);
+        color: var(--primary);
+        border-color: rgba(62, 91, 163, 0.2);
+        font-weight: 600;
+        box-shadow: none;
       }
 
       :root[data-theme="dark"] .tab-btn[aria-selected="true"] {
-        background: var(--primary);
-        color: #0f172a;
+        background: var(--primary-surface);
+        color: var(--primary);
+        border-color: rgba(155, 180, 245, 0.25);
+        box-shadow: none;
       }
 
       .tab-btn:active {
-        transform: scale(0.97);
+        transform: scale(0.98);
+      }
+
+      .tab-icon {
+        width: 16px;
+        height: 16px;
+        display: block;
+        fill: currentColor;
+        flex-shrink: 0;
       }
 
       /* Tab Panels */
@@ -199,18 +323,18 @@
       /* Sticky Save Bar */
       .form-sticky-bar {
         position: sticky;
-        bottom: 12px;
+        bottom: 16px;
         z-index: 100;
         display: flex;
         align-items: center;
         justify-content: flex-end;
         gap: 16px;
         margin-top: 24px;
-        padding: 12px 18px;
+        padding: 12px 20px;
         background: var(--panel);
         border: 1px solid var(--border);
-        border-radius: 14px;
-        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-lg);
         backdrop-filter: blur(12px);
       }
 
@@ -218,22 +342,18 @@
       #onboardingCard {
         position: relative;
         margin-top: 0;
-        margin-bottom: 20px;
-        padding: 16px 20px;
-        border-radius: 14px;
-        background:
-          linear-gradient(180deg, rgba(37, 99, 235, 0.04) 0%, rgba(37, 99, 235, 0.01) 100%),
-          var(--panel);
-        border: 1px solid rgba(37, 99, 235, 0.18);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+        margin-bottom: 24px;
+        padding: 18px 22px;
+        border-radius: var(--radius-lg);
+        background: var(--primary-surface);
+        border: 1px solid rgba(79, 70, 229, 0.18);
+        box-shadow: var(--shadow-sm);
         transition: all 0.2s ease;
       }
 
       :root[data-theme="dark"] #onboardingCard {
-        background:
-          linear-gradient(180deg, rgba(96, 165, 250, 0.08) 0%, rgba(96, 165, 250, 0.02) 100%),
-          var(--panel);
-        border-color: rgba(96, 165, 250, 0.25);
+        background: var(--primary-surface);
+        border-color: rgba(129, 140, 248, 0.24);
       }
 
       .onboarding-header {
@@ -323,21 +443,34 @@
       .topbar-help-btn {
         display: inline-flex;
         align-items: center;
-        gap: 4px;
-        padding: 6px 12px;
-        font-size: 13px;
+        gap: 6px;
+        padding: 6px 14px;
+        min-height: 34px;
+        font-size: 12.5px;
         font-weight: 600;
-        color: var(--muted);
-        background: var(--bg);
+        color: var(--text);
+        background: var(--panel);
         border: 1px solid var(--border);
-        border-radius: 8px;
+        border-radius: var(--radius-pill);
         cursor: pointer;
-        transition: all 0.15s ease;
+        transition: all 0.16s ease;
+        box-shadow: var(--shadow-sm);
       }
 
       .topbar-help-btn:hover {
         color: var(--primary);
+        border-color: var(--border-hover);
+        background: var(--primary-surface);
+      }
+
+      .topbar-help-btn[aria-expanded="true"] {
+        color: var(--primary);
+        background: var(--primary-surface);
         border-color: var(--primary);
+      }
+
+      .topbar-help-btn svg {
+        fill: currentColor;
       }
 
       .form-sticky-bar .status {
@@ -363,7 +496,7 @@
       }
 
       :root[data-theme="dark"] details[style*="background"] {
-        background: #1e293b !important;
+        background: var(--panel-subtle) !important;
       }
 
       :root[data-theme="dark"] details[style*="background"] summary,
@@ -376,11 +509,11 @@
       :root[data-theme="dark"] details details,
       :root[data-theme="dark"] textarea,
       :root[data-theme="dark"] select[style*="background"] {
-        background: #111827 !important;
+        background: var(--panel) !important;
       }
 
       :root[data-theme="dark"] a {
-        color: #93c5fd !important;
+        color: var(--primary) !important;
       }
 
       @media (max-width: 620px) {
@@ -397,7 +530,7 @@
       }
 
       details[open] {
-        box-shadow: 0 6px 18px rgba(31, 41, 55, 0.06);
+        box-shadow: var(--shadow-sm);
       }
 
       details summary:focus-visible,
@@ -406,7 +539,7 @@
       select:focus-visible,
       textarea:focus-visible,
       a:focus-visible {
-        outline: 3px solid rgba(37, 99, 235, 0.35);
+        outline: 3px solid rgba(79, 70, 229, 0.25);
         outline-offset: 2px;
       }
 
@@ -418,21 +551,24 @@
 
       .card {
         background: var(--panel);
-        border: 1px solid rgba(215, 221, 231, 0.85);
-        border-radius: 18px;
-        padding: 20px;
-        box-shadow: 0 4px 12px rgba(31, 41, 55, 0.08);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 24px;
+        box-shadow: var(--shadow-md);
       }
 
       .settings-section {
-        --section-accent: #64748b;
         display: block;
-        margin-bottom: 12px;
-        padding: 14px 16px;
+        margin-bottom: 14px;
+        padding: 16px 18px;
         border: 1px solid var(--border);
-        border-left: 4px solid var(--section-accent);
-        border-radius: 12px;
+        border-radius: var(--radius-md);
         background: var(--panel);
+        transition: all 0.16s ease;
+      }
+
+      .settings-section:hover {
+        border-color: var(--border-hover);
       }
 
       .settings-section > summary {
@@ -451,30 +587,10 @@
         margin-top: 16px;
       }
 
-      #redmineSettings {
-        --section-accent: #3b82f6;
-      }
-
-      #backlogSettings {
-        --section-accent: #d97706;
-      }
-
-      #primaryAiSettings {
-        --section-accent: #059669;
-      }
-
-      #fallbackAiSettings {
-        --section-accent: #7c3aed;
-      }
-
-      #uiSettings {
-        --section-accent: #64748b;
-      }
-
       .policy-group {
         margin-top: 10px;
         border: 1px solid var(--border);
-        border-radius: 10px;
+        border-radius: var(--radius-md);
         background: var(--panel);
       }
 
@@ -491,13 +607,11 @@
       }
 
       .advanced-settings {
-        --section-accent: #64748b;
         display: block;
         margin: 16px 0 12px;
         padding: 14px 16px;
         border: 1px solid var(--border);
-        border-left: 4px solid var(--section-accent);
-        border-radius: 12px;
+        border-radius: var(--radius-md);
         background: var(--panel);
       }
 
@@ -533,35 +647,35 @@
       :root[data-theme="dark"] textarea,
       :root[data-theme="dark"] select {
         color: var(--text);
-        background: #111827 !important;
+        background: var(--panel) !important;
         border-color: var(--border) !important;
         caret-color: var(--text);
       }
 
       :root[data-theme="dark"] input::placeholder,
       :root[data-theme="dark"] textarea::placeholder {
-        color: #94a3b8;
-        opacity: 1;
+        color: var(--muted);
+        opacity: 0.8;
       }
 
       :root[data-theme="dark"] select option {
         color: var(--text);
-        background: #111827;
+        background: var(--panel);
       }
 
       :root[data-theme="dark"] input[readonly] {
         color: var(--muted) !important;
-        background: #1e293b !important;
+        background: var(--panel-subtle) !important;
       }
 
       :root[data-theme="dark"] .secondary {
         color: var(--text);
-        background: #1e293b;
+        background: var(--panel-subtle);
       }
 
       :root[data-theme="dark"] .secondary:hover:not(:disabled) {
-        background: #334155;
-        border-color: #475569;
+        background: #383532;
+        border-color: #4d4944;
       }
 
       :root[data-theme="dark"] .secondary:active:not(:disabled) {
@@ -573,13 +687,37 @@
       }
 
       :root[data-theme="dark"] .provider-models-list button,
-      :root[data-theme="dark"] .provider-keys-list button {
+      :root[data-theme="dark"] #geminiModelsList button {
         background: #1e3a5f !important;
         color: #dbeafe !important;
         border-color: #60a5fa !important;
       }
 
-      :root[data-theme="dark"] .provider-models-list button.selected {
+      :root[data-theme="dark"] .provider-keys-list button,
+      :root[data-theme="dark"] #geminiKeysList button,
+      :root[data-theme="dark"] #fallbackGeminiKeysList button {
+        background: rgba(6, 78, 59, 0.45) !important;
+        color: #a7f3d0 !important;
+        border-color: #059669 !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+      }
+
+      :root[data-theme="dark"] .provider-keys-list button::before,
+      :root[data-theme="dark"] #geminiKeysList button::before,
+      :root[data-theme="dark"] #fallbackGeminiKeysList button::before {
+        color: #34d399;
+      }
+
+      :root[data-theme="dark"] .provider-keys-list button:hover,
+      :root[data-theme="dark"] #geminiKeysList button:hover,
+      :root[data-theme="dark"] #fallbackGeminiKeysList button:hover {
+        background: rgba(153, 27, 27, 0.5) !important;
+        color: #fecaca !important;
+        border-color: #ef4444 !important;
+      }
+
+      :root[data-theme="dark"] .provider-models-list button.selected,
+      :root[data-theme="dark"] #geminiModelsList button.selected {
         background: #047857 !important;
         color: #ecfdf5 !important;
         border-color: #34d399 !important;
@@ -844,10 +982,6 @@
         font-size: 12px;
       }
 
-      #projectProfilesSettings {
-        --section-accent: #64748b;
-      }
-
       .profile-scope {
         max-width: 520px;
         margin-bottom: 18px;
@@ -976,11 +1110,16 @@
       .field input:focus {
         outline: none;
         border-color: var(--primary);
-        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+        box-shadow: 0 0 0 3px var(--focus-ring);
       }
 
       .field > button {
         margin-top: 10px;
+      }
+
+      .field[style*="display: flex"] > button,
+      .field[style*="display:flex"] > button {
+        margin-top: 0 !important;
       }
 
       #redmineApiKey + p {
@@ -1020,12 +1159,12 @@
 
       button {
         border: 0;
-        border-radius: 12px;
-        padding: 12px 18px;
+        border-radius: var(--radius-md);
+        padding: 10px 16px;
         font: inherit;
-        font-weight: 700;
+        font-weight: 600;
         cursor: pointer;
-        transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
       }
 
       button:active:not(:disabled) {
@@ -1037,34 +1176,71 @@
         cursor: not-allowed;
       }
 
-      .primary {
+      .primary,
+      #saveOptionsBtn {
         display: inline-flex;
         align-items: center;
         justify-content: center;
         gap: 8px;
-        background: linear-gradient(180deg, #3b82f6, var(--primary));
-        color: white;
-        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
-        transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+        background: #3e5ba3 !important;
+        color: #ffffff !important;
+        border: none;
+        border-radius: var(--radius-pill);
+        padding: 10px 22px;
+        font-size: 13.5px;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        cursor: pointer;
+        box-shadow: 0 2px 6px rgba(62, 91, 163, 0.28);
+        transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+        user-select: none;
       }
 
-      .primary:hover:not(:disabled) {
-        background: linear-gradient(180deg, #2563eb, var(--primary-strong));
-        box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35);
+      .primary:hover:not(:disabled),
+      #saveOptionsBtn:hover:not(:disabled) {
+        background: #324b88 !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 12px rgba(62, 91, 163, 0.38);
         transform: translateY(-1px);
       }
 
-      .primary:active:not(:disabled) {
-        transform: translateY(1px) scale(0.98);
-        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+      .primary:active:not(:disabled),
+      #saveOptionsBtn:active:not(:disabled) {
+        background: #273c6f !important;
+        color: #ffffff !important;
+        transform: translateY(0) scale(0.98);
+        box-shadow: 0 1px 3px rgba(62, 91, 163, 0.2);
       }
 
-      .primary:disabled {
-        opacity: 0.65;
+      .primary:disabled,
+      #saveOptionsBtn:disabled {
+        opacity: 0.6;
         cursor: not-allowed;
-        filter: grayscale(20%);
         box-shadow: none;
         transform: none;
+      }
+
+      #saveOptionsBtn .btn-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      #saveOptionsBtn .btn-icon svg {
+        fill: #ffffff !important;
+      }
+
+      :root[data-theme="dark"] .primary,
+      :root[data-theme="dark"] #saveOptionsBtn {
+        background: #3e5ba3 !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 8px rgba(62, 91, 163, 0.45);
+      }
+
+      :root[data-theme="dark"] .primary:hover:not(:disabled),
+      :root[data-theme="dark"] #saveOptionsBtn:hover:not(:disabled) {
+        background: #4a6bb8 !important;
+        box-shadow: 0 4px 14px rgba(62, 91, 163, 0.6);
       }
 
       .secondary {
@@ -1072,21 +1248,24 @@
         align-items: center;
         justify-content: center;
         gap: 6px;
-        background: #f8fafc;
-        color: #475569;
+        background: var(--panel);
+        color: var(--text);
         border: 1px solid var(--border);
-        transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-sm);
+        transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
       }
 
       .secondary:hover:not(:disabled) {
-        background: #f1f5f9;
-        border-color: #94a3b8;
+        background: var(--panel-subtle);
+        border-color: var(--border-hover);
+        color: var(--text);
         transform: translateY(-1px);
       }
 
       .secondary:active:not(:disabled) {
-        transform: translateY(1px) scale(0.98);
-        background: #e2e8f0;
+        transform: translateY(0) scale(0.98);
+        background: var(--border);
       }
 
       .secondary:disabled {
@@ -1124,9 +1303,9 @@
 
       .btn-sync:hover:not(:disabled) {
         color: var(--primary);
-        background: #eff6ff;
-        border-color: #93c5fd;
-        box-shadow: 0 2px 6px rgba(37, 99, 235, 0.12);
+        background: var(--primary-surface);
+        border-color: var(--primary);
+        box-shadow: 0 2px 6px rgba(62, 91, 163, 0.15);
       }
 
       .btn-sync:active:not(:disabled) {
@@ -1205,13 +1384,18 @@
       .status {
         display: inline-flex;
         align-items: center;
-        min-height: 20px;
-        padding: 8px 12px;
-        border-radius: 10px;
+        justify-content: center;
+        min-height: 42px;
+        box-sizing: border-box;
+        padding: 9px 14px;
+        border-radius: 12px;
         border: 1px solid transparent;
         background: #f8fafc;
         color: var(--muted);
-        font-size: 14px;
+        font-size: 13.5px;
+        font-weight: 500;
+        line-height: 1.4;
+        margin: 0;
       }
 
       .status:empty,
@@ -1289,14 +1473,14 @@
 
       .disclaimer {
         margin-top: 24px;
-        padding: 12px;
-        border-radius: 12px;
-        background: #fff7ed;
-        border: 1px dashed #fed7aa;
-        color: #9a3412;
+        padding: 14px 16px;
+        border-radius: var(--radius-md);
+        background: var(--panel-subtle);
+        border: 1px solid var(--border);
+        color: var(--muted);
         font-size: 13px;
         text-align: center;
-        font-style: italic;
+        font-style: normal;
       }
 
       @keyframes slide-up {
@@ -1403,23 +1587,71 @@
         flex-shrink: 0;
       }
 
-      #geminiModelsList button {
-        background: #dbeafe;
-        color: #1e40af;
-        border: 1px solid #bfdbfe;
-        border-radius: 8px;
+      /* Active API Key Chips (Green / Emerald Active theme) */
+      .provider-keys-list button,
+      #geminiKeysList button,
+      #fallbackGeminiKeysList button {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #ecfdf5 !important;
+        color: #065f46 !important;
+        border: 1px solid #6ee7b7 !important;
+        border-radius: 8px !important;
+        padding: 5px 10px !important;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+        font-size: 12px !important;
+        font-weight: 600 !important;
+        cursor: pointer !important;
+        box-shadow: 0 1px 3px rgba(16, 185, 129, 0.12) !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      }
+
+      .provider-keys-list button::before,
+      #geminiKeysList button::before,
+      #fallbackGeminiKeysList button::before {
+        content: "●";
+        color: #10b981;
+        font-size: 10px;
+        line-height: 1;
+      }
+
+      .provider-keys-list button:hover,
+      #geminiKeysList button:hover,
+      #fallbackGeminiKeysList button:hover {
+        background: #fee2e2 !important;
+        color: #991b1b !important;
+        border-color: #fca5a5 !important;
+        box-shadow: 0 2px 6px rgba(239, 68, 68, 0.2) !important;
+        transform: translateY(-1px);
+      }
+
+      .provider-keys-list button:hover::before,
+      #geminiKeysList button:hover::before,
+      #fallbackGeminiKeysList button:hover::before {
+        color: #ef4444;
+      }
+
+      #geminiModelsList button,
+      .provider-models-list button {
+        background: var(--primary-surface);
+        color: var(--primary);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
         padding: 6px 12px;
         font-size: 12px;
         cursor: pointer;
         transition: all 0.25s ease;
       }
 
-      #geminiModelsList button:hover {
+      #geminiModelsList button:hover,
+      .provider-models-list button:hover {
         background: #bfdbfe;
         transform: translateY(-1px);
       }
 
-      #geminiModelsList button.selected {
+      #geminiModelsList button.selected,
+      .provider-models-list button.selected {
         background: #10b981;
         color: #fff;
         border-color: #059669;
@@ -1469,7 +1701,18 @@
           aria-expanded="true"
           aria-controls="onboardingCard"
         >
-          <span>❓</span>
+          <svg
+            class="tab-icon"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            width="16"
+            height="16"
+            aria-hidden="true"
+          >
+            <path
+              d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"
+            />
+          </svg>
           <span data-i18n="options_onboarding_help_btn">Hướng dẫn</span>
         </button>
         <div class="options-top-bar__prefs">
@@ -1480,13 +1723,101 @@
               <option value="en" data-i18n="options_language_en">English</option>
             </select>
           </div>
-          <div class="pref-field">
-            <label for="themePreference" data-i18n="options_theme_label">Theme</label>
-            <select id="themePreference">
-              <option value="system" data-i18n="options_theme_system">Theo hệ thống</option>
-              <option value="light" data-i18n="options_theme_light">Sáng</option>
-              <option value="dark" data-i18n="options_theme_dark">Tối</option>
-            </select>
+          <div class="pref-field pref-field--theme">
+            <label id="themePreferenceLabel" data-i18n="options_theme_label">Theme</label>
+            <div
+              class="theme-toggle-group"
+              id="themeToggleGroup"
+              role="radiogroup"
+              aria-labelledby="themePreferenceLabel"
+            >
+              <button
+                type="button"
+                class="theme-toggle-btn"
+                data-theme-val="light"
+                data-i18n-title="options_theme_light"
+                data-i18n-aria-label="options_theme_light"
+                title="Sáng"
+                aria-label="Sáng"
+                role="radio"
+                aria-checked="false"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  width="15"
+                  height="15"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="5"></circle>
+                  <line x1="12" y1="1" x2="12" y2="3"></line>
+                  <line x1="12" y1="21" x2="12" y2="23"></line>
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                  <line x1="1" y1="12" x2="3" y2="12"></line>
+                  <line x1="21" y1="12" x2="23" y2="12"></line>
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+              </button>
+              <button
+                type="button"
+                class="theme-toggle-btn active"
+                data-theme-val="system"
+                data-i18n-title="options_theme_system"
+                data-i18n-aria-label="options_theme_system"
+                title="Theo hệ thống"
+                aria-label="Theo hệ thống"
+                role="radio"
+                aria-checked="true"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  width="15"
+                  height="15"
+                  aria-hidden="true"
+                >
+                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                  <line x1="8" y1="21" x2="16" y2="21"></line>
+                  <line x1="12" y1="17" x2="12" y2="21"></line>
+                </svg>
+              </button>
+              <button
+                type="button"
+                class="theme-toggle-btn"
+                data-theme-val="dark"
+                data-i18n-title="options_theme_dark"
+                data-i18n-aria-label="options_theme_dark"
+                title="Tối"
+                aria-label="Tối"
+                role="radio"
+                aria-checked="false"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  width="15"
+                  height="15"
+                  aria-hidden="true"
+                >
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+              </button>
+            </div>
+            <input type="hidden" id="themePreference" value="system" />
           </div>
         </div>
       </div>
@@ -1509,7 +1840,12 @@
           aria-controls="tab-panel-redmine"
           data-panel="redmine"
         >
-          <span>💎 Redmine</span>
+          <svg class="tab-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path
+              d="M12 2L3 9l9 13 9-13-9-7zm0 3.31L17.47 9H6.53L12 5.31zM5.04 10.5h3.69L12 18.24 5.04 10.5zm5.55 0h2.82l-1.41 6.82-1.41-6.82zm4.68 0h3.69l-6.96 7.74 3.27-7.74z"
+            />
+          </svg>
+          <span>Redmine</span>
         </button>
         <button
           type="button"
@@ -1520,7 +1856,12 @@
           aria-controls="tab-panel-backlog"
           data-panel="backlog"
         >
-          <span>📝 Backlog</span>
+          <svg class="tab-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path
+              d="M3 10h11v2H3v-2zm0-2h11V6H3v2zm0 8h7v-2H3v2zm15.01-3.13l.71-.71c.39-.39 1.02-.39 1.41 0l.71.71c.39.39.39 1.02 0 1.41l-.71.71-2.12-2.12zm-.71.71l-5.3 5.3V21h2.12l5.3-5.3-2.12-2.12z"
+            />
+          </svg>
+          <span>Backlog</span>
         </button>
         <button
           type="button"
@@ -1531,7 +1872,12 @@
           aria-controls="tab-panel-ai"
           data-panel="ai"
         >
-          <span>🤖 AI</span>
+          <svg class="tab-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path
+              d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"
+            />
+          </svg>
+          <span>AI</span>
         </button>
         <button
           type="button"
@@ -1542,7 +1888,12 @@
           aria-controls="tab-panel-profiles"
           data-panel="profiles"
         >
-          <span>📁 Profiles</span>
+          <svg class="tab-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path
+              d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-5 3c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm4 8h-8v-1c0-1.33 2.67-2 4-2s4 .67 4 2v1z"
+            />
+          </svg>
+          <span>Profiles</span>
         </button>
         <button
           type="button"
@@ -1553,7 +1904,12 @@
           aria-controls="tab-panel-ui"
           data-panel="ui"
         >
-          <span>🎨 UI</span>
+          <svg class="tab-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path
+              d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 19.4c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l2.12-2.12C9.42 19.45 10.67 20 12 20c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"
+            />
+          </svg>
+          <span>UI</span>
         </button>
         <button
           type="button"
@@ -1564,7 +1920,12 @@
           aria-controls="tab-panel-advanced"
           data-panel="advanced"
         >
-          <span>⚙️ Nâng cao</span>
+          <svg class="tab-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path
+              d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"
+            />
+          </svg>
+          <span>Nâng cao</span>
         </button>
       </div>
 
@@ -1584,7 +1945,17 @@
               title="Ẩn hướng dẫn"
               aria-label="Ẩn hướng dẫn"
             >
-              <span>✕</span>
+              <svg
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                width="14"
+                height="14"
+                aria-hidden="true"
+              >
+                <path
+                  d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+                />
+              </svg>
               <span data-i18n="options_onboarding_dismiss">Ẩn hướng dẫn</span>
             </button>
           </div>
@@ -1686,13 +2057,9 @@
                       title="Reload projects"
                       data-i18n-title="options_sync_projects"
                     >
-                      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                         <path
-                          d="M20 7v5h-5M4 17v-5h5m10.2-1A7.5 7.5 0 0 0 6.3 6.3L4 8m16 8-2.3 1.7A7.5 7.5 0 0 1 4.8 13"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
+                          d="M12 20q-3.35 0-5.675-2.325T4 12t2.325-5.675T12 4q1.725 0 3.3.712T18 6.75V4h2v7h-7V9h4.2q-.8-1.4-2.187-2.2T12 6Q9.5 6 7.75 7.75T6 12t1.75 4.25T12 18q1.925 0 3.475-1.1T17.65 14h2.1q-.7 2.65-2.85 4.325T12 20"
                         />
                       </svg>
                       <span data-i18n="options_sync_projects">Tải lại dự án</span>
@@ -1712,7 +2079,12 @@
                   "
                 >
                   <summary
-                    style="padding: 12px 0; font-weight: 600; cursor: pointer; color: #1d4ed8"
+                    style="
+                      padding: 12px 0;
+                      font-weight: 600;
+                      cursor: pointer;
+                      color: var(--primary);
+                    "
                   >
                     <span data-i18n="options_custom_fields_section"
                       >Cáº¥u hÃ¬nh Custom Fields (JSON Mapping)</span
@@ -2210,7 +2582,17 @@
                         data-i18n-title="options_export_config_title"
                         title="Xuất cấu hình JSON để chia sẻ trong team"
                       >
-                        <span>📤</span>
+                        <span class="btn-icon">
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                            width="16"
+                            height="16"
+                            aria-hidden="true"
+                          >
+                            <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
+                          </svg>
+                        </span>
                         <span data-i18n="options_export_config">Xuất cấu hình</span>
                       </button>
                       <button
@@ -2220,7 +2602,17 @@
                         data-i18n-title="options_import_config_title"
                         title="Nhập cấu hình JSON từ file"
                       >
-                        <span>📥</span>
+                        <span class="btn-icon">
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                            width="16"
+                            height="16"
+                            aria-hidden="true"
+                          >
+                            <path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z" />
+                          </svg>
+                        </span>
                         <span data-i18n="options_import_config">Nhập cấu hình</span>
                       </button>
                       <input
@@ -2525,7 +2917,19 @@
           <div class="form-sticky-bar">
             <div id="status" class="status"></div>
             <button id="saveOptionsBtn" class="primary" type="submit">
-              <span class="btn-icon">💾</span>
+              <span class="btn-icon">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  width="16"
+                  height="16"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"
+                  />
+                </svg>
+              </span>
               <span class="btn-text" data-i18n="options_save">Lưu cấu hình</span>
             </button>
           </div>
