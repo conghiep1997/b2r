@@ -19,6 +19,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   let optionsMessages = {};
   await localizeOptions();
+  const vBadge = document.getElementById("optionsVersionBadge");
+  if (vBadge) {
+    try {
+      const manifest = chrome.runtime.getManifest?.();
+      if (manifest?.version) {
+        vBadge.textContent = `v${manifest.version}`;
+      }
+    } catch {
+      // ignore
+    }
+  }
 
   async function localizeOptions() {
     const { languagePreference } = await chrome.storage.local.get("languagePreference");
@@ -213,6 +224,19 @@ document.addEventListener("DOMContentLoaded", async () => {
   const showRedmineSuccessModalInput = document.getElementById("showRedmineSuccessModal");
   const statusEl = document.getElementById("status");
 
+  const SCIENCE_ICON_SVG =
+    globalThis.TB_ICONS?.SCIENCE ||
+    '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M19 19H5v-1l4-5V5h-1V3h8v2h-1v8l4 5v1zm-7-7.2L8.5 17h7L12 11.8zM11 5v4.8L9.2 12h5.6L13 9.8V5h-2z"/></svg>';
+  const SPINNER_ICON_SVG =
+    globalThis.TB_ICONS?.SPINNER ||
+    '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" class="is-spinning" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke-opacity="0.25"/><path d="M12 3a9 9 0 0 1 9 9"/></svg>';
+  const CHECK_ICON_SVG =
+    globalThis.TB_ICONS?.CHECK ||
+    '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
+  const CLOSE_ICON_SVG =
+    globalThis.TB_ICONS?.CLOSE ||
+    '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>';
+
   function syncThemeToggleUI(theme) {
     themeToggleBtns.forEach((btn) => {
       const isActive = btn.dataset.themeVal === theme;
@@ -334,6 +358,56 @@ document.addEventListener("DOMContentLoaded", async () => {
     handleProviderChange(fallbackProviderSelect)
   );
   redmineApiKeyInput.addEventListener("blur", handleRedmineKeyBlur);
+  // --- Automatic Verification on Input / Configuration Change ---
+  let backlogAutoCheckTimer = null;
+  function scheduleAutoCheckBacklog() {
+    clearTimeout(backlogAutoCheckTimer);
+    backlogAutoCheckTimer = setTimeout(() => {
+      const key = backlogApiKeyInput.value.trim();
+      if (key && key !== "**********" && key.length >= 16) {
+        handleBacklogConnectionTest();
+      }
+    }, 700);
+  }
+
+  let aiAutoCheckTimer = null;
+  function scheduleAutoCheckPrimaryAi() {
+    clearTimeout(aiAutoCheckTimer);
+    aiAutoCheckTimer = setTimeout(() => {
+      const provider = primaryProviderSelect.value;
+      const key = provider === "gemini" ? getFirstGeminiKey() : getProviderKeys("primary", provider)[0];
+      if (key && key !== "**********") {
+        handlePrimaryAiTest();
+      }
+    }, 700);
+  }
+
+  backlogApiKeyInput.addEventListener("blur", () => {
+    const key = backlogApiKeyInput.value.trim();
+    if (key && key !== "**********" && key.length >= 16) {
+      handleBacklogConnectionTest();
+    }
+  });
+  backlogApiKeyInput.addEventListener("input", scheduleAutoCheckBacklog);
+
+  document.getElementById("geminiApiKeys")?.addEventListener("blur", scheduleAutoCheckPrimaryAi);
+  groqApiKeyInput?.addEventListener("blur", scheduleAutoCheckPrimaryAi);
+  cerebrasApiKeyInput?.addEventListener("blur", scheduleAutoCheckPrimaryAi);
+  openrouterApiKeyInput?.addEventListener("blur", scheduleAutoCheckPrimaryAi);
+
+  document.getElementById("defaultProjectId")?.addEventListener("change", async (e) => {
+    const selectedId = e.target.value;
+    if (selectedId) {
+      const stored = await chrome.storage.local.get(["redmineApiKey", "redmineDomain"]);
+      if (stored.redmineApiKey) {
+        const key = await decryptData(stored.redmineApiKey);
+        const domain = stored.redmineDomain || TB.REDMINE_DOMAIN;
+        const fp = await verificationFingerprint([TB_REDMINE_DOMAIN.normalize(domain), key]);
+        await chrome.storage.local.set({ defaultProjectId: selectedId, redmineConnectionVerified: fp });
+        updateOnboardingStatuses();
+      }
+    }
+  });
   document.getElementById("syncProjectsBtn")?.addEventListener("click", handleSyncProjects);
   document
     .getElementById("testBacklogConnectionBtn")
@@ -1507,6 +1581,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         renderGeminiKeysButtons(legacyKey ? [legacyKey] : []);
       }
       updateOnboardingStatuses();
+
+      // Quiet auto-verify for already stored credentials on first load if not verified yet
+      if (items.backlogApiKey && !items.backlogConnectionVerified) {
+        setTimeout(handleBacklogConnectionTest, 800);
+      }
+      if ((items.geminiApiKeys || items.geminiApiKey || items.groqApiKey || items.cerebrasApiKey || items.openrouterApiKey) && !items.aiConnectionVerified) {
+        setTimeout(handlePrimaryAiTest, 1200);
+      }
     });
   }
 
@@ -1708,24 +1790,30 @@ document.addEventListener("DOMContentLoaded", async () => {
           const btn = listEl?.querySelector(`button[data-model-id="${mId}"]`);
           const icon = btn?.querySelector(".test-icon");
           if (icon) {
-            icon.textContent = "⏳";
-            icon.style.animation = "spin 1s linear infinite";
+            icon.innerHTML = SPINNER_ICON_SVG;
+            icon.style.color = "";
           }
           const res = await testGeminiKeysForModel(mId);
           if (res.ok) {
             successModels.push(mId);
             if (icon) {
-              icon.textContent = "✅";
-              icon.style.animation = "";
+              icon.innerHTML = CHECK_ICON_SVG;
+              icon.style.color = "var(--success)";
             }
           } else {
             failedModels.push(mId);
             if (icon) {
-              icon.textContent = "❌";
-              icon.style.animation = "";
+              icon.innerHTML = CLOSE_ICON_SVG;
+              icon.style.color = "var(--danger)";
             }
             btn?.classList.remove("selected");
           }
+          setTimeout(() => {
+            if (icon) {
+              icon.innerHTML = SCIENCE_ICON_SVG;
+              icon.style.color = "";
+            }
+          }, 3000);
         }
 
         if (listEl) {
@@ -2007,12 +2095,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   function setModelButtonContent(button, label, badge) {
     const icon = document.createElement("span");
     icon.className = "test-icon";
-    icon.textContent = "🧪";
-    Object.assign(icon.style, {
-      marginLeft: "6px",
-      opacity: "0.6",
-      cursor: "pointer",
-    });
+    icon.title = (om("options_test_model_label", "Kiểm tra mô hình $model$") || "").replace("$model$", label);
+    icon.innerHTML = SCIENCE_ICON_SVG;
     const labelSpan = document.createElement("span");
     labelSpan.className = "model-label";
     labelSpan.textContent = label;
@@ -2046,7 +2130,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       btn.className = selectedModels.includes(model.value) ? "selected" : "";
       setModelButtonContent(btn, model.label, model.badge);
       btn.onclick = (e) => {
-        if (e.target.classList.contains("test-icon")) {
+        if (e.target.closest(".test-icon")) {
           e.stopPropagation();
           handleTestSingleModel(model.value, model.label, btn);
         } else {
@@ -2077,28 +2161,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       btn.className = selectedModels.includes(model.value) ? "selected" : "";
       setModelButtonContent(btn, model.label);
 
-      Object.assign(btn.style, {
-        background: btn.classList.contains("selected") ? "#10b981" : "var(--primary-surface)",
-        color: btn.classList.contains("selected") ? "#fff" : "var(--primary)",
-        border: `1px solid ${btn.classList.contains("selected") ? "#059669" : "var(--border)"}`,
-        borderRadius: "var(--radius-sm)",
-        padding: "6px 12px",
-        cursor: "pointer",
-        fontSize: "12px",
-        display: "flex",
-        alignItems: "center",
-      });
-
       btn.onclick = (e) => {
-        if (e.target.classList.contains("test-icon")) {
+        if (e.target.closest(".test-icon")) {
           e.stopPropagation();
           handleTestProviderModel(scope, provider, model.value, model.label, btn);
         } else {
           btn.classList.toggle("selected");
-          const isSelected = btn.classList.contains("selected");
-          btn.style.background = isSelected ? "#10b981" : "var(--primary-surface)";
-          btn.style.color = isSelected ? "#fff" : "var(--primary)";
-          btn.style.borderColor = isSelected ? "#059669" : "var(--border)";
           countEl.textContent = listEl.querySelectorAll(".selected").length;
         }
       };
@@ -2113,10 +2181,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const apiKey = keys[0];
     const icon = btn.querySelector(".test-icon");
-    const originalIcon = icon.textContent;
-    icon.textContent = "⏳";
-    icon.style.display = "inline-block";
-    icon.style.animation = "spin 1s linear infinite";
+    icon.innerHTML = SPINNER_ICON_SVG;
+    icon.style.color = "";
     setStatus(`${om("options_testing_model")}: ${provider} / ${modelLabel}...`);
 
     try {
@@ -2127,21 +2193,20 @@ document.addEventListener("DOMContentLoaded", async () => {
         apiKey,
       });
       if (result.ok) {
-        icon.textContent = "✅";
-        icon.style.animation = "";
-        setStatus(`✅ ${om("options_model_ok")}: ${modelLabel} (${provider})`);
+        icon.innerHTML = CHECK_ICON_SVG;
+        icon.style.color = "var(--success)";
+        setStatus(`✓ ${om("options_model_ok")}: ${modelLabel} (${provider})`);
       } else {
         throw new Error(result.message || "Model test failed.");
       }
     } catch (e) {
-      icon.textContent = "❌";
-      icon.style.animation = "";
+      icon.innerHTML = CLOSE_ICON_SVG;
+      icon.style.color = "var(--danger)";
       setStatus(`❌ ${e.message}`, true);
     } finally {
       setTimeout(() => {
-        if (icon.textContent !== "🧪") {
-          // Giữ icon kết quả một lúc rồi có thể reset hoặc để nguyên
-        }
+        icon.innerHTML = SCIENCE_ICON_SVG;
+        icon.style.color = "";
       }, 3000);
     }
   }
@@ -2235,6 +2300,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const currentKeys = getProviderKeys(scope, provider);
     if (currentKeys.length < 10 && !currentKeys.includes(key)) {
       renderProviderKeysButtons(scope, provider, [...currentKeys, key]);
+      if (scope === "primary") scheduleAutoCheckPrimaryAi();
     }
     input.value = "";
   }
@@ -2270,18 +2336,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     getFirstGeminiKey();
     if (getGeminiKeys().length === 0) return setStatus(om("options_enter_gemini_key"), true);
     const icon = btn.querySelector(".test-icon");
-    icon.textContent = "⏳";
-    icon.style.animation = "spin 1s linear infinite";
+    icon.innerHTML = SPINNER_ICON_SVG;
+    icon.style.color = "";
     setStatus(`${om("options_testing_model")}: ${modelLabel}...`);
     try {
       const result = await testGeminiKeysForModel(modelId);
       if (result.ok) {
-        icon.textContent = "✅";
-        icon.style.animation = "";
-        setStatus(`✅ ${modelLabel}: ${result.message}`);
+        icon.innerHTML = CHECK_ICON_SVG;
+        icon.style.color = "var(--success)";
+        setStatus(`✓ ${modelLabel}: ${result.message}`);
       } else {
-        icon.textContent = "❌";
-        icon.style.animation = "";
+        icon.innerHTML = CLOSE_ICON_SVG;
+        icon.style.color = "var(--danger)";
         btn.classList.remove("selected");
         const listEl = document.getElementById("geminiModelsList");
         if (listEl) {
@@ -2294,8 +2360,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         );
       }
     } catch (e) {
-      icon.textContent = "❌";
-      icon.style.animation = "";
+      icon.innerHTML = CLOSE_ICON_SVG;
+      icon.style.color = "var(--danger)";
       btn.classList.remove("selected");
       const listEl = document.getElementById("geminiModelsList");
       if (listEl) {
@@ -2303,6 +2369,11 @@ document.addEventListener("DOMContentLoaded", async () => {
           listEl.querySelectorAll(".selected").length;
       }
       setStatus(`❌ ${modelLabel}: ${e.message} (Đã tự động bỏ chọn)`, true);
+    } finally {
+      setTimeout(() => {
+        icon.innerHTML = SCIENCE_ICON_SVG;
+        icon.style.color = "";
+      }, 3000);
     }
   }
 
@@ -2437,6 +2508,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         key,
       ]);
       input.value = "";
+      scheduleAutoCheckPrimaryAi();
     }
   }
 

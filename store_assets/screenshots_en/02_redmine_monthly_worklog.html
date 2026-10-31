@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    width: 1280px;
+    height: 800px;
+    background: #090e17;
+    background-image: 
+      radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.12) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
+      radial-gradient(at 50% 50%, rgba(62, 91, 163, 0.08) 0px, transparent 60%);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
+    color: #f8fafc;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 36px 48px 30px;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .badge-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    background: rgba(56, 189, 248, 0.1);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #38bdf8;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .badge-tag-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #38bdf8;
+    box-shadow: 0 0 8px #38bdf8;
+  }
+
+  .header {
+    text-align: center;
+    max-width: 960px;
+    margin-bottom: 24px;
+  }
+  .header h1 {
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+  }
+  .header p {
+    font-size: 15px;
+    color: #94a3b8;
+    line-height: 1.45;
+  }
+
+  /* Mockup Frame */
+  .window-frame {
+    width: 100%;
+    max-width: 1180px;
+    flex: 1;
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 14px;
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .window-titlebar {
+    height: 38px;
+    background: #131d31;
+    border-bottom: 1px solid #1e293b;
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 12px;
+  }
+  .traffic-lights {
+    display: flex;
+    gap: 7px;
+  }
+  .traffic-dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+  }
+  .traffic-red { background: #ef4444; }
+  .traffic-yellow { background: #f59e0b; }
+  .traffic-green { background: #10b981; }
+  .window-address {
+    flex: 1;
+    max-width: 520px;
+    height: 24px;
+    background: #0a101d;
+    border: 1px solid #243247;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    font-size: 11px;
+    color: #64748b;
+    gap: 6px;
+  }
+  .window-address span { color: #94a3b8; font-family: monospace; }
+  .window-content {
+    flex: 1;
+    padding: 20px;
+    background: #0b111e;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+</style>
+</head>
+<body>
+  <div class="badge-tag"><div class="badge-tag-dot"></div> Time Tracking • Redmine Monthly Worklog</div>
+  <div class="header">
+    <h1>Redmine Monthly Worklog & Automated Time Tracking</h1>
+    <p>Automatic monthly task aggregation, duplicate detection, exact hour calculation, and 1-click bulk activity logging.</p>
+  </div>
+  <div class="window-frame">
+    <div class="window-titlebar">
+      <div class="traffic-lights">
+        <div class="traffic-dot traffic-red"></div>
+        <div class="traffic-dot traffic-yellow"></div>
+        <div class="traffic-dot traffic-green"></div>
+      </div>
+      <div class="window-address">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="#10b981"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+        <span>https://workspace.backlog.com/view/PROJ-104</span>
+      </div>
+    </div>
+    <div class="window-content">
+      
+        <div style="display: flex; flex-direction: column; height: 100%; gap: 14px;">
+          <!-- Top Toolbar: Month Picker & Summary Stats -->
+          <div style="display: flex; align-items: center; justify-content: space-between; background: #131d31; padding: 12px 16px; border-radius: 10px; border: 1px solid #1e293b;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span style="font-weight: 700; font-size: 15px; color: #f1f5f9;">Monthly Report:</span>
+              <div style="display: inline-flex; align-items: center; background: #0f172a; padding: 3px; border: 1px solid #334155; border-radius: 8px; gap: 4px;">
+                <button style="width: 28px; height: 28px; background: #1e293b; border: 1px solid #334155; color: #cbd5e1; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+                </button>
+                <input type="text" value="October 2026" readonly style="height: 28px; padding: 2px 12px; border: 1px solid #334155; border-radius: 6px; background: #1e293b; color: #f1f5f9; font-size: 13px; font-weight: 600; width: 130px; text-align: center;">
+                <button style="width: 28px; height: 28px; background: #1e293b; border: 1px solid #334155; color: #cbd5e1; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+                </button>
+                <button style="height: 28px; padding: 0 10px; background: #1e293b; border: 1px solid #334155; color: #9bb4f5; font-size: 12px; font-weight: 600; border-radius: 6px; cursor: pointer;">This Month</button>
+              </div>
+            </div>
+
+            <!-- Stats -->
+            <div style="display: flex; gap: 14px;">
+              <div style="background: #0f172a; border: 1px solid #1e293b; padding: 6px 14px; border-radius: 6px;">
+                <span style="font-size: 11px; color: #94a3b8;">Total Hours:</span> <strong style="font-size: 14px; color: #38bdf8;">168.0h</strong>
+              </div>
+              <div style="background: #0f172a; border: 1px solid #1e293b; padding: 6px 14px; border-radius: 6px;">
+                <span style="font-size: 11px; color: #94a3b8;">Work Days:</span> <strong style="font-size: 14px; color: #4ade80;">21 days</strong>
+              </div>
+              <div style="background: #0f172a; border: 1px solid #1e293b; padding: 6px 14px; border-radius: 6px;">
+                <span style="font-size: 11px; color: #94a3b8;">Progress:</span> <strong style="font-size: 14px; color: #fbbf24;">100%</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Table of Logs -->
+          <div style="flex: 1; background: #131d31; border: 1px solid #1e293b; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
+              <thead>
+                <tr style="background: #0f172a; border-bottom: 1px solid #1e293b; color: #94a3b8;">
+                  <th style="padding: 10px 14px; width: 120px;">Date</th>
+                  <th style="padding: 10px 14px; width: 260px;">Report / Task</th>
+                  <th style="padding: 10px 14px;">Completed Work</th>
+                  <th style="padding: 10px 14px; width: 130px;">Activity</th>
+                  <th style="padding: 10px 14px; width: 90px; text-align: center;">Hours</th>
+                  <th style="padding: 10px 14px; width: 100px; text-align: center;">Status</th>
+                </tr>
+              </thead>
+              <tbody style="color: #cbd5e1;">
+                <tr style="border-bottom: 1px solid #1e293b;">
+                  <td style="padding: 10px 14px; font-weight: 600; color: #f8fafc;">Oct 30 (Fri)</td>
+                  <td style="padding: 10px 14px;"><span style="color: #38bdf8; font-weight: 500;">Sprint 44 Progress Report</span></td>
+                  <td style="padding: 10px 14px;">Review PR #89, fix UI layout bugs & update guide docs</td>
+                  <td style="padding: 10px 14px;"><span style="background: #0f172a; border: 1px solid #334155; padding: 3px 8px; border-radius: 4px; font-size: 11px;">Development</span></td>
+                  <td style="padding: 10px 14px; text-align: center; font-weight: 700; color: #4ade80;">8.0h</td>
+                  <td style="padding: 10px 14px; text-align: center;"><span style="background: rgba(74,222,128,0.15); color: #4ade80; padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 11px;">Logged</span></td>
+                </tr>
+                <tr style="border-bottom: 1px solid #1e293b; background: rgba(56, 189, 248, 0.03);">
+                  <td style="padding: 10px 14px; font-weight: 600; color: #f8fafc;">Oct 29 (Thu)</td>
+                  <td style="padding: 10px 14px;"><span style="color: #38bdf8; font-weight: 500;">Export Report Feature</span></td>
+                  <td style="padding: 10px 14px;">Design CSV/Excel export API & integrate UI controls</td>
+                  <td style="padding: 10px 14px;"><span style="background: #0f172a; border: 1px solid #334155; padding: 3px 8px; border-radius: 4px; font-size: 11px;">Development</span></td>
+                  <td style="padding: 10px 14px; text-align: center; font-weight: 700; color: #4ade80;">8.0h</td>
+                  <td style="padding: 10px 14px; text-align: center;"><span style="background: rgba(74,222,128,0.15); color: #4ade80; padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 11px;">Logged</span></td>
+                </tr>
+                <tr style="border-bottom: 1px solid #1e293b;">
+                  <td style="padding: 10px 14px; font-weight: 600; color: #f8fafc;">Oct 28 (Wed)</td>
+                  <td style="padding: 10px 14px;"><span style="color: #38bdf8; font-weight: 500;">DB Performance Optimization</span></td>
+                  <td style="padding: 10px 14px;">Index comments table & optimize real-time query</td>
+                  <td style="padding: 10px 14px;"><span style="background: #0f172a; border: 1px solid #334155; padding: 3px 8px; border-radius: 4px; font-size: 11px;">Development</span></td>
+                  <td style="padding: 10px 14px; text-align: center; font-weight: 700; color: #38bdf8;">8.0h</td>
+                  <td style="padding: 10px 14px; text-align: center;"><span style="background: rgba(56,189,248,0.15); color: #38bdf8; padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 11px;">Ready</span></td>
+                </tr>
+              </tbody>
+            </table>
+            
+            <!-- Bottom bulk action -->
+            <div style="margin-top: auto; padding: 12px 16px; background: #0f172a; border-top: 1px solid #1e293b; display: flex; align-items: center; justify-content: space-between;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 12px; color: #94a3b8;">Bulk Activity:</span>
+                <span style="background: #1e293b; border: 1px solid #334155; padding: 4px 10px; border-radius: 6px; font-size: 12px; color: #f1f5f9;">Development</span>
+                <button style="background: #3e5ba3; color: #fff; border: none; padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;">Apply to ready rows</button>
+              </div>
+              <button style="background: #10b981; color: #fff; border: none; padding: 7px 18px; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 2px 6px rgba(16,185,129,0.3);">Log Selected Entries</button>
+            </div>
+          </div>
+        </div>
+      
+    </div>
+  </div>
+</body>
+</html>

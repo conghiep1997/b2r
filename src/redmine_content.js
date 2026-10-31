@@ -1328,9 +1328,9 @@ function openMonthlyLogModal({
           <div class="tb-monthly-log-title-row">
             <h2 id="tb-monthly-log-title">${reportMessage("report_log_time_month")} ${monthLabel}</h2>
             <div class="tb-month-picker-wrapper">
-              <button type="button" id="tb-month-prev" class="tb-month-nav-btn" title="${reportMessage("report_prev_month")}" aria-label="${reportMessage("report_prev_month")}">‹</button>
+              <button type="button" id="tb-month-prev" class="tb-month-nav-btn" title="${reportMessage("report_prev_month")}" aria-label="${reportMessage("report_prev_month")}">${globalThis.TB_ICONS?.CHEVRON_LEFT || '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>'}</button>
               <input type="month" id="tb-monthly-log-month" class="tb-monthly-log-month-input" value="${initialMonthValue}" required lang="${currentLanguage}" aria-label="${reportMessage("report_log_time_month")}">
-              <button type="button" id="tb-month-next" class="tb-month-nav-btn" title="${reportMessage("report_next_month")}" aria-label="${reportMessage("report_next_month")}">›</button>
+              <button type="button" id="tb-month-next" class="tb-month-nav-btn" title="${reportMessage("report_next_month")}" aria-label="${reportMessage("report_next_month")}">${globalThis.TB_ICONS?.CHEVRON_RIGHT || '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>'}</button>
               <button type="button" id="tb-month-today" class="tb-month-today-btn" title="${reportMessage("report_this_month")}">${reportMessage("report_this_month")}</button>
             </div>
           </div>

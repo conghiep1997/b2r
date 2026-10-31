@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Cáº¥u hÃ¬nh Translate Backlog Comment</title>
+    <title>Cấu hình Translate Backlog Comment</title>
     <style>
       :root {
         color-scheme: light;
@@ -18,6 +18,7 @@
         --primary-hover: #324b88;
         --primary-active: #273c6f;
         --primary-strong: #324b88;
+        --primary-text: #3e5ba3;
         --primary-surface: #eef2f9;
         --on-primary: #ffffff;
         --success: #16a34a;
@@ -54,6 +55,7 @@
         --primary-hover: #4a6bb8;
         --primary-active: #324b88;
         --primary-strong: #4a6bb8;
+        --primary-text: #9bb4f5;
         --primary-surface: rgba(62, 91, 163, 0.2);
         --on-primary: #ffffff;
         --success: #4ade80;
@@ -128,9 +130,30 @@
         margin-bottom: 24px;
       }
 
+      .hero-brand {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .hero-brand-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        flex-shrink: 0;
+      }
+
+      .hero-title-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 4px;
+      }
+
       .hero h1 {
-        margin: 0 0 8px;
-        font-size: clamp(22px, 3vw, 32px);
+        margin: 0;
+        font-size: clamp(20px, 3vw, 26px);
         font-weight: 750;
         letter-spacing: -0.02em;
         color: var(--text);
@@ -139,9 +162,19 @@
       .hero p {
         margin: 0;
         color: var(--muted);
-        font-size: 14px;
-        line-height: 1.6;
+        font-size: 13px;
+        line-height: 1.5;
         max-width: 640px;
+      }
+
+      .version-badge {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--primary-text);
+        background: var(--primary-surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-pill);
+        padding: 2px 8px;
       }
 
       .pref-field {
@@ -221,7 +254,7 @@
 
       .theme-toggle-btn.active {
         background: var(--panel);
-        color: var(--primary);
+        color: var(--primary-text);
         border-color: var(--border);
         box-shadow: var(--shadow-sm);
       }
@@ -281,18 +314,27 @@
       }
 
       .tab-btn[aria-selected="true"] {
-        background: var(--primary-surface);
-        color: var(--primary);
-        border-color: rgba(62, 91, 163, 0.2);
+        background: var(--primary) !important;
+        color: var(--on-primary) !important;
+        border-color: var(--primary);
         font-weight: 600;
-        box-shadow: none;
+        box-shadow: 0 2px 6px rgba(62, 91, 163, 0.32);
+      }
+
+      .tab-btn[aria-selected="true"]:hover {
+        background: var(--primary-hover) !important;
+        color: var(--on-primary) !important;
+      }
+
+      .tab-btn[aria-selected="true"] .tab-icon {
+        fill: var(--on-primary) !important;
       }
 
       :root[data-theme="dark"] .tab-btn[aria-selected="true"] {
-        background: var(--primary-surface);
-        color: var(--primary);
-        border-color: rgba(155, 180, 245, 0.25);
-        box-shadow: none;
+        background: var(--primary) !important;
+        color: var(--on-primary) !important;
+        border-color: rgba(155, 180, 245, 0.35);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
       }
 
       .tab-btn:active {
@@ -380,13 +422,14 @@
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        padding: 6px 12px;
+        padding: 5px 12px;
+        margin: 2px 4px 2px 0;
         font-size: 12px;
         font-weight: 500;
         color: var(--muted);
-        background: var(--bg);
+        background: var(--panel-subtle);
         border: 1px solid var(--border);
-        border-radius: 8px;
+        border-radius: var(--radius-pill);
         cursor: pointer;
         transition: all 0.15s ease;
         flex-shrink: 0;
@@ -394,7 +437,8 @@
 
       .onboarding-dismiss-btn:hover {
         color: var(--text);
-        border-color: var(--muted);
+        background: var(--border);
+        border-color: var(--border-hover);
       }
 
       .onboarding-steps {
@@ -424,11 +468,11 @@
       .onboarding-badge {
         display: inline-block;
         margin-left: 8px;
-        padding: 2px 8px;
+        padding: 2px 10px;
         font-size: 11px;
         font-weight: 600;
-        border-radius: 6px;
-        background: var(--bg);
+        border-radius: var(--radius-pill);
+        background: var(--panel-subtle);
         color: var(--muted);
         border: 1px solid var(--border);
       }
@@ -458,15 +502,21 @@
       }
 
       .topbar-help-btn:hover {
-        color: var(--primary);
+        color: var(--primary-text);
         border-color: var(--border-hover);
         background: var(--primary-surface);
       }
 
       .topbar-help-btn[aria-expanded="true"] {
-        color: var(--primary);
+        color: var(--primary-text);
         background: var(--primary-surface);
-        border-color: var(--primary);
+        border-color: var(--primary-border);
+      }
+
+      :root[data-theme="dark"] .topbar-help-btn[aria-expanded="true"] {
+        color: var(--primary-text);
+        background: var(--primary-surface);
+        border-color: rgba(155, 180, 245, 0.35);
       }
 
       .topbar-help-btn svg {
@@ -513,7 +563,7 @@
       }
 
       :root[data-theme="dark"] a {
-        color: var(--primary) !important;
+        color: var(--primary-text) !important;
       }
 
       @media (max-width: 620px) {
@@ -671,56 +721,21 @@
       :root[data-theme="dark"] .secondary {
         color: var(--text);
         background: var(--panel-subtle);
+        border-color: var(--border);
       }
 
       :root[data-theme="dark"] .secondary:hover:not(:disabled) {
-        background: #383532;
-        border-color: #4d4944;
+        background: var(--border);
+        border-color: var(--border-hover);
+        color: var(--text);
       }
 
       :root[data-theme="dark"] .secondary:active:not(:disabled) {
-        background: #0f172a;
+        background: var(--bg);
       }
 
       :root[data-theme="dark"] details summary {
         color: var(--text) !important;
-      }
-
-      :root[data-theme="dark"] .provider-models-list button,
-      :root[data-theme="dark"] #geminiModelsList button {
-        background: #1e3a5f !important;
-        color: #dbeafe !important;
-        border-color: #60a5fa !important;
-      }
-
-      :root[data-theme="dark"] .provider-keys-list button,
-      :root[data-theme="dark"] #geminiKeysList button,
-      :root[data-theme="dark"] #fallbackGeminiKeysList button {
-        background: rgba(6, 78, 59, 0.45) !important;
-        color: #a7f3d0 !important;
-        border-color: #059669 !important;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
-      }
-
-      :root[data-theme="dark"] .provider-keys-list button::before,
-      :root[data-theme="dark"] #geminiKeysList button::before,
-      :root[data-theme="dark"] #fallbackGeminiKeysList button::before {
-        color: #34d399;
-      }
-
-      :root[data-theme="dark"] .provider-keys-list button:hover,
-      :root[data-theme="dark"] #geminiKeysList button:hover,
-      :root[data-theme="dark"] #fallbackGeminiKeysList button:hover {
-        background: rgba(153, 27, 27, 0.5) !important;
-        color: #fecaca !important;
-        border-color: #ef4444 !important;
-      }
-
-      :root[data-theme="dark"] .provider-models-list button.selected,
-      :root[data-theme="dark"] #geminiModelsList button.selected {
-        background: #047857 !important;
-        color: #ecfdf5 !important;
-        border-color: #34d399 !important;
       }
 
       :root[data-theme="dark"] .disclaimer {
@@ -964,6 +979,17 @@
         border-color: var(--primary);
         color: var(--primary-strong);
         transform: scale(1.05);
+      }
+
+      :root[data-theme="dark"] .translation-direction-icon {
+        color: var(--primary-text);
+        border-color: var(--border);
+      }
+
+      :root[data-theme="dark"] .translation-direction-icon:hover {
+        background: var(--primary-surface);
+        border-color: var(--primary-text);
+        color: var(--primary-text);
       }
 
       .translation-direction-icon:active {
@@ -1245,6 +1271,7 @@
 
       .secondary {
         display: inline-flex;
+        white-space: nowrap;
         align-items: center;
         justify-content: center;
         gap: 6px;
@@ -1302,9 +1329,9 @@
       }
 
       .btn-sync:hover:not(:disabled) {
-        color: var(--primary);
+        color: var(--primary-text);
         background: var(--primary-surface);
-        border-color: var(--primary);
+        border-color: var(--primary-text);
         box-shadow: 0 2px 6px rgba(62, 91, 163, 0.15);
       }
 
@@ -1313,16 +1340,16 @@
       }
 
       :root[data-theme="dark"] .btn-sync {
-        background: #1e293b;
-        border-color: #334155;
-        color: #f1f5f9;
+        background: var(--panel);
+        border-color: var(--border);
+        color: var(--text);
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
       }
 
       :root[data-theme="dark"] .btn-sync:hover:not(:disabled) {
-        background: #1e3a5f;
-        border-color: #60a5fa;
-        color: #93c5fd;
+        background: var(--primary-surface);
+        border-color: var(--primary-text);
+        color: var(--primary-text);
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
       }
 
@@ -1342,28 +1369,18 @@
         animation: options-reload-spin 800ms linear infinite;
       }
 
-      .btn-sync.is-success {
-        color: var(--success-text);
-        border-color: #86efac;
-        background: #f0fdf4;
-      }
-
+      .btn-sync.is-success,
       :root[data-theme="dark"] .btn-sync.is-success {
-        color: #4ade80;
-        border-color: #166534;
-        background: rgba(22, 101, 52, 0.2);
+        color: var(--success-text);
+        border-color: var(--success-border);
+        background: var(--success-bg);
       }
 
-      .btn-sync.is-error {
-        color: var(--danger-text);
-        border-color: #fca5a5;
-        background: #fef2f2;
-      }
-
+      .btn-sync.is-error,
       :root[data-theme="dark"] .btn-sync.is-error {
-        color: #f87171;
-        border-color: #991b1b;
-        background: rgba(153, 27, 27, 0.2);
+        color: var(--danger-text);
+        border-color: var(--danger-border);
+        background: var(--danger-bg);
       }
 
       @media (max-width: 480px) {
@@ -1577,7 +1594,7 @@
       .retry-queue-item__error {
         margin: 4px 0 0;
         font-size: 11px;
-        color: #ef4444;
+        color: var(--danger-text);
         word-break: break-word;
       }
 
@@ -1587,23 +1604,23 @@
         flex-shrink: 0;
       }
 
-      /* Active API Key Chips (Green / Emerald Active theme) */
+      /* Active API Key Chips */
       .provider-keys-list button,
       #geminiKeysList button,
       #fallbackGeminiKeysList button {
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        background: #ecfdf5 !important;
-        color: #065f46 !important;
-        border: 1px solid #6ee7b7 !important;
-        border-radius: 8px !important;
+        background: var(--success-bg) !important;
+        color: var(--success-text) !important;
+        border: 1px solid var(--success-border) !important;
+        border-radius: var(--radius-sm) !important;
         padding: 5px 10px !important;
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
         font-size: 12px !important;
         font-weight: 600 !important;
         cursor: pointer !important;
-        box-shadow: 0 1px 3px rgba(16, 185, 129, 0.12) !important;
+        box-shadow: var(--shadow-sm) !important;
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
       }
 
@@ -1611,7 +1628,7 @@
       #geminiKeysList button::before,
       #fallbackGeminiKeysList button::before {
         content: "●";
-        color: #10b981;
+        color: var(--success);
         font-size: 10px;
         line-height: 1;
       }
@@ -1619,73 +1636,117 @@
       .provider-keys-list button:hover,
       #geminiKeysList button:hover,
       #fallbackGeminiKeysList button:hover {
-        background: #fee2e2 !important;
-        color: #991b1b !important;
-        border-color: #fca5a5 !important;
-        box-shadow: 0 2px 6px rgba(239, 68, 68, 0.2) !important;
+        background: var(--danger-bg) !important;
+        color: var(--danger-text) !important;
+        border-color: var(--danger-border) !important;
+        box-shadow: var(--shadow-md) !important;
         transform: translateY(-1px);
       }
 
       .provider-keys-list button:hover::before,
       #geminiKeysList button:hover::before,
       #fallbackGeminiKeysList button:hover::before {
-        color: #ef4444;
+        color: var(--danger);
+      }
+
+      #geminiModelsList,
+      #fallbackGeminiModelsList,
+      .provider-models-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 10px !important;
+        align-items: center;
       }
 
       #geminiModelsList button,
+      #fallbackGeminiModelsList button,
       .provider-models-list button {
-        background: var(--primary-surface);
-        color: var(--primary);
+        display: inline-flex;
+        align-items: center;
+        background: var(--panel-subtle);
+        color: var(--text);
         border: 1px solid var(--border);
         border-radius: var(--radius-sm);
-        padding: 6px 12px;
+        padding: 5px 12px;
         font-size: 12px;
+        font-weight: 500;
         cursor: pointer;
-        transition: all 0.25s ease;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: var(--shadow-sm);
       }
 
       #geminiModelsList button:hover,
+      #fallbackGeminiModelsList button:hover,
       .provider-models-list button:hover {
-        background: #bfdbfe;
+        background: var(--primary-surface);
+        color: var(--primary-text);
+        border-color: var(--border-hover);
         transform: translateY(-1px);
       }
 
       #geminiModelsList button.selected,
+      #fallbackGeminiModelsList button.selected,
       .provider-models-list button.selected {
-        background: #10b981;
-        color: #fff;
-        border-color: #059669;
+        background: var(--success-bg) !important;
+        color: var(--success-text) !important;
+        border-color: var(--success-border) !important;
+        font-weight: 600;
         animation: select-pulse 0.4s ease;
-        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.35);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
       }
 
-      #geminiModelsList button.test-pass {
-        background: #10b981;
-        color: #fff;
-        border-color: #059669;
+      #geminiModelsList button.test-pass,
+      #fallbackGeminiModelsList button.test-pass,
+      .provider-models-list button.test-pass {
+        background: var(--success-bg) !important;
+        color: var(--success-text) !important;
+        border-color: var(--success-border) !important;
         animation: test-ok 0.8s ease infinite;
-        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.3);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
       }
 
-      #geminiModelsList button.test-fail {
-        background: #ef4444;
-        color: #fff;
-        border-color: #dc2626;
+      #geminiModelsList button.test-fail,
+      #fallbackGeminiModelsList button.test-fail,
+      .provider-models-list button.test-fail {
+        background: var(--danger-bg) !important;
+        color: var(--danger-text) !important;
+        border-color: var(--danger-border) !important;
         animation: test-err 0.8s ease infinite;
-        box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.3);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+      }
+
+      .model-choice {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        margin: 2px 0;
       }
 
       .test-icon {
-        font-size: 14px;
-        vertical-align: middle;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 20px;
+        border-radius: var(--radius-sm);
         margin-left: 6px;
-        opacity: 0.6;
+        opacity: 0.75;
         cursor: pointer;
-        transition: opacity 0.2s;
+        transition: all 0.18s ease;
       }
 
       .test-icon:hover {
         opacity: 1;
+        background: rgba(0, 0, 0, 0.08);
+        transform: scale(1.12);
+      }
+
+      :root[data-theme="dark"] .test-icon:hover {
+        background: rgba(255, 255, 255, 0.12);
+      }
+
+      .is-spinning {
+        animation: spin 0.8s linear infinite;
       }
     </style>
   </head>
@@ -1823,11 +1884,18 @@
       </div>
 
       <div class="hero">
-        <h1 data-i18n="options_title">Translate Backlog & Redmine</h1>
-        <p>
-          LÆ°u cáº¥u hÃ¬nh Redmine, Backlog vÃ  AI Ä‘á»ƒ extension cÃ³ thá»ƒ dá»‹ch vÃ  Ä‘á»“ng bá»™
-          comment qua láº¡i giá»¯a 2 há»‡ thá»‘ng.
-        </p>
+        <div class="hero-brand">
+          <img class="hero-brand-icon" src="../assets/icons/icon-48.png" alt="B2R" width="48" height="48" />
+          <div>
+            <div class="hero-title-row">
+              <h1 data-i18n="options_title">Translate Backlog &amp; Redmine</h1>
+              <span id="optionsVersionBadge" class="version-badge">v1.8.24</span>
+            </div>
+            <p data-i18n="options_hero_desc">
+              Lưu cấu hình Redmine, Backlog và AI để extension có thể dịch và đồng bộ comment qua lại giữa 2 hệ thống.
+            </p>
+          </div>
+        </div>
       </div>
 
       <div class="options-tab-bar" role="tablist" aria-label="Cài đặt">
@@ -1845,7 +1913,7 @@
               d="M12 2L3 9l9 13 9-13-9-7zm0 3.31L17.47 9H6.53L12 5.31zM5.04 10.5h3.69L12 18.24 5.04 10.5zm5.55 0h2.82l-1.41 6.82-1.41-6.82zm4.68 0h3.69l-6.96 7.74 3.27-7.74z"
             />
           </svg>
-          <span>Redmine</span>
+          <span data-i18n="options_tab_redmine">Redmine</span>
         </button>
         <button
           type="button"
@@ -1861,7 +1929,7 @@
               d="M3 10h11v2H3v-2zm0-2h11V6H3v2zm0 8h7v-2H3v2zm15.01-3.13l.71-.71c.39-.39 1.02-.39 1.41 0l.71.71c.39.39.39 1.02 0 1.41l-.71.71-2.12-2.12zm-.71.71l-5.3 5.3V21h2.12l5.3-5.3-2.12-2.12z"
             />
           </svg>
-          <span>Backlog</span>
+          <span data-i18n="options_tab_backlog">Backlog</span>
         </button>
         <button
           type="button"
@@ -1877,7 +1945,7 @@
               d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"
             />
           </svg>
-          <span>AI</span>
+          <span data-i18n="options_tab_ai">AI</span>
         </button>
         <button
           type="button"
@@ -1893,7 +1961,7 @@
               d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-5 3c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm4 8h-8v-1c0-1.33 2.67-2 4-2s4 .67 4 2v1z"
             />
           </svg>
-          <span>Profiles</span>
+          <span data-i18n="options_tab_profiles">Profiles</span>
         </button>
         <button
           type="button"
@@ -1909,7 +1977,7 @@
               d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 19.4c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l2.12-2.12C9.42 19.45 10.67 20 12 20c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"
             />
           </svg>
-          <span>UI</span>
+          <span data-i18n="options_tab_ui">UI</span>
         </button>
         <button
           type="button"
@@ -1925,7 +1993,7 @@
               d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"
             />
           </svg>
-          <span>Nâng cao</span>
+          <span data-i18n="options_tab_advanced">Nâng cao</span>
         </button>
       </div>
 
@@ -2004,7 +2072,7 @@
             <details id="redmineSettings" class="settings-section" open>
               <summary>
                 <span data-i18n="options_redmine_section"
-                  >ðŸ’Ž Cáº¥u hÃ¬nh Redmine - Click Ä‘á»ƒ thu gá»n/má»Ÿ rá»™ng</span
+                  >Cấu hình Redmine - Click để thu gọn/mở rộng</span
                 >
               </summary>
               <div class="settings-section__content">
@@ -2031,7 +2099,7 @@
                       target="_blank"
                       style="color: var(--primary)"
                       data-i18n="options_personal_account"
-                      >TÃ i khoáº£n cÃ¡ nhÃ¢n â†—</a
+                      >Tài khoản cá nhân ↗</a
                     >
                   </p>
                 </div>
@@ -2039,7 +2107,7 @@
                 <div class="field" style="margin-bottom: 12px">
                   <label for="defaultProjectId" style="margin-bottom: 8px; display: block">
                     <span data-i18n="options_default_project"
-                      >Dự án Redmine (di chuyển issue và báo cáo tháng)</span
+                      >Dự án Redmine mặc định</span
                     >
                   </label>
                   <div class="field-control-row">
@@ -2067,11 +2135,11 @@
                   </div>
                 </div>
 
-                <!-- Cáº¥u hÃ¬nh Custom Fields (JSON Mapping) -->
+                <!-- Cấu hình Custom Fields (JSON Mapping) -->
                 <details
                   hidden
                   style="
-                    border: 1px solid #bfdbfe;
+                    border: 1px solid var(--border);
                     border-radius: 12px;
                     background: white;
                     padding: 0 14px;
@@ -2087,7 +2155,7 @@
                     "
                   >
                     <span data-i18n="options_custom_fields_section"
-                      >Cáº¥u hÃ¬nh Custom Fields (JSON Mapping)</span
+                      >Cấu hình Custom Fields (JSON Mapping)</span
                     >
                   </summary>
                   <div class="field" style="padding-bottom: 16px">
@@ -2111,7 +2179,7 @@
                       data-i18n="options_custom_fields_help"
                       style="margin-top: 6px; font-size: 12px; color: var(--muted)"
                     >
-                      ðŸ’¡ Nháº­p mÃ£ ID cá»§a cÃ¡c trÆ°á»ng báº¯t buá»™c. VÃ­ dá»¥:
+                Nhập mã ID của các trường bắt buộc. Ví dụ:
                       <code
                         >{ "Severity": 46, "Reproduction Rate": 0, "Role": 11, "QC Activity": 8,
                         "Q&A Category": 58 }</code
@@ -2133,7 +2201,7 @@
           >
             <details id="backlogSettings" class="settings-section" open>
               <summary>
-                <span data-i18n="options_backlog_section">📝 Cấu hình Backlog</span>
+                <span data-i18n="options_backlog_section">Cấu hình Backlog</span>
               </summary>
               <div class="settings-section__content">
                 <div class="field" style="margin-bottom: 0">
@@ -2198,12 +2266,12 @@
             <details id="primaryAiSettings" class="settings-section" open>
               <summary>
                 <span data-i18n="options_primary_ai_section"
-                  >ðŸ¤– Cáº¥u hÃ¬nh AI ChÃ­nh (Primary)</span
+                  >Cấu hình AI Chính (Primary)</span
                 >
               </summary>
               <div class="grid" style="padding-top: 12px; gap: 12px">
                 <div class="field" style="margin-bottom: 0">
-                  <label for="primaryProvider" data-i18n="options_provider">NhÃ  cung cáº¥p</label>
+                  <label for="primaryProvider" data-i18n="options_provider">Nhà cung cấp</label>
                   <select
                     id="primaryProvider"
                     style="
@@ -2217,11 +2285,11 @@
                     "
                   >
                     <option value="gemini">
-                      Google Gemini AI Studio (Miá»…n phÃ­/Dá»‹ch tá»‘t)
+                      Google Gemini AI Studio (Miễn phí/Dịch tốt)
                     </option>
-                    <option value="groq">Groq Cloud (SiÃªu nhanh - Llama 3)</option>
-                    <option value="cerebras">Cerebras (Hiá»‡u nÄƒng cao)</option>
-                    <option value="openrouter">OpenRouter (Nhiá»u model miá»…n phÃ­)</option>
+                    <option value="groq">Groq Cloud (Siêu nhanh - Llama 3)</option>
+                    <option value="cerebras">Cerebras (Hiệu năng cao)</option>
+                  <option value="openrouter">OpenRouter (Nhiều model miễn phí)</option>
                   </select>
                 </div>
 
@@ -2237,15 +2305,14 @@
                     >.
                   </p>
                   <div style="margin-bottom: 12px">
-                    <p style="margin: 0 0 6px; font-size: 11px; color: #166534; font-weight: 500">
-                      <span data-i18n="options_models_help">Models (click chá»n/bá»)</span>
+                    <p style="margin: 0 0 6px; font-size: 11px; color: var(--muted); font-weight: 500">
+                  <span data-i18n="options_models_help">Models (click chọn/bỏ)</span>
                     </p>
                     <div
                       id="geminiModelsList"
-                      style="display: flex; flex-wrap: wrap; gap: 6px"
                     ></div>
                     <p style="margin: 4px 0 0; font-size: 11px; color: var(--muted)">
-                      <span data-i18n="options_selected">ÄÃ£ chá»n:</span>
+                  <span data-i18n="options_selected">Đã chọn:</span>
                       <span id="selectedModelCount">0</span>
                     </p>
                   </div>
@@ -2270,7 +2337,7 @@
                       "
                     />
                     <p style="margin: 4px 0 0; font-size: 11px; color: var(--muted)">
-                      <span data-i18n="options_added">ÄÃ£ thÃªm:</span>
+                  <span data-i18n="options_added">Đã thêm:</span>
                       <span id="selectedKeyCount">0</span>/10
                     </p>
                   </div>
@@ -2285,7 +2352,7 @@
                     data-i18n-placeholder="options_groq_key_placeholder"
                   />
                   <p style="margin-top: 6px; font-size: 11px; color: var(--muted)">
-                    ðŸ”‘ Láº¥y táº¡i:
+                    Lấy tại:
                     <a
                       href="https://console.groq.com/keys"
                       target="_blank"
@@ -2308,7 +2375,7 @@
                     data-i18n-placeholder="options_cerebras_key_placeholder"
                   />
                   <p style="margin-top: 6px; font-size: 11px; color: var(--muted)">
-                    ðŸ”‘ Láº¥y táº¡i:
+                    Lấy tại:
                     <a
                       href="https://cloud.cerebras.ai/"
                       target="_blank"
@@ -2331,9 +2398,9 @@
                     data-i18n-placeholder="options_openrouter_key_placeholder"
                   />
                   <p style="margin-top: 6px; font-size: 11px; color: var(--muted)">
-                    ðŸ”‘ Láº¥y táº¡i:
+                    Lấy tại:
                     <a href="https://openrouter.ai/keys" target="_blank">OpenRouter Keys</a>. ðŸ’¡
-                    Nhiá»u model miá»…n phÃ­ (suffix :free).
+                    <a href="https://openrouter.ai/models" target="_blank" rel="noopener noreferrer">Nhiều model miễn phí (suffix :free).</a>
                   </p>
                 </div>
 
@@ -2387,13 +2454,13 @@
             <details id="fallbackAiSettings" class="settings-section">
               <summary>
                 <span data-i18n="options_fallback_ai_section"
-                  >ðŸ”„ Cáº¥u hÃ¬nh AI Dá»± phÃ²ng (Fallback)</span
+                  >Cấu hình AI Dự phòng (Fallback)</span
                 >
               </summary>
               <div class="grid" style="padding-top: 12px; gap: 12px">
                 <div class="field" style="margin-bottom: 0">
                   <label for="fallbackProvider" data-i18n="options_fallback_provider"
-                    >NhÃ  cung cáº¥p dá»± phÃ²ng</label
+                    >Nhà cung cấp dự phòng</label
                   >
                   <select
                     id="fallbackProvider"
@@ -2407,7 +2474,7 @@
                       background: white;
                     "
                   >
-                    <option value="none">KhÃ´ng dÃ¹ng dá»± phÃ²ng</option>
+                    <option value="none">Không dùng dự phòng</option>
                     <option value="gemini">Google Gemini AI Studio</option>
                     <option value="groq">Groq Cloud</option>
                     <option value="cerebras">Cerebras</option>
@@ -2418,15 +2485,14 @@
                 <!-- Fallback Groq Key -->
                 <div id="fallbackGeminiConfig" style="display: none">
                   <div style="margin-bottom: 12px">
-                    <p style="margin: 0 0 6px; font-size: 11px; color: #166534; font-weight: 500">
-                      Models dá»± phÃ²ng (click chá»n/bá»)
+                    <p style="margin: 0 0 6px; font-size: 11px; color: var(--muted); font-weight: 500">
+                      Models dự phòng (click chọn/bỏ)
                     </p>
                     <div
                       id="fallbackGeminiModelsList"
-                      style="display: flex; flex-wrap: wrap; gap: 6px"
                     ></div>
                     <p style="margin: 4px 0 0; font-size: 11px; color: var(--muted)">
-                      ÄÃ£ chá»n: <span id="fallbackGeminiSelectedModelCount">0</span>
+                  Đã chọn: <span id="fallbackGeminiSelectedModelCount">0</span>
                     </p>
                   </div>
                   <div>
@@ -2450,7 +2516,7 @@
                       "
                     />
                     <p style="margin: 4px 0 0; font-size: 11px; color: var(--muted)">
-                      ÄÃ£ thÃªm: <span id="fallbackGeminiSelectedKeyCount">0</span>/10
+                  Đã thêm: <span id="fallbackGeminiSelectedKeyCount">0</span>/10
                     </p>
                   </div>
                 </div>
@@ -2475,7 +2541,7 @@
                   <p style="margin-top: 6px; font-size: 11px; color: var(--muted)">
                     ðŸ”‘
                     <a href="https://console.groq.com/keys" target="_blank"
-                      >Láº¥y key táº¡i Groq Console</a
+                      >Lấy key tại Groq Console</a
                     >
                   </p>
                 </div>
@@ -2495,7 +2561,7 @@
                   <p style="margin-top: 6px; font-size: 11px; color: var(--muted)">
                     ðŸ”‘
                     <a href="https://cloud.cerebras.ai/" target="_blank"
-                      >Láº¥y key táº¡i Cerebras Cloud</a
+                      >Lấy key tại Cerebras Cloud</a
                     >
                   </p>
                 </div>
@@ -2515,7 +2581,7 @@
                   <p style="margin-top: 6px; font-size: 11px; color: var(--muted)">
                     ðŸ”‘
                     <a href="https://openrouter.ai/keys" target="_blank"
-                      >Láº¥y key táº¡i OpenRouter</a
+                      >Lấy key tại OpenRouter</a
                     >
                   </p>
                 </div>
@@ -2532,7 +2598,7 @@
           >
             <details id="uiSettings" class="settings-section" open>
               <summary>
-                <span data-i18n="options_ui_section">TÃ¹y chá»n giao diá»‡n</span>
+                <span data-i18n="options_ui_section">Tùy chọn giao diện</span>
               </summary>
               <div class="field check-field" style="padding-top: 12px; margin-bottom: 0">
                 <input id="showRedmineSuccessModal" type="checkbox" />
@@ -2541,9 +2607,9 @@
                     >Hiện thông báo sau khi gửi bình luận sang Redmine</label
                   >
                   <p style="margin: 0; font-size: 12px; color: var(--muted)">
-                    Chá»‰ Ã¡p dá»¥ng cho chá»©c nÄƒng dá»‹ch comment. Di chuyá»ƒn Issue luÃ´n hiá»‡n
-                    modal kÃ¨m link Redmine. Báº­t láº¡i náº¿u trÆ°á»›c Ä‘Ã³ báº¡n Ä‘Ã£ chá»n khÃ´ng
-                    hiá»ƒn thá»‹ thÃ´ng bÃ¡o thÃ nh cÃ´ng.
+              Chỉ áp dụng cho chức năng dịch comment. Di chuyển Issue luôn hiện
+              modal kèm link Redmine. Bật lại nếu trước đó bạn đã chọn không
+              hiển thị thông báo thành công.
                   </p>
                 </div>
               </div>
@@ -3007,7 +3073,7 @@
             <!-- Offline Retry Queue Section -->
             <details class="policy-group" id="retryQueueGroup" open>
               <summary id="retryQueueTitle" data-i18n="options_retry_queue_title">
-                📶 Hàng đợi thử lại khi rớt mạng (Offline / Retry Queue)
+                Hàng đợi thử lại khi rớt mạng (Offline / Retry Queue)
               </summary>
               <div class="policy-group__content">
                 <p
@@ -3023,17 +3089,13 @@
                     id="retryAllQueueBtn"
                     class="primary"
                     data-i18n="options_retry_all"
-                  >
-                    🔄 Thử lại tất cả
-                  </button>
+                  ><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true" style="margin-right: 6px;"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg><span data-i18n="options_retry_all">Thử lại tất cả</span></button>
                   <button
                     type="button"
                     id="clearRetryQueueBtn"
                     class="secondary"
                     data-i18n="options_clear_queue"
-                  >
-                    🗑️ Xóa hàng đợi
-                  </button>
+                  ><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true" style="margin-right: 6px;"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg><span data-i18n="options_clear_queue">Xóa hàng đợi</span></button>
                   <button
                     type="button"
                     id="refreshRetryQueueBtn"
@@ -3057,36 +3119,36 @@
 
             <!-- Bug Report Section -->
             <details class="policy-group">
-              <summary id="bugReportTitle" data-i18n="options_bug_title">ðŸž BÃ¡o lá»—i</summary>
+              <summary id="bugReportTitle" data-i18n="options_bug_title">Báo lỗi</summary>
               <div class="policy-group__content">
                 <p style="margin: 0 0 16px; color: var(--muted); font-size: 14px">
-                  Táº¡o bÃ¡o cÃ¡o cÃ³ cáº¥u trÃºc kÃ¨m áº£nh chá»¥p vÃ  thÃ´ng tin mÃ´i trÆ°á»ng.
-                  Dá»¯ liá»‡u chá»‰ Ä‘Æ°á»£c táº£i xuá»‘ng hoáº·c má»Ÿ trong GitHub khi báº¡n xÃ¡c
-                  nháº­n.
+                  Tạo báo cáo có cấu trúc kèm ảnh chụp và thông tin môi trường.
+                  Dữ liệu chỉ được tải xuống hoặc mở trong GitHub khi bạn xác
+                  nhận.
                 </p>
                 <div class="field">
-                  <label for="bugTitle" data-i18n="options_bug_subject">TiÃªu Ä‘á» lá»—i</label>
+                  <label for="bugTitle" data-i18n="options_bug_subject">Tiêu đề lỗi</label>
                   <input
-                    id="bugTitle"
+                  <label for="bugTitle" data-i18n="options_bug_subject">Tiêu đề lỗi</label>
                     type="text"
                     maxlength="120"
-                    placeholder="VÃ­ dá»¥: KhÃ´ng gá»­i Ä‘Æ°á»£c comment sang Redmine"
+                    placeholder="Ví dụ: Không gửi được comment sang Redmine"
                   />
                 </div>
                 <div class="field">
                   <label for="bugDescription" data-i18n="options_bug_description_label"
-                    >MÃ´ táº£ lá»—i</label
+                    >Mô tả lỗi</label
                   >
                   <textarea
                     id="bugDescription"
                     rows="4"
                     maxlength="4000"
-                    placeholder="Äiá»u gÃ¬ Ä‘Ã£ xáº£y ra?"
+                    placeholder="Điều gì đã xảy ra?"
                   ></textarea>
                 </div>
                 <div class="field">
                   <label for="bugSteps" data-i18n="options_bug_steps"
-                    >CÃ¡c bÆ°á»›c tÃ¡i hiá»‡n</label
+                    >Các bước tái hiện</label
                   >
                   <textarea
                     id="bugSteps"
@@ -3097,7 +3159,7 @@
                 </div>
                 <div class="field">
                   <label for="bugPageUrl" data-i18n="options_bug_url"
-                    >URL trang xáº£y ra lá»—i (khÃ´ng báº¯t buá»™c)</label
+                    >URL trang xảy ra lỗi (không bắt buộc)</label
                   >
                   <input
                     id="bugPageUrl"
@@ -3108,7 +3170,7 @@
                 </div>
                 <div class="field">
                   <label for="bugScreenshot" data-i18n="options_screenshot"
-                    >áº¢nh chá»¥p mÃ n hÃ¬nh</label
+                    >Ảnh chụp màn hình</label
                   >
                   <input
                     id="bugScreenshot"
@@ -3125,7 +3187,7 @@
                   </p>
                   <img
                     id="bugScreenshotPreview"
-                    alt="Xem trÆ°á»›c áº£nh lá»—i"
+                    alt="Xem trước ảnh lỗi"
                     data-i18n-alt="options_screenshot_preview_alt"
                     hidden
                     style="
@@ -3140,14 +3202,12 @@
                 </div>
                 <div class="actions">
                   <button id="downloadBugReportBtn" type="button" class="secondary">
-                    ðŸ“¥ Táº£i bÃ¡o cÃ¡o
+                    Tải báo cáo
                   </button>
                   <button id="copyBugReportBtn" type="button" class="secondary">
-                    ðŸ“‹ Sao chÃ©p
+                    Sao chép
                   </button>
-                  <button id="openGithubIssueBtn" type="button" class="primary">
-                    Má»Ÿ GitHub Issue
-                  </button>
+                  <button id="openGithubIssueBtn" type="button" class="primary"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true" style="margin-right: 6px;"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg><span>Mở GitHub Issue</span></button>
                 </div>
                 <div id="bugReportStatus" class="status" aria-live="polite"></div>
               </div>
@@ -3194,39 +3254,34 @@
 
             <!-- Error logs remain available to bug reports but are hidden from the settings UI. -->
             <div class="error-log-management" hidden>
-              <h3 style="margin: 0 0 12px; font-size: 16px">Quáº£n lÃ½ Lá»—i (Logs)</h3>
+              <h3 style="margin: 0 0 12px; font-size: 16px">Quản lý Lỗi (Logs)</h3>
               <p style="margin: 0 0 16px; color: var(--muted); font-size: 14px">
-                Náº¿u gáº·p sá»± cá»‘, báº¡n cÃ³ thá»ƒ xuáº¥t file log lá»—i Ä‘á»ƒ gá»­i cho Ä‘á»™i
-                phÃ¡t triá»ƒn.
+                Nếu gặp sự cố, bạn có thể xuất file log lỗi để gửi cho đội phát triển.
               </p>
               <div class="actions">
-                <button id="exportLogsBtn" class="secondary">ðŸ“¥ Xuáº¥t File Lá»—i</button>
-                <button id="clearLogsBtn" class="secondary">ðŸ—‘ï¸ XÃ³a Lá»‹ch Sá»­ Lá»—i</button>
+                <button id="exportLogsBtn" class="secondary">Xuất File Lỗi</button>
+                <button id="clearLogsBtn" class="secondary">Xóa Lịch Sử Lỗi</button>
               </div>
             </div>
 
             <!-- Update Check Section -->
             <details class="policy-group">
-              <summary data-i18n="options_update_title">ðŸ”” Cáº­p nháº­t Extension</summary>
+              <summary data-i18n="options_update_title">Cập nhật Extension</summary>
               <div class="policy-group__content">
-                <div id="updateStatus" style="margin-bottom: 12px">
-                  <p style="margin: 0; color: var(--muted)">Äang kiá»ƒm tra phiÃªn báº£n...</p>
+                  <p style="margin: 0; color: var(--muted)">Đang kiểm tra phiên bản...</p>
+                  <p style="margin: 0; color: var(--muted)">Đang kiểm tra phiên bản...</p>
                 </div>
                 <div class="actions">
                   <button type="button" id="checkUpdateBtn" class="secondary">
-                    ðŸ” Kiá»ƒm tra cáº­p nháº­t
+                    Kiểm tra cập nhật
                   </button>
-                  <button type="button" id="goToDashboardBtn" class="secondary">
-                    📦 Trang Download
-                  </button>
+                  <button type="button" id="goToDashboardBtn" class="secondary"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true" style="margin-right: 6px;"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg><span>Trang Download</span></button>
                   <button
                     type="button"
                     id="reopenOnboardingBtn"
                     class="secondary"
                     data-i18n="options_onboarding_reopen"
-                  >
-                    📋 Hiện lại hướng dẫn bắt đầu
-                  </button>
+                  ><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true" style="margin-right: 6px;"><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/></svg><span data-i18n="options_onboarding_reopen">Hiện lại hướng dẫn bắt đầu</span></button>
                 </div>
               </div>
             </details>

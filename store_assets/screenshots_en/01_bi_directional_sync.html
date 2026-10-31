@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    width: 1280px;
+    height: 800px;
+    background: #090e17;
+    background-image: 
+      radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.12) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
+      radial-gradient(at 50% 50%, rgba(62, 91, 163, 0.08) 0px, transparent 60%);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
+    color: #f8fafc;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 36px 48px 30px;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .badge-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    background: rgba(56, 189, 248, 0.1);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #38bdf8;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .badge-tag-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #38bdf8;
+    box-shadow: 0 0 8px #38bdf8;
+  }
+
+  .header {
+    text-align: center;
+    max-width: 960px;
+    margin-bottom: 24px;
+  }
+  .header h1 {
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+  }
+  .header p {
+    font-size: 15px;
+    color: #94a3b8;
+    line-height: 1.45;
+  }
+
+  /* Mockup Frame */
+  .window-frame {
+    width: 100%;
+    max-width: 1180px;
+    flex: 1;
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 14px;
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .window-titlebar {
+    height: 38px;
+    background: #131d31;
+    border-bottom: 1px solid #1e293b;
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 12px;
+  }
+  .traffic-lights {
+    display: flex;
+    gap: 7px;
+  }
+  .traffic-dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+  }
+  .traffic-red { background: #ef4444; }
+  .traffic-yellow { background: #f59e0b; }
+  .traffic-green { background: #10b981; }
+  .window-address {
+    flex: 1;
+    max-width: 520px;
+    height: 24px;
+    background: #0a101d;
+    border: 1px solid #243247;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    font-size: 11px;
+    color: #64748b;
+    gap: 6px;
+  }
+  .window-address span { color: #94a3b8; font-family: monospace; }
+  .window-content {
+    flex: 1;
+    padding: 20px;
+    background: #0b111e;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+</style>
+</head>
+<body>
+  <div class="badge-tag"><div class="badge-tag-dot"></div> 2-Way Sync • AI Translation v1.8.24</div>
+  <div class="header">
+    <h1>Seamless Bi-directional Comment Sync (Backlog ⟷ Redmine)</h1>
+    <p>Automatic Japanese, Vietnamese & English AI translation (Gemini, Groq, Cerebras) preserving markdown structure and attachments.</p>
+  </div>
+  <div class="window-frame">
+    <div class="window-titlebar">
+      <div class="traffic-lights">
+        <div class="traffic-dot traffic-red"></div>
+        <div class="traffic-dot traffic-yellow"></div>
+        <div class="traffic-dot traffic-green"></div>
+      </div>
+      <div class="window-address">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="#10b981"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+        <span>https://workspace.backlog.com/view/PROJ-104</span>
+      </div>
+    </div>
+    <div class="window-content">
+      
+        <div style="display: grid; grid-template-columns: 1fr 64px 1fr; gap: 16px; height: 100%; align-items: center;">
+          <!-- Left: Backlog Side -->
+          <div style="background: #131d31; border: 1px solid #1e293b; border-radius: 10px; padding: 18px; height: 100%; display: flex; flex-direction: column;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #243247;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-weight: 700; color: #f87171; font-size: 14px;">Backlog Issue</span>
+                <span style="background: #243247; color: #94a3b8; font-size: 11px; padding: 2px 6px; border-radius: 4px; font-family: monospace;">CTRIAL-104</span>
+              </div>
+              <span style="font-size: 12px; color: #64748b;">Today, 10:15</span>
+            </div>
+            <div style="font-size: 13px; font-weight: 600; color: #e2e8f0; margin-bottom: 8px;">Takashi Yamada (QA Lead):</div>
+            <div style="background: #0b111e; border: 1px solid #1e293b; border-radius: 8px; padding: 12px; font-size: 13px; line-height: 1.5; color: #cbd5e1; flex: 1;">
+              最新のビルド環境にて検証を行いました。<br>
+              ログイン画面のレイアウト崩れは修正されていることを確認しました。<br>
+              詳細ログとスクリーンショットを添付いたしますのでご確認ください。
+              <div style="margin-top: 14px; padding-top: 10px; border-top: 1px dashed #243247; display: flex; gap: 8px;">
+                <span style="background: #1e293b; color: #38bdf8; font-size: 11px; padding: 4px 8px; border-radius: 4px;">📎 test_result_v2.png (340 KB)</span>
+              </div>
+            </div>
+            <div style="margin-top: 12px; display: flex; justify-content: flex-end;">
+              <div style="background: #3e5ba3; color: #fff; font-size: 12px; font-weight: 600; padding: 7px 14px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(62,91,163,0.3);">
+                <span>Send to Redmine (B2R)</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- Middle: Sync Flow -->
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;">
+            <div style="width: 44px; height: 44px; border-radius: 50%; background: #1e293b; border: 1px solid #38bdf8; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px rgba(56,189,248,0.25);">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="#38bdf8"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+            </div>
+            <span style="font-size: 10px; font-weight: 700; color: #38bdf8; background: rgba(56,189,248,0.15); padding: 3px 6px; border-radius: 4px; text-align: center; white-space: nowrap;">AI Sync 0.3s</span>
+            <span style="font-size: 9px; color: #64748b;">Gemini 2.5</span>
+          </div>
+
+          <!-- Right: Redmine Side -->
+          <div style="background: #131d31; border: 1px solid #1e293b; border-radius: 10px; padding: 18px; height: 100%; display: flex; flex-direction: column;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #243247;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-weight: 700; color: #38bdf8; font-size: 14px;">Redmine Issue</span>
+                <span style="background: #243247; color: #94a3b8; font-size: 11px; padding: 2px 6px; border-radius: 4px; font-family: monospace;">#14258</span>
+              </div>
+              <span style="font-size: 11px; color: #4ade80; background: rgba(74,222,128,0.15); padding: 2px 8px; border-radius: 4px; font-weight: 600;">✓ Synced</span>
+            </div>
+            <div style="font-size: 13px; font-weight: 600; color: #e2e8f0; margin-bottom: 8px;">Synchronized Note from Backlog:</div>
+            <div style="background: #0b111e; border: 1px solid #1e293b; border-radius: 8px; padding: 12px; font-size: 13px; line-height: 1.5; color: #cbd5e1; flex: 1;">
+              <div style="color: #9bb4f5; font-size: 12px; margin-bottom: 6px;">[AI Translated Note]</div>
+              Verification was performed on the latest build environment.<br>
+              Confirmed that the layout corruption issue on login screen has been fixed.<br>
+              Detailed logs and screenshots are attached for your reference.
+              <div style="margin-top: 14px; padding-top: 10px; border-top: 1px dashed #243247; display: flex; align-items: center; justify-content: space-between;">
+                <span style="background: #1e293b; color: #38bdf8; font-size: 11px; padding: 4px 8px; border-radius: 4px;">📎 test_result_v2.png</span>
+                <span style="font-size: 11px; color: #64748b;">Source: CTRIAL-104</span>
+              </div>
+            </div>
+            <div style="margin-top: 12px; display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 11px; color: #94a3b8;">Status: Complete (100%)</span>
+              <span style="font-size: 12px; color: #38bdf8; font-weight: 600;">View in Redmine ↗</span>
+            </div>
+          </div>
+        </div>
+      
+    </div>
+  </div>
+</body>
+</html>

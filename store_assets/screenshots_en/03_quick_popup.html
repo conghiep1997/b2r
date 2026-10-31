@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    width: 1280px;
+    height: 800px;
+    background: #090e17;
+    background-image: 
+      radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.12) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
+      radial-gradient(at 50% 50%, rgba(62, 91, 163, 0.08) 0px, transparent 60%);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
+    color: #f8fafc;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 36px 48px 30px;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .badge-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    background: rgba(56, 189, 248, 0.1);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #38bdf8;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .badge-tag-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #38bdf8;
+    box-shadow: 0 0 8px #38bdf8;
+  }
+
+  .header {
+    text-align: center;
+    max-width: 960px;
+    margin-bottom: 24px;
+  }
+  .header h1 {
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+  }
+  .header p {
+    font-size: 15px;
+    color: #94a3b8;
+    line-height: 1.45;
+  }
+
+  /* Mockup Frame */
+  .window-frame {
+    width: 100%;
+    max-width: 1180px;
+    flex: 1;
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 14px;
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .window-titlebar {
+    height: 38px;
+    background: #131d31;
+    border-bottom: 1px solid #1e293b;
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 12px;
+  }
+  .traffic-lights {
+    display: flex;
+    gap: 7px;
+  }
+  .traffic-dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+  }
+  .traffic-red { background: #ef4444; }
+  .traffic-yellow { background: #f59e0b; }
+  .traffic-green { background: #10b981; }
+  .window-address {
+    flex: 1;
+    max-width: 520px;
+    height: 24px;
+    background: #0a101d;
+    border: 1px solid #243247;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    font-size: 11px;
+    color: #64748b;
+    gap: 6px;
+  }
+  .window-address span { color: #94a3b8; font-family: monospace; }
+  .window-content {
+    flex: 1;
+    padding: 20px;
+    background: #0b111e;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+</style>
+</head>
+<body>
+  <div class="badge-tag"><div class="badge-tag-dot"></div> B2R Extension UI • Quick Control Popup</div>
+  <div class="header">
+    <h1>Quick Control Popup & Real-time Health Monitor</h1>
+    <p>Real-time API health checks for Backlog, Redmine & AI providers; 1-click access to monthly timesheets and active workspaces.</p>
+  </div>
+  <div class="window-frame">
+    <div class="window-titlebar">
+      <div class="traffic-lights">
+        <div class="traffic-dot traffic-red"></div>
+        <div class="traffic-dot traffic-yellow"></div>
+        <div class="traffic-dot traffic-green"></div>
+      </div>
+      <div class="window-address">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="#10b981"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+        <span>https://workspace.backlog.com/view/PROJ-104</span>
+      </div>
+    </div>
+    <div class="window-content">
+      
+        <div style="display: flex; align-items: center; justify-content: center; height: 100%;">
+          <!-- Floating Centered Popup -->
+          <div style="width: 380px; background: #131d31; border: 1px solid #243247; border-radius: 14px; box-shadow: 0 20px 45px rgba(0,0,0,0.6); overflow: hidden; display: flex; flex-direction: column;">
+            <!-- Popup Header -->
+            <div style="padding: 16px; background: #1a263d; border-bottom: 1px solid #243247; display: flex; align-items: center; justify-content: space-between;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 32px; height: 32px; border-radius: 8px; background: #0f172a; border: 1px solid #38bdf8; display: flex; align-items: center; justify-content: center;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="#38bdf8"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+                </div>
+                <div>
+                  <div style="font-size: 14px; font-weight: 700; color: #f8fafc;">Backlog2Redmine</div>
+                  <div style="font-size: 11px; color: #94a3b8;">Version v1.8.24 (Latest)</div>
+                </div>
+              </div>
+              <span style="font-size: 11px; background: rgba(74,222,128,0.15); color: #4ade80; padding: 3px 8px; border-radius: 4px; font-weight: 600;">Active</span>
+            </div>
+
+            <!-- Health Status Rows -->
+            <div style="padding: 14px 16px; display: flex; flex-direction: column; gap: 8px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; background: #0b111e; padding: 10px 12px; border-radius: 8px; border: 1px solid #1e293b;">
+                <span style="font-size: 12px; color: #cbd5e1; font-weight: 500;">Backlog API</span>
+                <span style="font-size: 11px; color: #4ade80; display: inline-flex; align-items: center; gap: 4px;">● Connected</span>
+              </div>
+              <div style="display: flex; align-items: center; justify-content: space-between; background: #0b111e; padding: 10px 12px; border-radius: 8px; border: 1px solid #1e293b;">
+                <span style="font-size: 12px; color: #cbd5e1; font-weight: 500;">Redmine API</span>
+                <span style="font-size: 11px; color: #4ade80; display: inline-flex; align-items: center; gap: 4px;">● Connected</span>
+              </div>
+              <div style="display: flex; align-items: center; justify-content: space-between; background: #0b111e; padding: 10px 12px; border-radius: 8px; border: 1px solid #1e293b;">
+                <span style="font-size: 12px; color: #cbd5e1; font-weight: 500;">AI Service (Gemini 2.5)</span>
+                <span style="font-size: 11px; color: #38bdf8; display: inline-flex; align-items: center; gap: 4px;">⚡ High Speed</span>
+              </div>
+            </div>
+
+            <!-- Project Selector -->
+            <div style="padding: 0 16px 14px;">
+              <div style="font-size: 11px; color: #94a3b8; margin-bottom: 6px;">Default Project:</div>
+              <div style="background: #0b111e; border: 1px solid #1e293b; padding: 8px 12px; border-radius: 6px; font-size: 12px; color: #f1f5f9; font-weight: 600;">
+                [B2R] Core Banking System Migration
+              </div>
+            </div>
+
+            <!-- Quick Action Buttons -->
+            <div style="padding: 12px 16px; background: #0f172a; border-top: 1px solid #1e293b; display: flex; flex-direction: column; gap: 8px;">
+              <button style="width: 100%; background: #3e5ba3; color: #fff; border: none; padding: 9px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 2px 6px rgba(62,91,163,0.3);">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>
+                <span>Log Time for October 2026</span>
+              </button>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <button style="background: #1e293b; border: 1px solid #334155; color: #cbd5e1; padding: 7px; border-radius: 6px; font-size: 12px; cursor: pointer;">Open Redmine</button>
+                <button style="background: #1e293b; border: 1px solid #334155; color: #cbd5e1; padding: 7px; border-radius: 6px; font-size: 12px; cursor: pointer;">Open Backlog</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      
+    </div>
+  </div>
+</body>
+</html>

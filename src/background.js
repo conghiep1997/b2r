@@ -159,7 +159,7 @@ async function checkForUpdates() {
       await chrome.notifications.create(UPDATE_NOTIFICATION_ID, {
         type: "basic",
         iconUrl: "assets/icons/icon-48.png",
-        title: "🚀 Cập nhật mới sẵn sàng!",
+        title: "Cập nhật mới sẵn sàng!",
         message: `Phiên bản ${latestVersion} đã ra mắt. Click để xem chi tiết!`,
         priority: 2,
         buttons: [{ title: "Download ngay" }, { title: "Để sau" }],

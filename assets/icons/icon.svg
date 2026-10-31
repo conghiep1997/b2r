@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="100%" height="100%">
+  <defs>
+    <linearGradient id="b2rBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1A2644"/>
+      <stop offset="100%" stop-color="#0B111D"/>
+    </linearGradient>
+    <linearGradient id="b2rSyncBlue" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="100%" stop-color="#818CF8"/>
+    </linearGradient>
+    <linearGradient id="b2rSyncRose" x1="100%" y1="100%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FB7185"/>
+      <stop offset="100%" stop-color="#F43F5E"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Squircle Base with Border and Rim Light -->
+  <rect x="3" y="3" width="122" height="122" rx="28" fill="url(#b2rBg)" stroke="#3E5BA3" stroke-width="2.5"/>
+  <rect x="5.5" y="5.5" width="117" height="117" rx="26" fill="none" stroke="rgba(255, 255, 255, 0.12)" stroke-width="1.2"/>
+
+  <!-- Google M3 Standard Continuous Sync Stream (Single Vector Per Direction) -->
+  <g transform="translate(16, 16) scale(4.0)">
+    <!-- Top Forward Stream (Backlog -> Redmine): Sky Blue to Electric Indigo -->
+    <path d="M 12 4 V 1 L 8 5 L 12 9 V 6 C 15.31 6 18 8.69 18 12 C 18 13.01 17.75 13.97 17.3 14.8 L 18.76 16.26 C 19.54 15.03 20 13.57 20 12 C 20 7.58 16.42 4 12 4 Z" 
+          fill="url(#b2rSyncBlue)"
+          transform="rotate(90 12 12)"/>
+
+    <!-- Bottom Reverse Stream (Redmine -> Backlog): Rose Coral to Crimson -->
+    <path d="M 12 4 V 1 L 8 5 L 12 9 V 6 C 15.31 6 18 8.69 18 12 C 18 13.01 17.75 13.97 17.3 14.8 L 18.76 16.26 C 19.54 15.03 20 13.57 20 12 C 20 7.58 16.42 4 12 4 Z" 
+          fill="url(#b2rSyncRose)"
+          transform="rotate(270 12 12)"/>
+  </g>
+</svg>

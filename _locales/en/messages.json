@@ -222,7 +222,7 @@
     "message": "Primary model busy. Trying fallback..."
   },
   "toast_rate_limit_failed": {
-    "message": "❌ Both models rate limited. Please wait or check API key."
+    "message": "Both models rate limited. Please wait or check API key."
   },
   "toast_cross_provider_retry": {
     "message": "$provider$ busy. Trying fallback...",
@@ -286,7 +286,7 @@
     "message": "Sending content cannot be empty."
   },
   "modal_success_title": {
-    "message": "✅ Done!"
+    "message": "Done!"
   },
   "modal_success_subtitle": {
     "message": "Comment has been sent successfully to Redmine."
@@ -342,10 +342,10 @@
     "message": "Loading title..."
   },
   "modal_error_numeric_id": {
-    "message": "⚠️ ID must be a number!"
+    "message": "ID must be a number!"
   },
   "modal_error_not_found": {
-    "message": "⚠️ Issue not found or connection error!"
+    "message": "Issue not found or connection error!"
   },
   "modal_error_select_project": {
     "message": "Please select a Redmine project."
@@ -372,7 +372,7 @@
     "message": "View in Backlog"
   },
   "modal_batch_title_multiple": {
-    "message": "✅ Sent $count$ notes successfully!",
+    "message": "Sent $ notes successfully!",
     "placeholders": {
       "count": {
         "content": "$1"
@@ -414,19 +414,19 @@
     "message": "Missing Gemini API Key in Options."
   },
   "options_gemini_key_required": {
-    "message": "❌ Please enter Gemini API Key."
+    "message": "Please enter Gemini API Key."
   },
   "options_cerebras_key_required": {
-    "message": "❌ Please enter Cerebras API Key."
+    "message": "Please enter Cerebras API Key."
   },
   "options_save_success": {
-    "message": "✅ Configuration saved successfully!"
+    "message": "Configuration saved successfully!"
   },
   "settings_options_save_success": {
-    "message": "✅ Configuration saved successfully!"
+    "message": "Configuration saved successfully!"
   },
   "options_save_error": {
-    "message": "❌ Error saving: $error$",
+    "message": "Error saving: $",
     "placeholders": {
       "error": {
         "content": "$1"
@@ -434,7 +434,7 @@
     }
   },
   "settings_options_save_error": {
-    "message": "❌ Error saving: $error$",
+    "message": "Error saving: $",
     "placeholders": {
       "error": {
         "content": "$1"
@@ -505,7 +505,7 @@
     "message": "Redmine project"
   },
   "popup_open_settings": {
-    "message": "Open full settings"
+    "message": "Settings"
   },
   "popup_donate": {
     "message": "Buy me a coffee"
@@ -529,7 +529,7 @@
     "message": "Close"
   },
   "popup_donate_title": {
-    "message": "Support the author ☕"
+    "message": "Support the author"
   },
   "popup_donate_intro": {
     "message": "If this extension is useful, a coffee helps me keep improving it."
@@ -1232,16 +1232,16 @@
     "message": "Preserves English tech terms (API, DB, query...), clear action-oriented sentences for Devs & Testers."
   },
   "options_retry_queue_title": {
-    "message": "📶 Offline / Retry Queue"
+    "message": "Offline / Retry Queue"
   },
   "options_retry_queue_help": {
     "message": "Automatically saves sync operations interrupted by network dropouts. You can retry them when connection recovers."
   },
   "options_retry_all": {
-    "message": "🔄 Retry all"
+    "message": "Retry all"
   },
   "options_clear_queue": {
-    "message": "🗑️ Clear queue"
+    "message": "Clear queue"
   },
   "options_refresh_queue": {
     "message": "↻ Refresh"
@@ -1270,7 +1270,7 @@
     "message": "Clear all items in the retry queue?"
   },
   "options_bug_title": {
-    "message": "🐞 Report a bug"
+    "message": "Report a bug"
   },
   "options_document_title": {
     "message": "Backlog & Redmine Settings"
@@ -1366,7 +1366,7 @@
     "message": "Unable to preview this image."
   },
   "options_download_report": {
-    "message": "📥 Download report"
+    "message": "Download report"
   },
   "options_copy_report": {
     "message": "Copy report"
@@ -1381,19 +1381,19 @@
     "message": "If you encounter a problem, export the error log and send it to the development team."
   },
   "options_export_logs": {
-    "message": "📥 Export error log"
+    "message": "Export error log"
   },
   "options_clear_logs": {
-    "message": "🗑️ Clear error history"
+    "message": "Clear error history"
   },
   "options_update_title": {
-    "message": "🔔 Extension updates"
+    "message": "Extension updates"
   },
   "options_update_checking": {
     "message": "Checking for updates..."
   },
   "options_check_update": {
-    "message": "🔍 Check for updates"
+    "message": "Check for updates"
   },
   "options_download_page": {
     "message": "Download page"
@@ -1402,10 +1402,10 @@
     "message": "Enter your Redmine server address."
   },
   "options_api_account_help": {
-    "message": "🔑 Get the API key from:"
+    "message": "Get the API key from:"
   },
   "options_backlog_help": {
-    "message": "🔑 Get it from Account > API in your Backlog. Required to send comments and sync data."
+    "message": "Get it from Account > API in your Backlog. Required to send comments and sync data."
   },
   "options_gemini_provider": {
     "message": "Google Gemini AI Studio"
@@ -1447,7 +1447,7 @@
     "message": "Connecting to server..."
   },
   "options_new_version": {
-    "message": "🚀 New version available:"
+    "message": "New version available:"
   },
   "options_current_version": {
     "message": "You are using the latest version"
@@ -1544,16 +1544,16 @@
     "message": "Migration custom fields"
   },
   "options_backlog_section": {
-    "message": "📝 Backlog settings"
+    "message": "Backlog settings"
   },
   "options_primary_ai_section": {
-    "message": "🤖 Primary AI settings"
+    "message": "Primary AI settings"
   },
   "options_fallback_ai_section": {
-    "message": "🔄 Fallback AI settings"
+    "message": "Fallback AI settings"
   },
   "options_get_key_from": {
-    "message": "🔑 Get it from:"
+    "message": "Get it from:"
   },
   "options_gemini_key_prefix": {
     "message": "Get a Gemini API key from"
@@ -1577,13 +1577,13 @@
     "message": "Get a key from OpenRouter"
   },
   "options_openrouter_hint": {
-    "message": "💡 Many free models (suffix :free)."
+    "message": "Many free models (suffix :free)."
   },
   "options_redmine_account_hint": {
     "message": "(Click \"Show\" next to \"API access key\")."
   },
   "options_default_project": {
-    "message": "Redmine project (issue migration and monthly reports)"
+    "message": "Default Redmine project"
   },
   "options_report_help": {
     "message": "Choose the project used for monthly time reports."
@@ -1592,7 +1592,7 @@
     "message": "Backlog Issue Title"
   },
   "modal_batch_count_changed_warning": {
-    "message": "⚠️ The comment count changed"
+    "message": "The comment count changed"
   },
   "modal_batch_subtitle_preparing": {
     "message": "Will translate and send $count$ comments in sequence.",
@@ -1665,7 +1665,7 @@
     "message": "Use field IDs and values from your Redmine instance."
   },
   "options_openrouter_suffix": {
-    "message": " 💡 Many free models (suffix :free)."
+    "message": " Many free models (suffix :free)."
   },
   "options_backlog_suffix": {
     "message": "Required to send comments and sync data."
@@ -1686,7 +1686,7 @@
     "message": "Apply"
   },
   "report_bulk_activity_applied": {
-    "message": "✓ Applied"
+    "message": "Applied"
   },
   "report_check_tasks": {
     "message": "Check this month's tasks"
@@ -1734,7 +1734,7 @@
     }
   },
   "report_logging_complete": {
-    "message": "🎉 Time logging is complete! You can copy the table below."
+    "message": "Time logging is complete! You can copy the table below."
   },
   "report_logging_partial": {
     "message": "Partially logged; $count$ reports failed. Review the details and scan again.",
@@ -2169,5 +2169,33 @@
   },
   "report_user_error": {
     "message": "Account unknown"
+  },
+  "options_hero_desc": {
+    "message": "Configure Redmine, Backlog, and AI credentials to enable two-way comment translation and synchronization.",
+    "description": "Description under main title in options page"
+  },
+  "options_tab_redmine": {
+    "message": "Redmine",
+    "description": "Redmine settings tab"
+  },
+  "options_tab_backlog": {
+    "message": "Backlog",
+    "description": "Backlog settings tab"
+  },
+  "options_tab_ai": {
+    "message": "AI",
+    "description": "AI settings tab"
+  },
+  "options_tab_profiles": {
+    "message": "Profiles",
+    "description": "Profiles settings tab"
+  },
+  "options_tab_ui": {
+    "message": "UI",
+    "description": "UI settings tab"
+  },
+  "options_tab_advanced": {
+    "message": "Advanced",
+    "description": "Advanced settings tab"
   }
 }

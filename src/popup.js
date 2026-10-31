@@ -85,7 +85,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function renderStatus() {
   const items = await chrome.storage.local.get([
     "redmineApiKey",
+    "redmineConnectionVerified",
+    "defaultProjectId",
+    "defaultProjectName",
     "backlogApiKey",
+    "backlogConnectionVerified",
     "primaryProvider",
     "geminiApiKey",
     "geminiApiKeys",
@@ -95,12 +99,16 @@ async function renderStatus() {
     "cerebrasApiKeys",
     "openrouterApiKey",
     "openrouterApiKeys",
-    "backlogDomain",
-    "defaultProjectId",
-    "defaultProjectName",
+    "aiConnectionVerified",
   ]);
-  const redmineReady = Boolean(items.redmineApiKey);
-  const backlogReady = Boolean(items.backlogApiKey);
+
+  const redmineConfigured = Boolean(items.redmineApiKey);
+  const redmineProjectConfigured = Boolean(items.defaultProjectId);
+  const redmineVerified = Boolean(redmineConfigured && redmineProjectConfigured && items.redmineConnectionVerified);
+
+  const backlogConfigured = Boolean(items.backlogApiKey);
+  const backlogVerified = Boolean(backlogConfigured && items.backlogConnectionVerified);
+
   const activeProvider = items.primaryProvider || "gemini";
   const providerKeyReadyMap = {
     gemini: Boolean(items.geminiApiKeys || items.geminiApiKey),
@@ -108,46 +116,99 @@ async function renderStatus() {
     cerebras: Boolean(items.cerebrasApiKeys || items.cerebrasApiKey),
     openrouter: Boolean(items.openrouterApiKeys || items.openrouterApiKey),
   };
-  const aiReady = Boolean(items.primaryProvider && providerKeyReadyMap[activeProvider]);
-  const provider = aiReady
-    ? PROVIDER_LABELS[activeProvider] || activeProvider
-    : t("popup_not_selected");
-  const forwardReady = redmineReady && aiReady;
-  const forwardStatus = forwardReady
-    ? t("popup_active")
-    : !redmineReady
-      ? t("popup_missing_redmine_key")
-      : t("popup_missing_ai_provider");
-  setState("forwardStatus", forwardReady, forwardStatus);
-  const reverseReady = backlogReady && aiReady;
-  const reverseStatus = reverseReady
-    ? t("popup_active")
-    : !backlogReady
-      ? t("popup_missing_backlog_key")
-      : t("popup_missing_ai_provider");
-  setState("reverseStatus", reverseReady, reverseStatus);
-  setState("providerStatus", aiReady, provider);
-  const configured = aiReady && (redmineReady || backlogReady);
-  document.getElementById("statusBadge").textContent = configured
-    ? t("popup_ready")
-    : t("popup_needs_setup");
-  document.getElementById("statusBadge").classList.toggle("ready", configured);
-  document.getElementById("statusBadge").classList.toggle("error", !redmineReady && !backlogReady);
-  const missingSetup = [];
-  if (!redmineReady && !backlogReady) missingSetup.push(t("popup_missing_both_keys"));
-  if (!aiReady) missingSetup.push(t("popup_missing_ai_provider"));
-  document.getElementById("overallStatus").textContent = configured
-    ? t("popup_configured")
-    : missingSetup.join(" · ");
+  const aiConfigured = Boolean(items.primaryProvider && providerKeyReadyMap[activeProvider]);
+  const aiVerified = Boolean(aiConfigured && items.aiConnectionVerified);
+
+  const providerLabel = PROVIDER_LABELS[activeProvider] || activeProvider;
+  const pendingLabel = t("options_onboarding_status_pending") || "Chưa kiểm tra";
+
+  // Forward Flow: Backlog -> Redmine (Needs Redmine + Project + AI)
+  let forwardState = "ok";
+  let forwardText = t("popup_active");
+  if (!redmineConfigured) {
+    forwardState = "missing";
+    forwardText = t("popup_missing_redmine_key");
+  } else if (!redmineProjectConfigured) {
+    forwardState = "warning";
+    forwardText = t("popup_not_selected");
+  } else if (!aiConfigured) {
+    forwardState = "missing";
+    forwardText = t("popup_missing_ai_provider");
+  } else if (!redmineVerified || !aiVerified) {
+    forwardState = "warning";
+    forwardText = pendingLabel;
+  }
+  setState("forwardStatus", forwardState, forwardText);
+
+  // Reverse Flow: Redmine -> Backlog (Needs Backlog + AI)
+  let reverseState = "ok";
+  let reverseText = t("popup_active");
+  if (!backlogConfigured) {
+    reverseState = "missing";
+    reverseText = t("popup_missing_backlog_key");
+  } else if (!aiConfigured) {
+    reverseState = "missing";
+    reverseText = t("popup_missing_ai_provider");
+  } else if (!backlogVerified || !aiVerified) {
+    reverseState = "warning";
+    reverseText = pendingLabel;
+  }
+  setState("reverseStatus", reverseState, reverseText);
+
+  // AI Provider Status
+  let providerState = "ok";
+  let providerText = providerLabel;
+  if (!aiConfigured) {
+    providerState = "missing";
+    providerText = t("popup_not_selected");
+  } else if (!aiVerified) {
+    providerState = "warning";
+    providerText = `${providerLabel} (${pendingLabel})`;
+  }
+  setState("providerStatus", providerState, providerText);
+
+  // Overall Status Badge & Description
+  const allVerified = redmineVerified && backlogVerified && aiVerified;
+  const anyMissing = !redmineConfigured || !backlogConfigured || !aiConfigured || !redmineProjectConfigured;
+  const anyUnverified = (redmineConfigured && !redmineVerified) || (backlogConfigured && !backlogVerified) || (aiConfigured && !aiVerified);
+
+  const badgeElement = document.getElementById("statusBadge");
+  badgeElement.classList.remove("ready", "warning", "error");
+
+  if (allVerified) {
+    badgeElement.textContent = t("popup_ready");
+    badgeElement.classList.add("ready");
+    document.getElementById("overallStatus").textContent = t("popup_configured");
+  } else if (anyMissing) {
+    badgeElement.textContent = t("popup_needs_setup");
+    badgeElement.classList.add("error");
+    const missingSetup = [];
+    if (!redmineConfigured && !backlogConfigured) missingSetup.push(t("popup_missing_both_keys"));
+    else if (!redmineConfigured) missingSetup.push(t("popup_missing_redmine_key"));
+    else if (!backlogConfigured) missingSetup.push(t("popup_missing_backlog_key"));
+    if (!redmineProjectConfigured) missingSetup.push(t("popup_default_project"));
+    if (!aiConfigured) missingSetup.push(t("popup_missing_ai_provider"));
+    document.getElementById("overallStatus").textContent = missingSetup.join(" · ");
+  } else if (anyUnverified) {
+    badgeElement.textContent = pendingLabel.toUpperCase();
+    badgeElement.classList.add("warning");
+    document.getElementById("overallStatus").textContent = t("popup_setup_required");
+  } else {
+    badgeElement.textContent = t("popup_ready");
+    badgeElement.classList.add("ready");
+    document.getElementById("overallStatus").textContent = t("popup_configured");
+  }
+
   document.getElementById("defaultProjectValue").textContent =
     items.defaultProjectName || items.defaultProjectId || t("popup_not_selected");
   if (!items.defaultProjectName && items.defaultProjectId) {
     document.getElementById("defaultProjectValue").textContent = t("popup_loading_project");
   }
   if (items.defaultProjectId && !items.defaultProjectName) loadDefaultProjectName();
-  document.getElementById("projectSummary").textContent = items.defaultProjectName
+  const summaryEl = document.getElementById("projectSummary");
+  if (summaryEl) {summaryEl.textContent = items.defaultProjectName
     ? t("popup_project_summary")
-    : t("popup_project_summary_empty");
+    : t("popup_project_summary_empty");}
 }
 
 async function loadDefaultProjectName() {
@@ -173,11 +234,12 @@ function formatDomain(value) {
   }
 }
 
-function setState(id, ready, text) {
+function setState(id, statusType, text) {
   const element = document.getElementById(id);
   element.textContent = text;
-  element.classList.toggle("ok", ready);
-  element.classList.toggle("missing", !ready);
+  element.classList.toggle("ok", statusType === "ok" || statusType === true);
+  element.classList.toggle("warning", statusType === "warning");
+  element.classList.toggle("missing", statusType === "missing" || statusType === false);
 }
 
 function setupActions() {

@@ -1,12 +1,19 @@
 # Changelog - Backlog2Redmine
 
-## [1.8.24] - 2026-10-30
+## [1.8.24] - 2026-10-31
+- **✨ Added**: Redesigned B2R brand identity icon using Google Material Design 3 (M3) continuous pure sync streams (`assets/icons/icon.svg`), generating pixel-perfect 128px, 48px, and 16px icons.
+- **✨ Added**: Automated Chrome Web Store promotional screenshot generator (`scripts/generate-cws-screenshots.js`) producing high-fidelity 1280x800 screenshots (5 for Vietnamese localization `store_assets/screenshots_vi/`, 5 for international default `store_assets/screenshots_en/`).
+- **✨ Added**: Complete localization support (`data-i18n`) for all Options navigation tabs (Redmine, Backlog, AI, Profiles, UI, Advanced).
+- **✨ Added**: Automatic background connection verification (debounced at 700ms) on API key and domain input, eliminating required manual test button clicks and synchronizing save status between Options and Popup.
 - **✨ Added**: Editable task hours, month navigation, and live daily/monthly totals in the Redmine monthly Log Time preview.
 - **✨ Added**: Tiered Gemini model selection that prioritizes higher-quota Flash Lite models and supports daily quota cooldowns; provider errors now honor `Retry-After` where available.
 - **✨ Added**: Richer Markdown rendering and formatting support for translated comments.
+- **🔧 Fixed**: Modernized Redmine Monthly Log Time month picker with official SVG chevrons (`TB_ICONS.CHEVRON_LEFT` & `CHEVRON_RIGHT`), consistent 28px height, dark mode calendar picker indicator invert filter, and Material 3 `:focus-visible` outline.
+- **🔧 Fixed**: Eliminated AI clichés across codebase: removed unused sparkle star SVG (`AUTO_AWESOME`) and stripped hardcoded emojis (`🤖`, `🔄`, `🐞`, `📥`, `🗑️`, `🔔`, `🔍`, `☕`, `🚀`, `🔑`, `💡`) from titles, buttons, and system messages in favor of clean text and Material Symbols SVGs.
+- **🔧 Fixed**: Repaired 100% of double-encoded UTF-8 mojibake across `src/options.html` (Bug report, Error logs, Model selection, Custom fields, and Navigation bar).
 - **🔧 Fixed**: Reduced bursts of translation requests by adding a short pause between comment batches; retired Gemini models are excluded from fallback selection.
 - **🔧 Improved**: Refreshed provider/model settings and monthly Log Time interface with localized controls and clearer status feedback.
-- **📝 Docs**:
+- **📝 Docs**: Expanded `docs/DESIGN_SYSTEM.md` with M3 pure sync stream icon specification, month picker alignment rules, AI cliché elimination guidelines, and Chrome Web Store asset standards (189 unit tests passing).
 
 
 ## [1.8.23] - 2026-10-29

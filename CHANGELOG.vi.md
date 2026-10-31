@@ -4,13 +4,20 @@ Tất cả các thay đổi đáng chú ý của dự án Backlog2Redmine (B2R) 
 Định dạng dựa trên [Keep a Changelog](https://keepachangelog.com/).
 (Bản tiếng Anh chính thức: [CHANGELOG.md](./CHANGELOG.md))
 
-## [1.8.24] - 2026-10-30
+## [1.8.24] - 2026-10-31
+- **✨ Thêm mới**: Thiết kế lại toàn diện biểu tượng thương hiệu B2R theo ngôn ngữ Google Material Design 3 (M3) liền khối (`assets/icons/icon.svg`), trích xuất pixel-perfect cho các cỡ 128px, 48px và 16px.
+- **✨ Thêm mới**: Công cụ tự động sinh ảnh chụp màn hình quảng bá Chrome Web Store (`scripts/generate-cws-screenshots.js`) chuẩn 1280x800 px (5 ảnh bản địa hóa Tiếng Việt `store_assets/screenshots_vi/`, 5 ảnh mặc định Quốc tế `store_assets/screenshots_en/`).
+- **✨ Thêm mới**: Hỗ trợ đa ngôn ngữ đầy đủ (`data-i18n`) cho toàn bộ 6 tab điều hướng trang Cài đặt (Redmine, Backlog, AI, Profiles, UI, Nâng cao/Advanced).
+- **✨ Thêm mới**: Tự động kiểm tra trạng thái kết nối ngầm (debounce 700ms) khi nhập API key hoặc domain, loại bỏ thao tác bấm nút thủ công và đồng bộ trạng thái lưu giữa Popup và Options.
 - **✨ Thêm mới**: Cho phép chỉnh số giờ từng task, điều hướng tháng và xem tổng giờ theo ngày/toàn tháng trong phần xem trước Log time tháng trên Redmine.
 - **✨ Thêm mới**: Phân tầng lựa chọn model Gemini, ưu tiên Flash Lite có hạn mức cao hơn và hỗ trợ cooldown khi hết quota ngày; lỗi từ provider sử dụng `Retry-After` nếu có.
 - **✨ Thêm mới**: Bổ sung khả năng định dạng và hiển thị Markdown cho comment đã dịch.
+- **🔧 Sửa lỗi**: Chuẩn hóa bộ chọn tháng (Month Picker) trong modal Log time Redmine với icon SVG chevron chuẩn (`TB_ICONS.CHEVRON_LEFT` & `CHEVRON_RIGHT`), đồng bộ chiều cao 28px, khắc phục outline focus ring trong Dark Mode và bộ lọc hiển thị icon lịch trình duyệt.
+- **🔧 Sửa lỗi**: Loại bỏ hoàn toàn AI Cliché khỏi codebase: xóa icon thừa `AUTO_AWESOME`, loại bỏ các emoji rườm rà (`🤖`, `🔄`, `🐞`, `📥`, `🗑️`, `🔔`, `🔍`, `☕`, `🚀`, `🔑`, `💡`) khỏi tiêu đề, nút bấm và thông báo hệ thống để chuyển sang text thuần kết hợp icon SVG Material Symbols.
+- **🔧 Sửa lỗi**: Sửa triệt để 100% lỗi font mã hóa kép (Mojibake UTF-8) trên toàn bộ `src/options.html` (Báo lỗi, Quản lý log lỗi, Chọn model AI, Custom fields và Thanh tab).
 - **🔧 Sửa lỗi**: Giảm các đợt gọi dịch dồn dập bằng cách thêm khoảng nghỉ ngắn giữa các batch comment; loại model Gemini đã ngừng hỗ trợ khỏi danh sách dự phòng.
 - **🔧 Cải thiện**: Làm mới giao diện cấu hình provider/model và Log time tháng, bổ sung điều khiển đã bản địa hóa cùng trạng thái rõ ràng hơn.
-- **📝 Tài liệu**:
+- **📝 Tài liệu**: Bổ sung `docs/DESIGN_SYSTEM.md` với đặc tả thiết kế icon M3, quy chuẩn Month Picker, tiêu chuẩn loại bỏ AI cliché và quy cách ảnh Chrome Web Store (189 bài test đều vượt qua).
 
 ## [1.8.23] - 2026-10-29
 - **✨ Thêm mới**: Hiển thị badge danh tính người dùng (`#tb-monthly-log-user`) trong modal Log time tháng Redmine qua `getCurrentUser()`, bao gồm tên, username và tooltip email.

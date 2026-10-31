@@ -228,7 +228,7 @@
     "message": "Model chính đang bận. Đang thử model dự phòng..."
   },
   "toast_rate_limit_failed": {
-    "message": "❌ Cả 2 model đều chạm giới hạn. Vui lòng đợi hoặc kiểm tra API key."
+    "message": "Cả 2 model đều chạm giới hạn. Vui lòng đợi hoặc kiểm tra API key."
   },
   "toast_cross_provider_retry": {
     "message": "$provider$ đang bận. Đang thử model dự phòng...",
@@ -307,7 +307,7 @@
     "message": "Nội dung gửi không được để trống."
   },
   "modal_success_title": {
-    "message": "✅ Hoàn thành!"
+    "message": "Hoàn thành!"
   },
   "modal_success_subtitle": {
     "message": "Bình luận đã được gửi thành công sang Redmine."
@@ -363,10 +363,10 @@
     "message": "Đang tải tiêu đề..."
   },
   "modal_error_numeric_id": {
-    "message": "⚠️ ID phải là chữ số!"
+    "message": "ID phải là chữ số!"
   },
   "modal_error_not_found": {
-    "message": "⚠️ Không tìm thấy Issue hoặc lỗi kết nối!"
+    "message": "Không tìm thấy Issue hoặc lỗi kết nối!"
   },
   "modal_error_select_project": {
     "message": "Vui lòng chọn dự án Redmine."
@@ -393,7 +393,7 @@
     "message": "Xem trên Backlog"
   },
   "modal_batch_title_multiple": {
-    "message": "✅ Đã gửi thành công $count$ bình luận!",
+    "message": "Đã gửi thành công $ bình luận!",
     "placeholders": {
       "count": {
         "content": "$1"
@@ -431,7 +431,7 @@
     }
   },
   "modal_batch_count_changed_warning": {
-    "message": "⚠️ Số lượng bình luận đã thay đổi"
+    "message": "Số lượng bình luận đã thay đổi"
   },
   "modal_migrate_comments_text": {
     "message": "Dịch và di chuyển tất cả $count$ bình luận",
@@ -487,19 +487,19 @@
     "message": "Thiếu Gemini API key trong trang Tùy chọn."
   },
   "options_gemini_key_required": {
-    "message": "❌ Vui lòng nhập Gemini API key."
+    "message": "Vui lòng nhập Gemini API key."
   },
   "options_cerebras_key_required": {
-    "message": "❌ Vui lòng nhập Cerebras API key."
+    "message": "Vui lòng nhập Cerebras API key."
   },
   "options_save_success": {
-    "message": "✅ Cấu hình đã được lưu thành công!"
+    "message": "Cấu hình đã được lưu thành công!"
   },
   "settings_options_save_success": {
-    "message": "✅ Cấu hình đã được lưu thành công!"
+    "message": "Cấu hình đã được lưu thành công!"
   },
   "options_save_error": {
-    "message": "❌ Lỗi khi lưu: $error$",
+    "message": "Lỗi khi lưu: $",
     "placeholders": {
       "error": {
         "content": "$1"
@@ -507,7 +507,7 @@
     }
   },
   "settings_options_save_error": {
-    "message": "❌ Lỗi khi lưu: $error$",
+    "message": "Lỗi khi lưu: $",
     "placeholders": {
       "error": {
         "content": "$1"
@@ -578,7 +578,7 @@
     "message": "Dự án Redmine"
   },
   "popup_open_settings": {
-    "message": "Cài đặt chi tiết"
+    "message": "Cài đặt"
   },
   "popup_donate": {
     "message": "Mời coffee"
@@ -602,7 +602,7 @@
     "message": "Đóng"
   },
   "popup_donate_title": {
-    "message": "Ủng hộ tác giả ☕"
+    "message": "Ủng hộ tác giả"
   },
   "popup_donate_intro": {
     "message": "Nếu extension hữu ích với bạn, một ly coffee sẽ giúp mình tiếp tục phát triển."
@@ -1305,16 +1305,16 @@
     "message": "Giữ nguyên thuật ngữ kỹ thuật tiếng Anh (API, DB, query...), câu văn ngắn gọn, rõ ràng cho Dev & Tester."
   },
   "options_retry_queue_title": {
-    "message": "📶 Hàng đợi thử lại khi rớt mạng (Offline / Retry Queue)"
+    "message": "Hàng đợi thử lại khi rớt mạng (Offline / Retry Queue)"
   },
   "options_retry_queue_help": {
     "message": "Tự động lưu nháp các thao tác đồng bộ bị lỗi mạng hoặc mất kết nối. Bạn có thể gửi lại khi mạng ổn định."
   },
   "options_retry_all": {
-    "message": "🔄 Thử lại tất cả"
+    "message": "Thử lại tất cả"
   },
   "options_clear_queue": {
-    "message": "🗑️ Xóa hàng đợi"
+    "message": "Xóa hàng đợi"
   },
   "options_refresh_queue": {
     "message": "↻ Làm mới"
@@ -1343,7 +1343,7 @@
     "message": "Xóa toàn bộ hàng đợi thử lại?"
   },
   "options_bug_title": {
-    "message": "🐞 Báo lỗi"
+    "message": "Báo lỗi"
   },
   "options_document_title": {
     "message": "Cấu hình Backlog & Redmine"
@@ -1439,7 +1439,7 @@
     "message": "Không thể xem trước ảnh này."
   },
   "options_download_report": {
-    "message": "📥 Tải báo cáo"
+    "message": "Tải báo cáo"
   },
   "options_copy_report": {
     "message": "Sao chép báo cáo"
@@ -1454,19 +1454,19 @@
     "message": "Nếu gặp sự cố, bạn có thể xuất file log lỗi để gửi cho đội phát triển."
   },
   "options_export_logs": {
-    "message": "📥 Xuất File Lỗi"
+    "message": "Xuất File Lỗi"
   },
   "options_clear_logs": {
-    "message": "🗑️ Xóa Lịch Sử Lỗi"
+    "message": "Xóa Lịch Sử Lỗi"
   },
   "options_update_title": {
-    "message": "🔔 Cập nhật Extension"
+    "message": "Cập nhật Extension"
   },
   "options_update_checking": {
     "message": "Đang kiểm tra phiên bản..."
   },
   "options_check_update": {
-    "message": "🔍 Kiểm tra cập nhật"
+    "message": "Kiểm tra cập nhật"
   },
   "options_download_page": {
     "message": "Trang tải xuống"
@@ -1478,7 +1478,7 @@
     "message": "Lấy khóa API tại:"
   },
   "options_backlog_help": {
-    "message": "🔑 Lấy tại: Tài khoản > API trong Backlog của bạn. Cần thiết để gửi comment và đồng bộ dữ liệu."
+    "message": "Lấy tại: Tài khoản > API trong Backlog của bạn. Cần thiết để gửi comment và đồng bộ dữ liệu."
   },
   "options_gemini_provider": {
     "message": "Google Gemini AI Studio"
@@ -1520,7 +1520,7 @@
     "message": "Đang kết nối đến server..."
   },
   "options_new_version": {
-    "message": "🚀 Có phiên bản mới:"
+    "message": "Có phiên bản mới:"
   },
   "options_current_version": {
     "message": "Bạn đang dùng phiên bản mới nhất"
@@ -1617,16 +1617,16 @@
     "message": "Trường tùy chỉnh khi di chuyển"
   },
   "options_backlog_section": {
-    "message": "📝 Cấu hình Backlog"
+    "message": "Cấu hình Backlog"
   },
   "options_primary_ai_section": {
-    "message": "🤖 Dịch vụ AI chính"
+    "message": "Dịch vụ AI chính"
   },
   "options_fallback_ai_section": {
-    "message": "🔄 Dịch vụ AI dự phòng"
+    "message": "Dịch vụ AI dự phòng"
   },
   "options_get_key_from": {
-    "message": "🔑 Lấy tại:"
+    "message": "Lấy tại:"
   },
   "options_gemini_key_prefix": {
     "message": "Lấy khóa API Gemini tại"
@@ -1650,13 +1650,13 @@
     "message": "Lấy key tại OpenRouter"
   },
   "options_openrouter_hint": {
-    "message": "💡 Nhiều model miễn phí (suffix :free)."
+    "message": "Nhiều model miễn phí (suffix :free)."
   },
   "options_redmine_account_hint": {
     "message": "(Bấm vào \"Hiện\" tại mục \"Mã truy cập API\")."
   },
   "options_default_project": {
-    "message": "Dự án Redmine (di chuyển issue và báo cáo tháng)"
+    "message": "Dự án Redmine mặc định"
   },
   "options_report_help": {
     "message": "Chọn dự án dùng để báo cáo thời gian làm việc theo tháng."
@@ -1665,7 +1665,7 @@
     "message": "Dùng ID và giá trị trường trên Redmine của bạn."
   },
   "options_openrouter_suffix": {
-    "message": " 💡 Nhiều model miễn phí (suffix :free)."
+    "message": " Nhiều model miễn phí (suffix :free)."
   },
   "options_backlog_suffix": {
     "message": "Cần thiết để gửi comment và đồng bộ dữ liệu."
@@ -1686,7 +1686,7 @@
     "message": "Áp dụng"
   },
   "report_bulk_activity_applied": {
-    "message": "✓ Đã đổi"
+    "message": "Đã đổi"
   },
   "report_check_tasks": {
     "message": "Kiểm tra task trong tháng"
@@ -1734,7 +1734,7 @@
     }
   },
   "report_logging_complete": {
-    "message": "🎉 Đã ghi time xong! Có thể sao chép bảng bên dưới."
+    "message": "Đã ghi time xong! Có thể sao chép bảng bên dưới."
   },
   "report_logging_partial": {
     "message": "Đã ghi một phần; $count$ report gặp lỗi. Kiểm tra chi tiết và quét lại.",
@@ -2169,5 +2169,33 @@
   },
   "report_user_error": {
     "message": "Không rõ tài khoản"
+  },
+  "options_hero_desc": {
+    "message": "Lưu cấu hình Redmine, Backlog và AI để extension có thể dịch và đồng bộ comment qua lại giữa 2 hệ thống.",
+    "description": "Description under main title in options page"
+  },
+  "options_tab_redmine": {
+    "message": "Redmine",
+    "description": "Redmine settings tab"
+  },
+  "options_tab_backlog": {
+    "message": "Backlog",
+    "description": "Backlog settings tab"
+  },
+  "options_tab_ai": {
+    "message": "AI",
+    "description": "AI settings tab"
+  },
+  "options_tab_profiles": {
+    "message": "Profiles",
+    "description": "Profiles settings tab"
+  },
+  "options_tab_ui": {
+    "message": "UI",
+    "description": "UI settings tab"
+  },
+  "options_tab_advanced": {
+    "message": "Nâng cao",
+    "description": "Advanced settings tab"
   }
 }
