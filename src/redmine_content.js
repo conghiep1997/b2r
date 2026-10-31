@@ -1336,7 +1336,9 @@ function openMonthlyLogModal({
   overlay.lang = currentLanguage;
   const initialResolvedTheme =
     document.documentElement.dataset.tbTheme ||
-    (typeof matchMedia === "function" && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    (typeof matchMedia === "function" && matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light");
   overlay.setAttribute("data-tb-theme", initialResolvedTheme);
   try {
     chrome.storage?.local?.get?.(["themePreference"], (res) => {
