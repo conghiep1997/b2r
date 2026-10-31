@@ -131,7 +131,7 @@ function createModernButton(text, onClick, options = {}) {
   });
 
   innerWrap.innerHTML = `
-    <span style="display:flex; align-items:center;">${REDMINE_ICON}</span>
+    <span style="display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px; flex-shrink:0;">${REDMINE_ICON}</span>
     <span class="tb-btn-text" style="margin-left:8px; font-weight:700; color:#3e5ba3; white-space:nowrap; font-size:${fontSize}; letter-spacing:0.2px;">${text}</span>
   `;
 

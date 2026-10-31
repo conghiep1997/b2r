@@ -1334,6 +1334,25 @@ function openMonthlyLogModal({
   const overlay = document.createElement("div");
   overlay.className = "tb-monthly-log-overlay";
   overlay.lang = currentLanguage;
+  const initialResolvedTheme =
+    document.documentElement.dataset.tbTheme ||
+    (typeof matchMedia === "function" && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  overlay.setAttribute("data-tb-theme", initialResolvedTheme);
+  try {
+    chrome.storage?.local?.get?.(["themePreference"], (res) => {
+      const pref = res?.themePreference || "system";
+      const resolved =
+        pref === "system"
+          ? typeof matchMedia === "function" && matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light"
+          : pref;
+      overlay.setAttribute("data-tb-theme", resolved);
+      document.documentElement.dataset.tbTheme = resolved;
+    });
+  } catch (_e) {
+    // Ignore restricted context errors
+  }
   overlay.innerHTML = `
     <section class="tb-monthly-log-dialog" role="dialog" aria-modal="true" aria-labelledby="tb-monthly-log-title" lang="${currentLanguage}">
       <header class="tb-monthly-log-header">
@@ -1348,15 +1367,15 @@ function openMonthlyLogModal({
           <div class="tb-monthly-log-title-row">
             <h2 id="tb-monthly-log-title">${reportMessage("report_log_time_month")} ${monthLabel}</h2>
             <div class="tb-month-picker-wrapper">
-              <button type="button" id="tb-month-prev" class="tb-month-nav-btn" title="${reportMessage("report_prev_month")}" aria-label="${reportMessage("report_prev_month")}">${globalThis.TB_ICONS?.CHEVRON_LEFT || '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>'}</button>
+              <button type="button" id="tb-month-prev" class="tb-month-nav-btn" title="${reportMessage("report_prev_month")}" aria-label="${reportMessage("report_prev_month")}">${globalThis.TB_ICONS?.CHEVRON_LEFT || '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>'}</button>
               <input type="month" id="tb-monthly-log-month" class="tb-monthly-log-month-input" value="${initialMonthValue}" required lang="${currentLanguage}" aria-label="${reportMessage("report_log_time_month")}">
-              <button type="button" id="tb-month-next" class="tb-month-nav-btn" title="${reportMessage("report_next_month")}" aria-label="${reportMessage("report_next_month")}">${globalThis.TB_ICONS?.CHEVRON_RIGHT || '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>'}</button>
+              <button type="button" id="tb-month-next" class="tb-month-nav-btn" title="${reportMessage("report_next_month")}" aria-label="${reportMessage("report_next_month")}">${globalThis.TB_ICONS?.CHEVRON_RIGHT || '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>'}</button>
               <button type="button" id="tb-month-today" class="tb-month-today-btn" title="${reportMessage("report_this_month")}">${reportMessage("report_this_month")}</button>
             </div>
           </div>
           <p id="tb-monthly-log-status" class="tb-monthly-log-status">${reportMessage("report_ready_to_scan")}</p>
         </div>
-        <button type="button" class="tb-monthly-log-close" aria-label="${reportMessage("modal_close_aria")}">${globalThis.TB_ICONS?.CLOSE || "&times;"}</button>
+        <button type="button" class="tb-monthly-log-close" aria-label="${reportMessage("modal_close_aria")}">${globalThis.TB_ICONS?.CLOSE || '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>'}</button>
       </header>
       <div class="tb-monthly-log-body">
         <div class="tb-monthly-log-grid">

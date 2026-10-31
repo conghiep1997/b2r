@@ -267,7 +267,7 @@ function ensureModalShell() {
       <div id="tb-confirm-modal" class="tb-modal-content" role="dialog" aria-modal="true" aria-labelledby="tb-modal-title">
         <div class="tb-modal-header">
           <h2 id="tb-modal-title" class="tb-modal-title">${TB.MESSAGES.MODAL.TITLE}</h2>
-          <button id="tb-modal-close" class="tb-modal-close" aria-label="${TB.MESSAGES.MODAL.CLOSE_ARIA}">${globalThis.TB_ICONS?.CLOSE || "&times;"}</button>
+          <button id="tb-modal-close" class="tb-modal-close" aria-label="${TB.MESSAGES.MODAL.CLOSE_ARIA}">${globalThis.TB_ICONS?.CLOSE || '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>'}</button>
         </div>
         <div class="tb-modal-body">
           <p id="tb-modal-subtitle" class="tb-modal-subtitle" hidden></p>

@@ -204,9 +204,12 @@ function injectStyles() {
       background: #e2e8f0 !important;
       color: #0f172a !important;
     }
+    .tb-modal-close:focus {
+      outline: none;
+    }
     .tb-modal-close:focus-visible {
       outline: 2px solid #3e5ba3;
-      outline-offset: 2px;
+      outline-offset: -1px;
     }
 
     /* Modal Body */
@@ -552,9 +555,12 @@ function injectStyles() {
       background: #e2e8f0 !important;
       color: #0f172a !important;
     }
+    .tb-monthly-log-close:focus {
+      outline: none;
+    }
     .tb-monthly-log-close:focus-visible {
       outline: 2px solid #3e5ba3;
-      outline-offset: 2px;
+      outline-offset: -1px;
     }
     .tb-monthly-log-close:disabled {
       opacity: 0.45;
@@ -1175,6 +1181,7 @@ function injectStyles() {
       border-radius: 8px;
       gap: 4px;
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      vertical-align: middle;
     }
     .tb-month-nav-btn {
       display: inline-flex;
@@ -1182,15 +1189,29 @@ function injectStyles() {
       justify-content: center;
       width: 28px;
       height: 28px;
+      min-width: 28px;
+      max-width: 28px;
+      margin: 0;
       padding: 0;
       border: 1px solid #cbd5e1;
       background: #ffffff;
       color: #334155;
       border-radius: 6px;
       cursor: pointer;
+      line-height: 1;
+      vertical-align: middle;
       transition: all 0.15s ease;
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
       box-sizing: border-box;
+      flex-shrink: 0;
+    }
+    .tb-month-nav-btn svg {
+      display: block;
+      width: 16px;
+      height: 16px;
+      margin: auto;
+      pointer-events: none;
+      flex-shrink: 0;
     }
     .tb-month-nav-btn:hover:not(:disabled) {
       background: #e2e8f0;
@@ -1203,7 +1224,7 @@ function injectStyles() {
     .tb-month-nav-btn:focus { outline: none; }
     .tb-month-nav-btn:focus-visible {
       outline: 2px solid #3e5ba3;
-      outline-offset: 1px;
+      outline-offset: -1px;
     }
     .tb-month-nav-btn:disabled {
       opacity: 0.4;
@@ -1213,19 +1234,24 @@ function injectStyles() {
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      margin: 0;
       padding: 0 12px;
       height: 28px;
+      line-height: 26px;
       border: 1px solid #cbd5e1;
       background: #ffffff;
       color: #3e5ba3;
       font-size: 12px;
       font-weight: 600;
+      font-family: inherit;
       border-radius: 6px;
       cursor: pointer;
       transition: all 0.15s ease;
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
       white-space: nowrap;
       box-sizing: border-box;
+      vertical-align: middle;
+      flex-shrink: 0;
     }
     .tb-month-today-btn:hover:not(:disabled) {
       background: #eef2f9;
@@ -1238,28 +1264,43 @@ function injectStyles() {
     .tb-month-today-btn:focus { outline: none; }
     .tb-month-today-btn:focus-visible {
       outline: 2px solid #3e5ba3;
-      outline-offset: 1px;
+      outline-offset: -1px;
     }
     .tb-month-today-btn:disabled {
       opacity: 0.4;
       cursor: not-allowed;
     }
     .tb-monthly-log-month-input {
+      display: inline-flex;
+      align-items: center;
       height: 28px;
-      padding: 2px 10px;
+      line-height: 26px;
+      margin: 0;
+      padding: 0 8px;
       border: 1px solid #cbd5e1;
       border-radius: 6px;
       background: #ffffff;
       color: #0f172a;
       font-size: 13px;
       font-weight: 600;
+      font-family: inherit;
       cursor: pointer;
       transition: border-color 0.15s ease, box-shadow 0.15s ease;
       box-sizing: border-box;
+      vertical-align: middle;
+      color-scheme: light;
     }
     .tb-monthly-log-month-input::-webkit-clear-button {
       display: none !important;
       -webkit-appearance: none !important;
+    }
+    .tb-monthly-log-month-input::-webkit-calendar-picker-indicator {
+      cursor: pointer;
+      opacity: 0.8;
+      transition: opacity 0.15s ease;
+    }
+    .tb-monthly-log-month-input::-webkit-calendar-picker-indicator:hover {
+      opacity: 1;
     }
     .tb-monthly-log-month-input:focus {
       outline: none;
@@ -1370,10 +1411,12 @@ function injectStyles() {
 
     /* Dark Mode Overrides for Injected UI */
     :root[data-tb-theme="dark"] .tb-modal-container,
-    :root[data-tb-theme="dark"] .tb-monthly-log-dialog {
+    :root[data-tb-theme="dark"] .tb-monthly-log-dialog,
+    .tb-monthly-log-overlay[data-tb-theme="dark"] .tb-monthly-log-dialog {
       background: #0f172a;
       color: #f1f5f9;
       border-color: #334155;
+      color-scheme: dark;
     }
     :root[data-tb-theme="dark"] .tb-modal-header,
     :root[data-tb-theme="dark"] .tb-modal-footer,
@@ -1457,56 +1500,75 @@ function injectStyles() {
       border-color: #334155;
       color: #f1f5f9;
     }
-    :root[data-tb-theme="dark"] .tb-month-picker-wrapper {
+    :root[data-tb-theme="dark"] .tb-month-picker-wrapper,
+    .tb-monthly-log-overlay[data-tb-theme="dark"] .tb-month-picker-wrapper {
       background: #0f172a;
       border-color: #334155;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
     }
-    :root[data-tb-theme="dark"] .tb-month-nav-btn {
+    :root[data-tb-theme="dark"] .tb-month-nav-btn,
+    .tb-monthly-log-overlay[data-tb-theme="dark"] .tb-month-nav-btn {
       background: #1e293b;
       border-color: #334155;
       color: #cbd5e1;
     }
-    :root[data-tb-theme="dark"] .tb-month-nav-btn:hover:not(:disabled) {
+    :root[data-tb-theme="dark"] .tb-month-nav-btn:hover:not(:disabled),
+    .tb-monthly-log-overlay[data-tb-theme="dark"] .tb-month-nav-btn:hover:not(:disabled) {
       background: #27354a;
       border-color: #475569;
       color: #f8fafc;
     }
-    :root[data-tb-theme="dark"] .tb-month-nav-btn:focus-visible {
-      outline: 2px solid #9bb4f5;
-      outline-offset: 1px;
+    :root[data-tb-theme="dark"] .tb-month-nav-btn:focus,
+    .tb-monthly-log-overlay[data-tb-theme="dark"] .tb-month-nav-btn:focus {
+      outline: none;
     }
-    :root[data-tb-theme="dark"] .tb-month-today-btn {
+    :root[data-tb-theme="dark"] .tb-month-nav-btn:focus-visible,
+    .tb-monthly-log-overlay[data-tb-theme="dark"] .tb-month-nav-btn:focus-visible {
+      outline: 2px solid #9bb4f5;
+      outline-offset: -1px;
+    }
+    :root[data-tb-theme="dark"] .tb-month-today-btn,
+    .tb-monthly-log-overlay[data-tb-theme="dark"] .tb-month-today-btn {
       background: #1e293b;
       border-color: #334155;
       color: #9bb4f5;
     }
-    :root[data-tb-theme="dark"] .tb-month-today-btn:hover:not(:disabled) {
+    :root[data-tb-theme="dark"] .tb-month-today-btn:hover:not(:disabled),
+    .tb-monthly-log-overlay[data-tb-theme="dark"] .tb-month-today-btn:hover:not(:disabled) {
       background: #27354a;
       border-color: #9bb4f5;
       color: #ffffff;
     }
-    :root[data-tb-theme="dark"] .tb-month-today-btn:focus-visible {
-      outline: 2px solid #9bb4f5;
-      outline-offset: 1px;
+    :root[data-tb-theme="dark"] .tb-month-today-btn:focus,
+    .tb-monthly-log-overlay[data-tb-theme="dark"] .tb-month-today-btn:focus {
+      outline: none;
     }
-    :root[data-tb-theme="dark"] .tb-monthly-log-month-input {
+    :root[data-tb-theme="dark"] .tb-month-today-btn:focus-visible,
+    .tb-monthly-log-overlay[data-tb-theme="dark"] .tb-month-today-btn:focus-visible {
+      outline: 2px solid #9bb4f5;
+      outline-offset: -1px;
+    }
+    :root[data-tb-theme="dark"] .tb-monthly-log-month-input,
+    .tb-monthly-log-overlay[data-tb-theme="dark"] .tb-monthly-log-month-input {
       background: #1e293b;
       border-color: #334155;
       color: #f1f5f9;
+      color-scheme: dark;
     }
-    :root[data-tb-theme="dark"] .tb-monthly-log-month-input:focus {
+    :root[data-tb-theme="dark"] .tb-monthly-log-month-input:focus,
+    .tb-monthly-log-overlay[data-tb-theme="dark"] .tb-monthly-log-month-input:focus {
+      outline: none;
       border-color: #9bb4f5;
       box-shadow: 0 0 0 2px rgba(155, 180, 245, 0.25);
     }
-    :root[data-tb-theme="dark"] .tb-monthly-log-month-input::-webkit-calendar-picker-indicator {
-      filter: invert(0.85);
+    :root[data-tb-theme="dark"] .tb-monthly-log-month-input::-webkit-calendar-picker-indicator,
+    .tb-monthly-log-overlay[data-tb-theme="dark"] .tb-monthly-log-month-input::-webkit-calendar-picker-indicator {
       cursor: pointer;
       opacity: 0.85;
       transition: opacity 0.15s ease;
     }
-    :root[data-tb-theme="dark"] .tb-monthly-log-month-input::-webkit-calendar-picker-indicator:hover {
-      filter: invert(1);
+    :root[data-tb-theme="dark"] .tb-monthly-log-month-input::-webkit-calendar-picker-indicator:hover,
+    .tb-monthly-log-overlay[data-tb-theme="dark"] .tb-monthly-log-month-input::-webkit-calendar-picker-indicator:hover {
       opacity: 1;
     }
     :root[data-tb-theme="dark"] .tb-field-group input[readonly],
