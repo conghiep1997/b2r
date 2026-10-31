@@ -1304,6 +1304,70 @@ function injectStyles() {
       cursor: pointer;
     }
 
+    .tb-top-menu-btn {
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 5px !important;
+      font-weight: 600 !important;
+      cursor: pointer !important;
+      text-decoration: none !important;
+    }
+    .tb-top-menu-btn .tb-top-menu-icon {
+      display: inline-flex;
+      align-items: center;
+      line-height: 1;
+    }
+    .tb-top-menu-btn .tb-top-menu-icon svg {
+      width: 13px;
+      height: 13px;
+      fill: currentColor;
+    }
+    .tb-report-project-select {
+      width: 100%;
+      padding: 9px 12px;
+      font-size: 13px;
+      font-weight: 500;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: #0f172a;
+      outline: none;
+      box-sizing: border-box;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .tb-report-project-select:focus {
+      border-color: #3e5ba3;
+      box-shadow: 0 0 0 2px rgba(62, 91, 163, 0.2);
+    }
+    .tb-report-sync-dialog {
+      background: #ffffff;
+      color: #0f172a;
+    }
+    .tb-report-sync-choices {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px 14px;
+      background: #f8fafc;
+      font-size: 13px;
+    }
+    .tb-report-sync-choices legend {
+      font-weight: 600;
+      color: #334155;
+      padding: 0 6px;
+      font-size: 12px;
+    }
+    .tb-report-sync-operations {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: #334155;
+      max-height: 160px;
+      overflow-y: auto;
+    }
+
     /* Dark Mode Overrides for Injected UI */
     :root[data-tb-theme="dark"] .tb-modal-container,
     :root[data-tb-theme="dark"] .tb-monthly-log-dialog {
@@ -1696,6 +1760,29 @@ function injectStyles() {
     }
     :root[data-tb-theme="dark"] .tb-table-empty-state {
       color: #64748b;
+    }
+    :root[data-tb-theme="dark"] .tb-report-project-select {
+      background: #1e293b;
+      border-color: #334155;
+      color: #f1f5f9;
+    }
+    :root[data-tb-theme="dark"] .tb-report-sync-dialog {
+      background: #0f172a;
+      color: #f1f5f9;
+      border-color: #334155;
+    }
+    :root[data-tb-theme="dark"] .tb-report-sync-choices {
+      border-color: #334155;
+      background: #1e293b;
+      color: #cbd5e1;
+    }
+    :root[data-tb-theme="dark"] .tb-report-sync-choices legend {
+      color: #9bb4f5;
+    }
+    :root[data-tb-theme="dark"] .tb-report-sync-operations {
+      background: #0f172a;
+      border-color: #334155;
+      color: #94a3b8;
     }
     @media (max-width: 760px) {
       .tb-modal-overlay {

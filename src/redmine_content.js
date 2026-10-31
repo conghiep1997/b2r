@@ -123,8 +123,8 @@ function injectMonthlyLogButton() {
   const link = document.createElement("a");
   link.href = "#";
   link.id = "tb-monthly-log-btn";
-  link.className = "icon icon-time-add";
-  link.textContent = reportMessage("report_log_month");
+  link.className = "icon icon-time-add tb-top-menu-btn";
+  link.innerHTML = `<span class="tb-top-menu-icon" aria-hidden="true">${globalThis.TB_ICONS?.SCHEDULE || '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>'}</span><span>${reportMessage("report_log_month")}</span>`;
   link.onclick = (e) => {
     e.preventDefault();
     logTimeForMonth().catch((error) => {
@@ -1096,12 +1096,23 @@ function chooseReportProject(projects, preferredId = "") {
     const overlay = document.createElement("div");
     overlay.className = "tb-modal-overlay";
     overlay.style.display = "flex";
+
     const dialog = document.createElement("section");
     dialog.className = "tb-modal-container";
     dialog.setAttribute("role", "dialog");
     dialog.setAttribute("aria-modal", "true");
+
+    const header = document.createElement("header");
+    header.className = "tb-modal-header";
     const title = document.createElement("h2");
+    title.className = "tb-modal-title";
     title.textContent = reportMessage("report_choose_project");
+    header.append(title);
+
+    const body = document.createElement("div");
+    body.className = "tb-modal-body";
+    body.style.padding = "20px 24px";
+
     const select = document.createElement("select");
     select.className = "tb-report-project-select";
     for (const project of projects) {
@@ -1120,14 +1131,25 @@ function chooseReportProject(projects, preferredId = "") {
         ? `${preferred.id}:${preferred.profileKey}`
         : String(preferred.id);
     }
+    body.append(select);
+
+    const footer = document.createElement("footer");
+    footer.className = "tb-modal-footer";
+
     const cancel = document.createElement("button");
     cancel.type = "button";
-    cancel.className = "secondary";
+    cancel.className = "tb-btn tb-btn-secondary";
     cancel.textContent = reportMessage("report_cancel");
+
     const confirm = document.createElement("button");
     confirm.type = "button";
-    confirm.className = "primary";
+    confirm.className = "tb-btn tb-btn-primary";
     confirm.textContent = reportMessage("report_continue");
+
+    footer.append(cancel, confirm);
+    dialog.append(header, body, footer);
+    overlay.append(dialog);
+
     const finish = (value) => {
       overlay.remove();
       resolve(value);
@@ -1144,8 +1166,6 @@ function chooseReportProject(projects, preferredId = "") {
     overlay.addEventListener("click", (event) => {
       if (event.target === overlay) finish("");
     });
-    dialog.append(title, select, cancel, confirm);
-    overlay.append(dialog);
     document.body.append(overlay);
     select.focus();
   });
@@ -1782,29 +1802,51 @@ function confirmReportSync(
   return new Promise((resolve) => {
     const previousFocus = document.activeElement;
     const dialog = document.createElement("dialog");
+    dialog.className = "tb-modal-container tb-report-sync-dialog";
     Object.assign(dialog.style, {
       maxWidth: "680px",
       width: "85vw",
       maxHeight: "85vh",
       overflow: "auto",
-      padding: "24px",
+      padding: "0",
+      border: "1px solid #e2e8f0",
+      borderRadius: "16px",
+      boxShadow: "0 20px 25px -5px rgba(15, 23, 42, 0.15)",
     });
+
+    const header = document.createElement("header");
+    header.className = "tb-modal-header";
     const heading = document.createElement("h2");
+    heading.className = "tb-modal-title";
     heading.id = "tb-report-sync-title";
     const dateInfo = formatMonthlyTableDate(initialPreview.date, currentLanguage);
     heading.textContent = `${reportMessage("report_sync_title")} #${initialPreview.reportIssueId} — ${dateInfo.formatted}`;
+    header.append(heading);
     dialog.setAttribute("aria-labelledby", heading.id);
+
+    const body = document.createElement("div");
+    body.className = "tb-modal-body";
+    body.style.padding = "20px 24px";
+    body.style.display = "flex";
+    body.style.flexDirection = "column";
+    body.style.gap = "14px";
+
     const hint = document.createElement("p");
+    hint.className = "tb-preview-notice";
     hint.textContent = reportMessage("report_sync_hint");
+
     const choices = document.createElement("fieldset");
+    choices.className = "tb-report-sync-choices";
     const legend = document.createElement("legend");
     legend.textContent = reportMessage("report_sync_legacy");
     choices.append(legend);
     const selected = new Set(initialSelectedIds.map(String));
     let preview = initialPreview;
     const summary = document.createElement("p");
+    summary.className = "tb-monthly-log-status";
     summary.setAttribute("aria-live", "polite");
     const operations = document.createElement("pre");
+    operations.className = "tb-report-sync-operations";
     operations.style.whiteSpace = "pre-wrap";
     const render = () => {
       preview = planReportSync(initialPreview, [...selected], logTimeRules);
@@ -1820,6 +1862,7 @@ function confirmReportSync(
     for (const entry of initialPreview.candidates) {
       const label = document.createElement("label");
       label.style.display = "block";
+      label.style.marginBottom = "6px";
       const checkbox = document.createElement("input");
       checkbox.type = "checkbox";
       checkbox.checked = selected.has(String(entry.id));
@@ -1837,13 +1880,23 @@ function confirmReportSync(
       choices.append(label);
     }
     choices.hidden = !initialPreview.candidates.length;
-    const accept = document.createElement("button");
-    accept.type = "button";
-    accept.textContent = reportMessage("report_sync_accept");
-    accept.disabled = !initialPreview.tasks.length;
+
+    body.append(hint, choices, summary, operations);
+
+    const footer = document.createElement("footer");
+    footer.className = "tb-modal-footer";
+
     const cancel = document.createElement("button");
     cancel.type = "button";
+    cancel.className = "tb-btn tb-btn-secondary";
     cancel.textContent = reportMessage("report_sync_cancel");
+
+    const accept = document.createElement("button");
+    accept.type = "button";
+    accept.className = "tb-btn tb-btn-primary";
+    accept.textContent = reportMessage("report_sync_accept");
+    accept.disabled = !initialPreview.tasks.length;
+
     const finish = (value) => {
       dialog.close();
       dialog.remove();
@@ -1869,7 +1922,9 @@ function confirmReportSync(
       event.preventDefault();
       finish(null);
     };
-    dialog.append(heading, hint, choices, summary, operations, cancel, accept);
+
+    footer.append(cancel, accept);
+    dialog.append(header, body, footer);
     document.body.append(dialog);
     render();
     dialog.showModal();

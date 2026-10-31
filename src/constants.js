@@ -21,8 +21,7 @@
     toast_rate_limit_retry:
       "Model chính chạm giới hạn (rate limit), đang thử lại với model dự phòng...",
     toast_rate_limit_failed: "Cả 2 model đều chạm giới hạn. Vui lòng đợi hoặc kiểm tra API key.",
-    toast_cross_provider_retry:
-      "$provider$ chạm giới hạn, đang chuyển sang Gemini Flash Lite...",
+    toast_cross_provider_retry: "$provider$ chạm giới hạn, đang chuyển sang Gemini Flash Lite...",
     modal_title: "Gửi bình luận sang Redmine",
     modal_subtitle: "",
     modal_issue_id_label: "Mã Issue Redmine",

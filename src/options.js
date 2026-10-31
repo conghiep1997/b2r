@@ -375,7 +375,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     clearTimeout(aiAutoCheckTimer);
     aiAutoCheckTimer = setTimeout(() => {
       const provider = primaryProviderSelect.value;
-      const key = provider === "gemini" ? getFirstGeminiKey() : getProviderKeys("primary", provider)[0];
+      const key =
+        provider === "gemini" ? getFirstGeminiKey() : getProviderKeys("primary", provider)[0];
       if (key && key !== "**********") {
         handlePrimaryAiTest();
       }
@@ -403,7 +404,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         const key = await decryptData(stored.redmineApiKey);
         const domain = stored.redmineDomain || TB.REDMINE_DOMAIN;
         const fp = await verificationFingerprint([TB_REDMINE_DOMAIN.normalize(domain), key]);
-        await chrome.storage.local.set({ defaultProjectId: selectedId, redmineConnectionVerified: fp });
+        await chrome.storage.local.set({
+          defaultProjectId: selectedId,
+          redmineConnectionVerified: fp,
+        });
         updateOnboardingStatuses();
       }
     }
@@ -1586,7 +1590,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (items.backlogApiKey && !items.backlogConnectionVerified) {
         setTimeout(handleBacklogConnectionTest, 800);
       }
-      if ((items.geminiApiKeys || items.geminiApiKey || items.groqApiKey || items.cerebrasApiKey || items.openrouterApiKey) && !items.aiConnectionVerified) {
+      if (
+        (items.geminiApiKeys ||
+          items.geminiApiKey ||
+          items.groqApiKey ||
+          items.cerebrasApiKey ||
+          items.openrouterApiKey) &&
+        !items.aiConnectionVerified
+      ) {
         setTimeout(handlePrimaryAiTest, 1200);
       }
     });
@@ -2095,7 +2106,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   function setModelButtonContent(button, label, badge) {
     const icon = document.createElement("span");
     icon.className = "test-icon";
-    icon.title = (om("options_test_model_label", "Kiểm tra mô hình $model$") || "").replace("$model$", label);
+    icon.title = (om("options_test_model_label", "Kiểm tra mô hình $model$") || "").replace(
+      "$model$",
+      label
+    );
     icon.innerHTML = SCIENCE_ICON_SVG;
     const labelSpan = document.createElement("span");
     labelSpan.className = "model-label";

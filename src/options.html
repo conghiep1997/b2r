@@ -1885,14 +1885,21 @@
 
       <div class="hero">
         <div class="hero-brand">
-          <img class="hero-brand-icon" src="../assets/icons/icon-48.png" alt="B2R" width="48" height="48" />
+          <img
+            class="hero-brand-icon"
+            src="../assets/icons/icon-48.png"
+            alt="B2R"
+            width="48"
+            height="48"
+          />
           <div>
             <div class="hero-title-row">
               <h1 data-i18n="options_title">Translate Backlog &amp; Redmine</h1>
               <span id="optionsVersionBadge" class="version-badge">v1.8.24</span>
             </div>
             <p data-i18n="options_hero_desc">
-              Lưu cấu hình Redmine, Backlog và AI để extension có thể dịch và đồng bộ comment qua lại giữa 2 hệ thống.
+              Lưu cấu hình Redmine, Backlog và AI để extension có thể dịch và đồng bộ comment qua
+              lại giữa 2 hệ thống.
             </p>
           </div>
         </div>
@@ -2106,9 +2113,7 @@
 
                 <div class="field" style="margin-bottom: 12px">
                   <label for="defaultProjectId" style="margin-bottom: 8px; display: block">
-                    <span data-i18n="options_default_project"
-                      >Dự án Redmine mặc định</span
-                    >
+                    <span data-i18n="options_default_project">Dự án Redmine mặc định</span>
                   </label>
                   <div class="field-control-row">
                     <select id="defaultProjectId">
@@ -2179,7 +2184,7 @@
                       data-i18n="options_custom_fields_help"
                       style="margin-top: 6px; font-size: 12px; color: var(--muted)"
                     >
-                Nhập mã ID của các trường bắt buộc. Ví dụ:
+                      Nhập mã ID của các trường bắt buộc. Ví dụ:
                       <code
                         >{ "Severity": 46, "Reproduction Rate": 0, "Role": 11, "QC Activity": 8,
                         "Q&A Category": 58 }</code
@@ -2265,9 +2270,7 @@
           >
             <details id="primaryAiSettings" class="settings-section" open>
               <summary>
-                <span data-i18n="options_primary_ai_section"
-                  >Cấu hình AI Chính (Primary)</span
-                >
+                <span data-i18n="options_primary_ai_section">Cấu hình AI Chính (Primary)</span>
               </summary>
               <div class="grid" style="padding-top: 12px; gap: 12px">
                 <div class="field" style="margin-bottom: 0">
@@ -2284,12 +2287,10 @@
                       background: white;
                     "
                   >
-                    <option value="gemini">
-                      Google Gemini AI Studio (Miễn phí/Dịch tốt)
-                    </option>
+                    <option value="gemini">Google Gemini AI Studio (Miễn phí/Dịch tốt)</option>
                     <option value="groq">Groq Cloud (Siêu nhanh - Llama 3)</option>
                     <option value="cerebras">Cerebras (Hiệu năng cao)</option>
-                  <option value="openrouter">OpenRouter (Nhiều model miễn phí)</option>
+                    <option value="openrouter">OpenRouter (Nhiều model miễn phí)</option>
                   </select>
                 </div>
 
@@ -2305,14 +2306,19 @@
                     >.
                   </p>
                   <div style="margin-bottom: 12px">
-                    <p style="margin: 0 0 6px; font-size: 11px; color: var(--muted); font-weight: 500">
-                  <span data-i18n="options_models_help">Models (click chọn/bỏ)</span>
+                    <p
+                      style="
+                        margin: 0 0 6px;
+                        font-size: 11px;
+                        color: var(--muted);
+                        font-weight: 500;
+                      "
+                    >
+                      <span data-i18n="options_models_help">Models (click chọn/bỏ)</span>
                     </p>
-                    <div
-                      id="geminiModelsList"
-                    ></div>
+                    <div id="geminiModelsList"></div>
                     <p style="margin: 4px 0 0; font-size: 11px; color: var(--muted)">
-                  <span data-i18n="options_selected">Đã chọn:</span>
+                      <span data-i18n="options_selected">Đã chọn:</span>
                       <span id="selectedModelCount">0</span>
                     </p>
                   </div>
@@ -2337,7 +2343,7 @@
                       "
                     />
                     <p style="margin: 4px 0 0; font-size: 11px; color: var(--muted)">
-                  <span data-i18n="options_added">Đã thêm:</span>
+                      <span data-i18n="options_added">Đã thêm:</span>
                       <span id="selectedKeyCount">0</span>/10
                     </p>
                   </div>
@@ -2400,7 +2406,9 @@
                   <p style="margin-top: 6px; font-size: 11px; color: var(--muted)">
                     Lấy tại:
                     <a href="https://openrouter.ai/keys" target="_blank">OpenRouter Keys</a>. ðŸ’¡
-                    <a href="https://openrouter.ai/models" target="_blank" rel="noopener noreferrer">Nhiều model miễn phí (suffix :free).</a>
+                    <a href="https://openrouter.ai/models" target="_blank" rel="noopener noreferrer"
+                      >Nhiều model miễn phí (suffix :free).</a
+                    >
                   </p>
                 </div>
 
@@ -2453,9 +2461,7 @@
             <!-- Fallback AI Configuration -->
             <details id="fallbackAiSettings" class="settings-section">
               <summary>
-                <span data-i18n="options_fallback_ai_section"
-                  >Cấu hình AI Dự phòng (Fallback)</span
-                >
+                <span data-i18n="options_fallback_ai_section">Cấu hình AI Dự phòng (Fallback)</span>
               </summary>
               <div class="grid" style="padding-top: 12px; gap: 12px">
                 <div class="field" style="margin-bottom: 0">
@@ -2485,14 +2491,19 @@
                 <!-- Fallback Groq Key -->
                 <div id="fallbackGeminiConfig" style="display: none">
                   <div style="margin-bottom: 12px">
-                    <p style="margin: 0 0 6px; font-size: 11px; color: var(--muted); font-weight: 500">
+                    <p
+                      style="
+                        margin: 0 0 6px;
+                        font-size: 11px;
+                        color: var(--muted);
+                        font-weight: 500;
+                      "
+                    >
                       Models dự phòng (click chọn/bỏ)
                     </p>
-                    <div
-                      id="fallbackGeminiModelsList"
-                    ></div>
+                    <div id="fallbackGeminiModelsList"></div>
                     <p style="margin: 4px 0 0; font-size: 11px; color: var(--muted)">
-                  Đã chọn: <span id="fallbackGeminiSelectedModelCount">0</span>
+                      Đã chọn: <span id="fallbackGeminiSelectedModelCount">0</span>
                     </p>
                   </div>
                   <div>
@@ -2516,7 +2527,7 @@
                       "
                     />
                     <p style="margin: 4px 0 0; font-size: 11px; color: var(--muted)">
-                  Đã thêm: <span id="fallbackGeminiSelectedKeyCount">0</span>/10
+                      Đã thêm: <span id="fallbackGeminiSelectedKeyCount">0</span>/10
                     </p>
                   </div>
                 </div>
@@ -2580,9 +2591,7 @@
                   />
                   <p style="margin-top: 6px; font-size: 11px; color: var(--muted)">
                     ðŸ”‘
-                    <a href="https://openrouter.ai/keys" target="_blank"
-                      >Lấy key tại OpenRouter</a
-                    >
+                    <a href="https://openrouter.ai/keys" target="_blank">Lấy key tại OpenRouter</a>
                   </p>
                 </div>
               </div>
@@ -2607,9 +2616,8 @@
                     >Hiện thông báo sau khi gửi bình luận sang Redmine</label
                   >
                   <p style="margin: 0; font-size: 12px; color: var(--muted)">
-              Chỉ áp dụng cho chức năng dịch comment. Di chuyển Issue luôn hiện
-              modal kèm link Redmine. Bật lại nếu trước đó bạn đã chọn không
-              hiển thị thông báo thành công.
+                    Chỉ áp dụng cho chức năng dịch comment. Di chuyển Issue luôn hiện modal kèm link
+                    Redmine. Bật lại nếu trước đó bạn đã chọn không hiển thị thông báo thành công.
                   </p>
                 </div>
               </div>
@@ -3089,13 +3097,39 @@
                     id="retryAllQueueBtn"
                     class="primary"
                     data-i18n="options_retry_all"
-                  ><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true" style="margin-right: 6px;"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg><span data-i18n="options_retry_all">Thử lại tất cả</span></button>
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="14"
+                      height="14"
+                      fill="currentColor"
+                      aria-hidden="true"
+                      style="margin-right: 6px"
+                    >
+                      <path
+                        d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"
+                      /></svg
+                    ><span data-i18n="options_retry_all">Thử lại tất cả</span>
+                  </button>
                   <button
                     type="button"
                     id="clearRetryQueueBtn"
                     class="secondary"
                     data-i18n="options_clear_queue"
-                  ><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true" style="margin-right: 6px;"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg><span data-i18n="options_clear_queue">Xóa hàng đợi</span></button>
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="14"
+                      height="14"
+                      fill="currentColor"
+                      aria-hidden="true"
+                      style="margin-right: 6px"
+                    >
+                      <path
+                        d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+                      /></svg
+                    ><span data-i18n="options_clear_queue">Xóa hàng đợi</span>
+                  </button>
                   <button
                     type="button"
                     id="refreshRetryQueueBtn"
@@ -3122,14 +3156,13 @@
               <summary id="bugReportTitle" data-i18n="options_bug_title">Báo lỗi</summary>
               <div class="policy-group__content">
                 <p style="margin: 0 0 16px; color: var(--muted); font-size: 14px">
-                  Tạo báo cáo có cấu trúc kèm ảnh chụp và thông tin môi trường.
-                  Dữ liệu chỉ được tải xuống hoặc mở trong GitHub khi bạn xác
-                  nhận.
+                  Tạo báo cáo có cấu trúc kèm ảnh chụp và thông tin môi trường. Dữ liệu chỉ được tải
+                  xuống hoặc mở trong GitHub khi bạn xác nhận.
                 </p>
                 <div class="field">
                   <label for="bugTitle" data-i18n="options_bug_subject">Tiêu đề lỗi</label>
                   <input
-                  <label for="bugTitle" data-i18n="options_bug_subject">Tiêu đề lỗi</label>
+                    id="bugTitle"
                     type="text"
                     maxlength="120"
                     placeholder="Ví dụ: Không gửi được comment sang Redmine"
@@ -3147,9 +3180,7 @@
                   ></textarea>
                 </div>
                 <div class="field">
-                  <label for="bugSteps" data-i18n="options_bug_steps"
-                    >Các bước tái hiện</label
-                  >
+                  <label for="bugSteps" data-i18n="options_bug_steps">Các bước tái hiện</label>
                   <textarea
                     id="bugSteps"
                     rows="3"
@@ -3204,10 +3235,21 @@
                   <button id="downloadBugReportBtn" type="button" class="secondary">
                     Tải báo cáo
                   </button>
-                  <button id="copyBugReportBtn" type="button" class="secondary">
-                    Sao chép
+                  <button id="copyBugReportBtn" type="button" class="secondary">Sao chép</button>
+                  <button id="openGithubIssueBtn" type="button" class="primary">
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="14"
+                      height="14"
+                      fill="currentColor"
+                      aria-hidden="true"
+                      style="margin-right: 6px"
+                    >
+                      <path
+                        d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"
+                      /></svg
+                    ><span>Mở GitHub Issue</span>
                   </button>
-                  <button id="openGithubIssueBtn" type="button" class="primary"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true" style="margin-right: 6px;"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg><span>Mở GitHub Issue</span></button>
                 </div>
                 <div id="bugReportStatus" class="status" aria-live="polite"></div>
               </div>
@@ -3268,20 +3310,46 @@
             <details class="policy-group">
               <summary data-i18n="options_update_title">Cập nhật Extension</summary>
               <div class="policy-group__content">
-                  <p style="margin: 0; color: var(--muted)">Đang kiểm tra phiên bản...</p>
+                <div id="updateStatus" style="margin-bottom: 12px">
                   <p style="margin: 0; color: var(--muted)">Đang kiểm tra phiên bản...</p>
                 </div>
                 <div class="actions">
                   <button type="button" id="checkUpdateBtn" class="secondary">
                     Kiểm tra cập nhật
                   </button>
-                  <button type="button" id="goToDashboardBtn" class="secondary"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true" style="margin-right: 6px;"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg><span>Trang Download</span></button>
+                  <button type="button" id="goToDashboardBtn" class="secondary">
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="14"
+                      height="14"
+                      fill="currentColor"
+                      aria-hidden="true"
+                      style="margin-right: 6px"
+                    >
+                      <path
+                        d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"
+                      /></svg
+                    ><span>Trang Download</span>
+                  </button>
                   <button
                     type="button"
                     id="reopenOnboardingBtn"
                     class="secondary"
                     data-i18n="options_onboarding_reopen"
-                  ><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true" style="margin-right: 6px;"><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/></svg><span data-i18n="options_onboarding_reopen">Hiện lại hướng dẫn bắt đầu</span></button>
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="14"
+                      height="14"
+                      fill="currentColor"
+                      aria-hidden="true"
+                      style="margin-right: 6px"
+                    >
+                      <path
+                        d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"
+                      /></svg
+                    ><span data-i18n="options_onboarding_reopen">Hiện lại hướng dẫn bắt đầu</span>
+                  </button>
                 </div>
               </div>
             </details>

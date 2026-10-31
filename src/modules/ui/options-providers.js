@@ -159,7 +159,9 @@ globalThis.TB_OPTIONS_PROVIDERS = Object.freeze({
       testButton.title = testButton.getAttribute("aria-label");
       const icon = document.createElement("span");
       icon.className = "test-icon";
-      icon.innerHTML = globalThis.TB_ICONS?.SCIENCE || '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M19 19H5v-1l4-5V5h-1V3h8v2h-1v8l4 5v1zm-7-7.2L8.5 17h7L12 11.8zM11 5v4.8L9.2 12h5.6L13 9.8V5h-2z"/></svg>';
+      icon.innerHTML =
+        globalThis.TB_ICONS?.SCIENCE ||
+        '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M19 19H5v-1l4-5V5h-1V3h8v2h-1v8l4 5v1zm-7-7.2L8.5 17h7L12 11.8zM11 5v4.8L9.2 12h5.6L13 9.8V5h-2z"/></svg>';
       icon.setAttribute("aria-hidden", "true");
       testButton.append(icon);
       testButton.onclick = async () => {
@@ -312,19 +314,25 @@ globalThis.TB_OPTIONS_PROVIDERS = Object.freeze({
           apiKey,
         });
         if (result.ok) {
-          icon.innerHTML = globalThis.TB_ICONS?.CHECK || '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
+          icon.innerHTML =
+            globalThis.TB_ICONS?.CHECK ||
+            '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
           icon.style.color = "var(--success)";
           setStatus(`✅ ${om("options_model_ok")}: ${modelLabel} (${provider})`);
         } else {
           throw new Error(result.message || "Model test failed.");
         }
       } catch (e) {
-        icon.innerHTML = globalThis.TB_ICONS?.CLOSE || '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>';
+        icon.innerHTML =
+          globalThis.TB_ICONS?.CLOSE ||
+          '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>';
         icon.style.color = "var(--danger)";
         setStatus(`❌ ${e.message}`, true);
       } finally {
         setTimeout(() => {
-          icon.innerHTML = globalThis.TB_ICONS?.SCIENCE || '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M19 19H5v-1l4-5V5h-1V3h8v2h-1v8l4 5v1zm-7-7.2L8.5 17h7L12 11.8zM11 5v4.8L9.2 12h5.6L13 9.8V5h-2z"/></svg>';
+          icon.innerHTML =
+            globalThis.TB_ICONS?.SCIENCE ||
+            '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M19 19H5v-1l4-5V5h-1V3h8v2h-1v8l4 5v1zm-7-7.2L8.5 17h7L12 11.8zM11 5v4.8L9.2 12h5.6L13 9.8V5h-2z"/></svg>';
           icon.style.color = "";
         }, 3000);
       }
@@ -432,17 +440,23 @@ globalThis.TB_OPTIONS_PROVIDERS = Object.freeze({
       getFirstGeminiKey();
       if (getGeminiKeys().length === 0) return setStatus(om("options_enter_gemini_key"), true);
       const icon = btn.querySelector(".test-icon");
-      icon.innerHTML = globalThis.TB_ICONS?.SPINNER || '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" class="is-spinning"><circle cx="12" cy="12" r="9" stroke-opacity="0.25"/><path d="M12 3a9 9 0 0 1 9 9"/></svg>';
+      icon.innerHTML =
+        globalThis.TB_ICONS?.SPINNER ||
+        '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" class="is-spinning"><circle cx="12" cy="12" r="9" stroke-opacity="0.25"/><path d="M12 3a9 9 0 0 1 9 9"/></svg>';
       icon.style.animation = "";
       setStatus(`${om("options_testing_model")}: ${modelLabel}...`);
       try {
         const result = await testGeminiKeysForModel(modelId);
         if (result.ok) {
-          icon.innerHTML = globalThis.TB_ICONS?.CHECK || '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
+          icon.innerHTML =
+            globalThis.TB_ICONS?.CHECK ||
+            '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
           icon.style.color = "var(--success)";
           setStatus(`✓ ${modelLabel}: ${result.message}`);
         } else {
-          icon.innerHTML = globalThis.TB_ICONS?.CLOSE || '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>';
+          icon.innerHTML =
+            globalThis.TB_ICONS?.CLOSE ||
+            '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>';
           icon.style.color = "var(--danger)";
           btn
             .closest(".model-choice")
@@ -457,7 +471,9 @@ globalThis.TB_OPTIONS_PROVIDERS = Object.freeze({
           );
         }
       } catch (e) {
-        icon.innerHTML = globalThis.TB_ICONS?.CLOSE || '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>';
+        icon.innerHTML =
+          globalThis.TB_ICONS?.CLOSE ||
+          '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>';
         icon.style.color = "var(--danger)";
         btn
           .closest(".model-choice")
@@ -469,7 +485,9 @@ globalThis.TB_OPTIONS_PROVIDERS = Object.freeze({
         setStatus(`❌ ${modelLabel}: ${e.message} (Đã tự động bỏ chọn)`, true);
       } finally {
         setTimeout(() => {
-          icon.innerHTML = globalThis.TB_ICONS?.SCIENCE || '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M19 19H5v-1l4-5V5h-1V3h8v2h-1v8l4 5v1zm-7-7.2L8.5 17h7L12 11.8zM11 5v4.8L9.2 12h5.6L13 9.8V5h-2z"/></svg>';
+          icon.innerHTML =
+            globalThis.TB_ICONS?.SCIENCE ||
+            '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M19 19H5v-1l4-5V5h-1V3h8v2h-1v8l4 5v1zm-7-7.2L8.5 17h7L12 11.8zM11 5v4.8L9.2 12h5.6L13 9.8V5h-2z"/></svg>';
           icon.style.color = "";
         }, 3000);
       }

@@ -49,12 +49,24 @@
       "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
     ),
     WARNING: svg("M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"),
-    SCIENCE: svg("M19 19H5v-1l4-5V5h-1V3h8v2h-1v8l4 5v1zm-7-7.2L8.5 17h7L12 11.8zM11 5v4.8L9.2 12h5.6L13 9.8V5h-2z", { size: 14 }),
+    SCIENCE: svg(
+      "M19 19H5v-1l4-5V5h-1V3h8v2h-1v8l4 5v1zm-7-7.2L8.5 17h7L12 11.8zM11 5v4.8L9.2 12h5.6L13 9.8V5h-2z",
+      { size: 14 }
+    ),
     CHECK: svg("M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z", { size: 14 }),
-    SPINNER: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" class="is-spinning" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke-opacity="0.25"/><path d="M12 3a9 9 0 0 1 9 9"/></svg>',
-    DELETE: svg("M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z", { size: 14 }),
-    DOWNLOAD: svg("M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z", { size: 14 }),
-    MENU_BOOK: svg("M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z", { size: 14 }),
+    SPINNER:
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" class="is-spinning" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke-opacity="0.25"/><path d="M12 3a9 9 0 0 1 9 9"/></svg>',
+    DELETE: svg("M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z", {
+      size: 14,
+    }),
+    DOWNLOAD: svg(
+      "M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z",
+      { size: 14 }
+    ),
+    MENU_BOOK: svg(
+      "M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z",
+      { size: 14 }
+    ),
     CHEVRON_LEFT: svg("M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z", { size: 16 }),
     CHEVRON_RIGHT: svg("M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z", { size: 16 }),
   };

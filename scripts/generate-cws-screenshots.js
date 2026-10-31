@@ -1,10 +1,10 @@
-const fs = require('fs');
-const path = require('path');
-const cp = require('child_process');
+const fs = require("fs");
+const path = require("path");
+const cp = require("child_process");
 
-const chromePath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
-const outDirVi = path.resolve('store_assets/screenshots_vi');
-const outDirEn = path.resolve('store_assets/screenshots_en');
+const chromePath = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
+const outDirVi = path.resolve("store_assets/screenshots_vi");
+const outDirEn = path.resolve("store_assets/screenshots_en");
 
 if (!fs.existsSync(outDirVi)) fs.mkdirSync(outDirVi, { recursive: true });
 if (!fs.existsSync(outDirEn)) fs.mkdirSync(outDirEn, { recursive: true });
@@ -133,7 +133,13 @@ const commonStyles = `
   }
 `;
 
-function buildTemplate({ badge, title, subtitle, contentHtml }) {
+function buildTemplate({
+  badge,
+  title,
+  subtitle,
+  contentHtml,
+  url = "https://workspace.backlog.com/view/PROJ-104",
+}) {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -157,7 +163,7 @@ function buildTemplate({ badge, title, subtitle, contentHtml }) {
       </div>
       <div class="window-address">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="#10b981"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
-        <span>https://workspace.backlog.com/view/PROJ-104</span>
+        <span>${url}</span>
       </div>
     </div>
     <div class="window-content">
@@ -172,11 +178,13 @@ function buildTemplate({ badge, title, subtitle, contentHtml }) {
 const screenshots = [
   // 1. Bi-directional Sync & AI Translation
   {
-    name: '01_bi_directional_sync',
+    name: "01_bi_directional_sync",
+    url: "https://workspace.backlog.com/view/PROJ-104",
     vi: {
-      badge: 'Đồng bộ 2 chiều • AI Translation v1.8.24',
-      title: 'Đồng bộ bình luận 2 chiều Backlog ⟷ Redmine',
-      subtitle: 'Dịch thuật tự động Nhật – Việt – Anh bằng AI (Gemini, Groq, Cerebras) với định dạng chuẩn xác và đồng bộ file đính kèm tức thì.',
+      badge: "Đồng bộ 2 chiều • AI Translation v1.8.24",
+      title: "Đồng bộ bình luận 2 chiều Backlog ⟷ Redmine",
+      subtitle:
+        "Dịch thuật tự động Nhật – Việt – Anh bằng AI (Gemini, Groq, Cerebras) với định dạng chuẩn xác và đồng bộ file đính kèm tức thì.",
       content: `
         <div style="display: grid; grid-template-columns: 1fr 64px 1fr; gap: 16px; height: 100%; align-items: center;">
           <!-- Left: Backlog Side -->
@@ -240,12 +248,13 @@ const screenshots = [
             </div>
           </div>
         </div>
-      `
+      `,
     },
     en: {
-      badge: '2-Way Sync • AI Translation v1.8.24',
-      title: 'Seamless Bi-directional Comment Sync (Backlog ⟷ Redmine)',
-      subtitle: 'Automatic Japanese, Vietnamese & English AI translation (Gemini, Groq, Cerebras) preserving markdown structure and attachments.',
+      badge: "2-Way Sync • AI Translation v1.8.24",
+      title: "Seamless Bi-directional Comment Sync (Backlog ⟷ Redmine)",
+      subtitle:
+        "Automatic Japanese, Vietnamese & English AI translation (Gemini, Groq, Cerebras) preserving markdown structure and attachments.",
       content: `
         <div style="display: grid; grid-template-columns: 1fr 64px 1fr; gap: 16px; height: 100%; align-items: center;">
           <!-- Left: Backlog Side -->
@@ -309,17 +318,19 @@ const screenshots = [
             </div>
           </div>
         </div>
-      `
-    }
+      `,
+    },
   },
 
   // 2. Redmine Monthly Worklog & Time Tracking
   {
-    name: '02_redmine_monthly_worklog',
+    name: "02_redmine_monthly_worklog",
+    url: "https://redmine.splus-software.com/time_entries",
     vi: {
-      badge: 'Ghi log thời gian • Redmine Time Tracker',
-      title: 'Báo cáo & Ghi log thời gian làm việc hàng tháng',
-      subtitle: 'Tự động kiểm tra trùng lặp, tính tổng giờ chính xác, hỗ trợ chuyển đổi tháng mượt mà và gán Activity hàng loạt chỉ với 1 click.',
+      badge: "Ghi log thời gian • Redmine Time Tracker",
+      title: "Báo cáo & Ghi log thời gian làm việc hàng tháng",
+      subtitle:
+        "Tự động kiểm tra trùng lặp, tính tổng giờ chính xác, hỗ trợ chuyển đổi tháng mượt mà và gán Activity hàng loạt chỉ với 1 click.",
       content: `
         <div style="display: flex; flex-direction: column; height: 100%; gap: 14px;">
           <!-- Top Toolbar: Month Picker & Summary Stats -->
@@ -404,12 +415,13 @@ const screenshots = [
             </div>
           </div>
         </div>
-      `
+      `,
     },
     en: {
-      badge: 'Time Tracking • Redmine Monthly Worklog',
-      title: 'Redmine Monthly Worklog & Automated Time Tracking',
-      subtitle: 'Automatic monthly task aggregation, duplicate detection, exact hour calculation, and 1-click bulk activity logging.',
+      badge: "Time Tracking • Redmine Monthly Worklog",
+      title: "Redmine Monthly Worklog & Automated Time Tracking",
+      subtitle:
+        "Automatic monthly task aggregation, duplicate detection, exact hour calculation, and 1-click bulk activity logging.",
       content: `
         <div style="display: flex; flex-direction: column; height: 100%; gap: 14px;">
           <!-- Top Toolbar: Month Picker & Summary Stats -->
@@ -494,17 +506,19 @@ const screenshots = [
             </div>
           </div>
         </div>
-      `
-    }
+      `,
+    },
   },
 
   // 3. Quick Control Popup & Connection Health
   {
-    name: '03_quick_popup',
+    name: "03_quick_popup",
+    url: "chrome-extension://b2r/popup.html",
     vi: {
-      badge: 'B2R Extension UI • Popup Kiểm Soát Nhanh',
-      title: 'Popup điều khiển nhanh & Trạng thái kết nối',
-      subtitle: 'Tự động kiểm tra sức khỏe API Redmine, Backlog và AI theo thời gian thực; truy cập nhanh báo cáo tháng và các dự án active.',
+      badge: "B2R Extension UI • Popup Kiểm Soát Nhanh",
+      title: "Popup điều khiển nhanh & Trạng thái kết nối",
+      subtitle:
+        "Tự động kiểm tra sức khỏe API Redmine, Backlog và AI theo thời gian thực; truy cập nhanh báo cáo tháng và các dự án active.",
       content: `
         <div style="display: flex; align-items: center; justify-content: center; height: 100%;">
           <!-- Floating Centered Popup -->
@@ -560,12 +574,13 @@ const screenshots = [
             </div>
           </div>
         </div>
-      `
+      `,
     },
     en: {
-      badge: 'B2R Extension UI • Quick Control Popup',
-      title: 'Quick Control Popup & Real-time Health Monitor',
-      subtitle: 'Real-time API health checks for Backlog, Redmine & AI providers; 1-click access to monthly timesheets and active workspaces.',
+      badge: "B2R Extension UI • Quick Control Popup",
+      title: "Quick Control Popup & Real-time Health Monitor",
+      subtitle:
+        "Real-time API health checks for Backlog, Redmine & AI providers; 1-click access to monthly timesheets and active workspaces.",
       content: `
         <div style="display: flex; align-items: center; justify-content: center; height: 100%;">
           <!-- Floating Centered Popup -->
@@ -621,17 +636,19 @@ const screenshots = [
             </div>
           </div>
         </div>
-      `
-    }
+      `,
+    },
   },
 
   // 4. 1-Click Issue Migration & Link Binding
   {
-    name: '04_issue_migration',
+    name: "04_issue_migration",
+    url: "https://workspace.backlog.com/view/PROJ-104",
     vi: {
-      badge: 'Chuyển Đổi Dự Án • Issue Migration',
-      title: 'Chuyển đổi Issue & Tự động liên kết 2 chiều',
-      subtitle: 'Tạo Issue mới trên Redmine trực tiếp từ Backlog; tự động map tiêu đề, mô tả, đính kèm file và gán Custom Fields chuẩn xác.',
+      badge: "Chuyển Đổi Dự Án • Issue Migration",
+      title: "Chuyển đổi Issue & Tự động liên kết 2 chiều",
+      subtitle:
+        "Tạo Issue mới trên Redmine trực tiếp từ Backlog; tự động map tiêu đề, mô tả, đính kèm file và gán Custom Fields chuẩn xác.",
       content: `
         <div style="display: flex; flex-direction: column; height: 100%; gap: 14px;">
           <!-- Top migration header -->
@@ -695,12 +712,13 @@ const screenshots = [
             </div>
           </div>
         </div>
-      `
+      `,
     },
     en: {
-      badge: 'Project Migration • 1-Click Issue Linking',
-      title: '1-Click Issue Migration & Two-way Link Binding',
-      subtitle: 'Create Redmine issues directly from Backlog; automatically map titles, descriptions, custom fields, and attachments with zero friction.',
+      badge: "Project Migration • 1-Click Issue Linking",
+      title: "1-Click Issue Migration & Two-way Link Binding",
+      subtitle:
+        "Create Redmine issues directly from Backlog; automatically map titles, descriptions, custom fields, and attachments with zero friction.",
       content: `
         <div style="display: flex; flex-direction: column; height: 100%; gap: 14px;">
           <!-- Top migration header -->
@@ -764,17 +782,19 @@ const screenshots = [
             </div>
           </div>
         </div>
-      `
-    }
+      `,
+    },
   },
 
   // 5. Multi-Provider AI & AES-GCM Encrypted Security
   {
-    name: '05_multi_ai_security',
+    name: "05_multi_ai_security",
+    url: "chrome-extension://b2r/options.html",
     vi: {
-      badge: 'Cấu hình Nâng cao • Đa AI & Bảo Mật AES-GCM',
-      title: 'Tùy biến đa mô hình AI & Bảo mật cấp cao',
-      subtitle: 'Hỗ trợ Gemini, Groq, Cerebras, OpenRouter với cơ chế tự động chuyển dự phòng; lưu trữ an toàn bằng mã hóa AES-256-GCM.',
+      badge: "Cấu hình Nâng cao • Đa AI & Bảo Mật AES-GCM",
+      title: "Tùy biến đa mô hình AI & Bảo mật cấp cao",
+      subtitle:
+        "Hỗ trợ Gemini, Groq, Cerebras, OpenRouter với cơ chế tự động chuyển dự phòng; lưu trữ an toàn bằng mã hóa AES-256-GCM.",
       content: `
         <div style="display: flex; flex-direction: column; height: 100%; gap: 14px;">
           <!-- Security Banner -->
@@ -841,12 +861,13 @@ const screenshots = [
             </div>
           </div>
         </div>
-      `
+      `,
     },
     en: {
-      badge: 'Advanced Settings • Multi-AI & AES-GCM Security',
-      title: 'Multi-Provider AI Fallback & AES-GCM Encrypted Security',
-      subtitle: 'Native support for Gemini, Groq, Cerebras & OpenRouter with auto-failover; protected with client-side AES-256-GCM encryption.',
+      badge: "Advanced Settings • Multi-AI & AES-GCM Security",
+      title: "Multi-Provider AI Fallback & AES-GCM Encrypted Security",
+      subtitle:
+        "Native support for Gemini, Groq, Cerebras & OpenRouter with auto-failover; protected with client-side AES-256-GCM encryption.",
       content: `
         <div style="display: flex; flex-direction: column; height: 100%; gap: 14px;">
           <!-- Security Banner -->
@@ -913,14 +934,14 @@ const screenshots = [
             </div>
           </div>
         </div>
-      `
-    }
-  }
+      `,
+    },
+  },
 ];
 
 // Generate HTML and render PNGs
 async function main() {
-  console.log('Generating Chrome Web Store Screenshots (1280x800)...');
+  console.log("Generating Chrome Web Store Screenshots (1280x800)...");
 
   for (let i = 0; i < screenshots.length; i++) {
     const item = screenshots[i];
@@ -930,50 +951,56 @@ async function main() {
       badge: item.vi.badge,
       title: item.vi.title,
       subtitle: item.vi.subtitle,
-      contentHtml: item.vi.content
+      contentHtml: item.vi.content,
+      url: item.url,
     });
     const htmlPathVi = path.resolve(`store_assets/screenshots_vi/${item.name}.html`);
     const pngPathVi = path.resolve(`store_assets/screenshots_vi/${item.name}.png`);
-    fs.writeFileSync(htmlPathVi, htmlVi, 'utf8');
+    fs.writeFileSync(htmlPathVi, htmlVi, "utf8");
 
     cp.execFileSync(chromePath, [
-      '--headless',
-      '--disable-gpu',
-      '--hide-scrollbars',
-      '--force-device-scale-factor=1',
-      '--window-size=1280,800',
-      '--screenshot=' + pngPathVi,
-      'file:///' + htmlPathVi.replace(/\\\\/g, '/')
+      "--headless",
+      "--disable-gpu",
+      "--hide-scrollbars",
+      "--force-device-scale-factor=1",
+      "--window-size=1280,800",
+      "--screenshot=" + pngPathVi,
+      "file:///" + htmlPathVi.replace(/\\\\/g, "/"),
     ]);
-    console.log(`[VI ${i + 1}/5] Rendered: ${item.name}.png (${fs.statSync(pngPathVi).size} bytes)`);
+    console.log(
+      `[VI ${i + 1}/5] Rendered: ${item.name}.png (${fs.statSync(pngPathVi).size} bytes)`
+    );
 
     // 2. English version (All languages)
     const htmlEn = buildTemplate({
       badge: item.en.badge,
       title: item.en.title,
       subtitle: item.en.subtitle,
-      contentHtml: item.en.content
+      contentHtml: item.en.content,
+      url: item.url,
     });
     const htmlPathEn = path.resolve(`store_assets/screenshots_en/${item.name}.html`);
     const pngPathEn = path.resolve(`store_assets/screenshots_en/${item.name}.png`);
-    fs.writeFileSync(htmlPathEn, htmlEn, 'utf8');
+    fs.writeFileSync(htmlPathEn, htmlEn, "utf8");
 
     cp.execFileSync(chromePath, [
-      '--headless',
-      '--disable-gpu',
-      '--hide-scrollbars',
-      '--force-device-scale-factor=1',
-      '--window-size=1280,800',
-      '--screenshot=' + pngPathEn,
-      'file:///' + htmlPathEn.replace(/\\\\/g, '/')
+      "--headless",
+      "--disable-gpu",
+      "--hide-scrollbars",
+      "--force-device-scale-factor=1",
+      "--window-size=1280,800",
+      "--screenshot=" + pngPathEn,
+      "file:///" + htmlPathEn.replace(/\\\\/g, "/"),
     ]);
-    console.log(`[EN ${i + 1}/5] Rendered: ${item.name}.png (${fs.statSync(pngPathEn).size} bytes)`);
+    console.log(
+      `[EN ${i + 1}/5] Rendered: ${item.name}.png (${fs.statSync(pngPathEn).size} bytes)`
+    );
   }
 
-  console.log('\\nAll 10 Chrome Web Store screenshots successfully created in store_assets/!');
+  console.log("\\nAll 10 Chrome Web Store screenshots successfully created in store_assets/!");
 }
 
-main().catch(err => {
+main().catch((err) => {
   console.error(err);
   process.exit(1);
 });

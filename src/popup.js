@@ -104,7 +104,9 @@ async function renderStatus() {
 
   const redmineConfigured = Boolean(items.redmineApiKey);
   const redmineProjectConfigured = Boolean(items.defaultProjectId);
-  const redmineVerified = Boolean(redmineConfigured && redmineProjectConfigured && items.redmineConnectionVerified);
+  const redmineVerified = Boolean(
+    redmineConfigured && redmineProjectConfigured && items.redmineConnectionVerified
+  );
 
   const backlogConfigured = Boolean(items.backlogApiKey);
   const backlogVerified = Boolean(backlogConfigured && items.backlogConnectionVerified);
@@ -169,8 +171,12 @@ async function renderStatus() {
 
   // Overall Status Badge & Description
   const allVerified = redmineVerified && backlogVerified && aiVerified;
-  const anyMissing = !redmineConfigured || !backlogConfigured || !aiConfigured || !redmineProjectConfigured;
-  const anyUnverified = (redmineConfigured && !redmineVerified) || (backlogConfigured && !backlogVerified) || (aiConfigured && !aiVerified);
+  const anyMissing =
+    !redmineConfigured || !backlogConfigured || !aiConfigured || !redmineProjectConfigured;
+  const anyUnverified =
+    (redmineConfigured && !redmineVerified) ||
+    (backlogConfigured && !backlogVerified) ||
+    (aiConfigured && !aiVerified);
 
   const badgeElement = document.getElementById("statusBadge");
   badgeElement.classList.remove("ready", "warning", "error");
@@ -206,9 +212,11 @@ async function renderStatus() {
   }
   if (items.defaultProjectId && !items.defaultProjectName) loadDefaultProjectName();
   const summaryEl = document.getElementById("projectSummary");
-  if (summaryEl) {summaryEl.textContent = items.defaultProjectName
-    ? t("popup_project_summary")
-    : t("popup_project_summary_empty");}
+  if (summaryEl) {
+    summaryEl.textContent = items.defaultProjectName
+      ? t("popup_project_summary")
+      : t("popup_project_summary_empty");
+  }
 }
 
 async function loadDefaultProjectName() {
