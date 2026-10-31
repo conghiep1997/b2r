@@ -14,6 +14,7 @@
     "sync:version": "node scripts/sync-version.js",
     "release": "npm run build:zip && npm run sync:version",
     "test": "node --test tests/*.test.js",
+    "verify": "npm run check:version-sync && npm run lint && npm run format:check && npm test && npm run build",
     "pretest:e2e": "npm run build",
     "test:e2e": "playwright test",
     "dev": "echo \"Load unpacked extension from dist/ folder in chrome://extensions/\""
