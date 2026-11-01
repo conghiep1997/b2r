@@ -519,7 +519,12 @@ async function logTimeForMonth() {
           const emptyCell = document.createElement("td");
           emptyCell.colSpan = 4;
           emptyCell.className = "tb-table-empty-state";
-          emptyCell.textContent = reportMessage("report_no_matching_issue");
+          emptyCell.innerHTML = `
+            <div class="tb-table-empty-wrap">
+              <span class="tb-table-empty-icon" aria-hidden="true">${globalThis.TB_ICONS?.CALENDAR || '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/></svg>'}</span>
+              <p class="tb-table-empty-title">${reportMessage("report_no_matching_issue")}</p>
+            </div>
+          `;
           emptyRow.appendChild(emptyCell);
           resultBody.appendChild(emptyRow);
         } else {
@@ -1358,24 +1363,29 @@ function openMonthlyLogModal({
   overlay.innerHTML = `
     <section class="tb-monthly-log-dialog" role="dialog" aria-modal="true" aria-labelledby="tb-monthly-log-title" lang="${currentLanguage}">
       <header class="tb-monthly-log-header">
-        <div>
-          <div class="tb-monthly-log-kicker-row">
-            <p class="tb-monthly-log-kicker">${reportMessage("report_spent_time")}</p>
+        <div class="tb-monthly-log-header-main">
+          <div class="tb-monthly-log-title-area">
+            <h2 id="tb-monthly-log-title">${reportMessage("report_spent_time")}</h2>
+            <div class="tb-month-picker-wrapper">
+              <button type="button" id="tb-month-prev" class="tb-month-nav-btn" title="${reportMessage("report_prev_month")}" aria-label="${reportMessage("report_prev_month")}">${globalThis.TB_ICONS?.CHEVRON_LEFT || '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>'}</button>
+              <button type="button" id="tb-month-display-btn" class="tb-month-display-btn" aria-haspopup="dialog" aria-expanded="false" title="${reportMessage("report_log_time_month")}">
+                <span class="tb-month-display-icon" aria-hidden="true">${globalThis.TB_ICONS?.CALENDAR || '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/></svg>'}</span>
+                <span id="tb-month-display-text" class="tb-month-display-text"></span>
+                <span class="tb-month-display-arrow" aria-hidden="true">${globalThis.TB_ICONS?.CHEVRON_DOWN || '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/></svg>'}</span>
+              </button>
+              <input type="hidden" id="tb-monthly-log-month" value="${initialMonthValue}">
+              <button type="button" id="tb-month-next" class="tb-month-nav-btn" title="${reportMessage("report_next_month")}" aria-label="${reportMessage("report_next_month")}">${globalThis.TB_ICONS?.CHEVRON_RIGHT || '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>'}</button>
+              <button type="button" id="tb-month-today" class="tb-month-today-btn" title="${reportMessage("report_this_month")}">${reportMessage("report_this_month")}</button>
+              <div id="tb-month-popover" class="tb-month-popover" role="dialog" aria-label="${reportMessage("report_log_time_month")}" hidden></div>
+            </div>
+          </div>
+          <div class="tb-monthly-log-meta-area">
+            <span id="tb-monthly-log-status" class="tb-monthly-log-status">${reportMessage("report_ready_to_scan")}</span>
             <div id="tb-monthly-log-user" class="tb-monthly-log-user-badge">
-              <span class="tb-user-icon" aria-hidden="true">${globalThis.TB_ICONS?.PERSON || "👤"}</span>
+              <span class="tb-user-icon" aria-hidden="true">${globalThis.TB_ICONS?.PERSON || '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>'}</span>
               <span class="tb-user-name">${reportMessage("report_user_loading")}</span>
             </div>
           </div>
-          <div class="tb-monthly-log-title-row">
-            <h2 id="tb-monthly-log-title">${reportMessage("report_log_time_month")} ${monthLabel}</h2>
-            <div class="tb-month-picker-wrapper">
-              <button type="button" id="tb-month-prev" class="tb-month-nav-btn" title="${reportMessage("report_prev_month")}" aria-label="${reportMessage("report_prev_month")}">${globalThis.TB_ICONS?.CHEVRON_LEFT || '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>'}</button>
-              <input type="month" id="tb-monthly-log-month" class="tb-monthly-log-month-input" value="${initialMonthValue}" required lang="${currentLanguage}" aria-label="${reportMessage("report_log_time_month")}">
-              <button type="button" id="tb-month-next" class="tb-month-nav-btn" title="${reportMessage("report_next_month")}" aria-label="${reportMessage("report_next_month")}">${globalThis.TB_ICONS?.CHEVRON_RIGHT || '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>'}</button>
-              <button type="button" id="tb-month-today" class="tb-month-today-btn" title="${reportMessage("report_this_month")}">${reportMessage("report_this_month")}</button>
-            </div>
-          </div>
-          <p id="tb-monthly-log-status" class="tb-monthly-log-status">${reportMessage("report_ready_to_scan")}</p>
         </div>
         <button type="button" class="tb-monthly-log-close" aria-label="${reportMessage("modal_close_aria")}">${globalThis.TB_ICONS?.CLOSE || '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>'}</button>
       </header>
@@ -1384,7 +1394,7 @@ function openMonthlyLogModal({
           <section class="tb-monthly-log-panel">
             <div class="tb-monthly-log-panel-title">${reportMessage("report_progress")}</div>
             <div id="tb-monthly-log-progress" class="tb-monthly-log-progress">
-              <div class="tb-monthly-log-progress-item tb-monthly-log-progress-item--info">
+              <div class="tb-monthly-log-progress-empty">
                 ${reportMessage("report_ready_to_scan")}
               </div>
             </div>
@@ -1392,17 +1402,17 @@ function openMonthlyLogModal({
           <section class="tb-monthly-log-panel">
             <div class="tb-monthly-log-panel-title">
               <div class="tb-preview-title-wrap">
-                <span>${reportMessage("report_preview_title")}</span>
+                <span class="tb-preview-title-text">${reportMessage("report_preview_title")}</span>
                 <div id="tb-monthly-total-summary" class="tb-monthly-total-summary" hidden>
-                  <span class="tb-total-icon">${globalThis.TB_ICONS?.SCHEDULE || "⏱️"}</span>
-                  <span>${reportMessage("report_total_label")}</span>
+                  <span class="tb-total-icon" aria-hidden="true">${globalThis.TB_ICONS?.SCHEDULE || '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>'}</span>
+                  <span class="tb-total-label">${reportMessage("report_total_label")}</span>
                   <strong id="tb-total-hours-val" class="tb-total-hours-val">0h</strong>
                   <span id="tb-total-days-val" class="tb-total-days-val">(0)</span>
                 </div>
               </div>
               <div id="tb-bulk-activity-toolbar" class="tb-bulk-activity-toolbar" hidden>
                 <label for="tb-bulk-activity-select" class="tb-bulk-activity-label">
-                  <span class="tb-bulk-activity-icon">${globalThis.TB_ICONS?.BOLT || "⚡"}</span>
+                  <span class="tb-bulk-activity-icon" aria-hidden="true">${globalThis.TB_ICONS?.BOLT || '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z"/></svg>'}</span>
                   <span>${reportMessage("report_bulk_activity_label")}</span>
                 </label>
                 <select id="tb-bulk-activity-select" class="tb-bulk-activity-select"></select>
@@ -1423,7 +1433,10 @@ function openMonthlyLogModal({
                 <tbody id="tb-monthly-log-results">
                   <tr>
                     <td colspan="4" class="tb-table-empty-state">
-                      ${reportMessage("report_ready_to_scan")}
+                      <div class="tb-table-empty-wrap">
+                        <span class="tb-table-empty-icon" aria-hidden="true">${globalThis.TB_ICONS?.CALENDAR || '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/></svg>'}</span>
+                        <p class="tb-table-empty-title">${reportMessage("report_ready_to_scan")}</p>
+                      </div>
                     </td>
                   </tr>
                 </tbody>
@@ -1508,6 +1521,9 @@ function openMonthlyLogModal({
   const previewButton = overlay.querySelector("#tb-monthly-log-preview");
   const startButton = overlay.querySelector("#tb-monthly-log-start");
   const monthInput = overlay.querySelector("#tb-monthly-log-month");
+  const monthDisplayBtn = overlay.querySelector("#tb-month-display-btn");
+  const monthDisplayText = overlay.querySelector("#tb-month-display-text");
+  const monthPopover = overlay.querySelector("#tb-month-popover");
   const prevMonthBtn = overlay.querySelector("#tb-month-prev");
   const nextMonthBtn = overlay.querySelector("#tb-month-next");
   const todayMonthBtn = overlay.querySelector("#tb-month-today");
@@ -1552,6 +1568,7 @@ function openMonthlyLogModal({
       monthLabel: `${String(month).padStart(2, "0")}/${year}`,
     };
   };
+
   const modalInstance = {
     overlay,
     previewButton,
@@ -1577,8 +1594,6 @@ function openMonthlyLogModal({
   };
 
   const handleMonthChange = () => {
-    const { year, month } = getSelectedMonth();
-    titleEl.textContent = `${reportMessage("report_log_time_month")} ${String(month).padStart(2, "0")}/${year}`;
     modalInstance.previewIssues = [];
     modalInstance.hasUnsafeReplacement = false;
     startButton.disabled = true;
@@ -1589,17 +1604,218 @@ function openMonthlyLogModal({
     if (modalInstance.tableFooter) modalInstance.tableFooter.hidden = true;
     modalInstance.statusText.textContent = reportMessage("report_ready_to_scan");
     const readyProgress = document.createElement("div");
-    readyProgress.className = "tb-monthly-log-progress-item tb-monthly-log-progress-item--info";
+    readyProgress.className = "tb-monthly-log-progress-empty";
     readyProgress.textContent = reportMessage("report_ready_to_scan");
     modalInstance.progressList.replaceChildren(readyProgress);
     const emptyRow = document.createElement("tr");
     const emptyCell = document.createElement("td");
     emptyCell.colSpan = 4;
     emptyCell.className = "tb-table-empty-state";
-    emptyCell.textContent = reportMessage("report_ready_to_scan");
+    emptyCell.innerHTML = `
+      <div class="tb-table-empty-wrap">
+        <span class="tb-table-empty-icon" aria-hidden="true">${globalThis.TB_ICONS?.CALENDAR || '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/></svg>'}</span>
+        <p class="tb-table-empty-title">${reportMessage("report_ready_to_scan")}</p>
+      </div>
+    `;
     emptyRow.appendChild(emptyCell);
     modalInstance.resultBody.replaceChildren(emptyRow);
   };
+
+  const EN_MONTHS_LONG = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+  const EN_MONTHS_SHORT = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+  const VI_MONTHS_SHORT = [
+    "Tháng 1",
+    "Tháng 2",
+    "Tháng 3",
+    "Tháng 4",
+    "Tháng 5",
+    "Tháng 6",
+    "Tháng 7",
+    "Tháng 8",
+    "Tháng 9",
+    "Tháng 10",
+    "Tháng 11",
+    "Tháng 12",
+  ];
+
+  const formatMonthDisplay = (y, m) => {
+    if (currentLanguage === "en") {
+      return `${EN_MONTHS_LONG[m - 1]} ${y}`;
+    }
+    return `Tháng ${m}, ${y}`;
+  };
+
+  const updateMonthDisplay = (y, m) => {
+    if (monthDisplayText) {
+      monthDisplayText.textContent = formatMonthDisplay(y, m);
+    }
+  };
+
+  const setMonthValue = (year, month) => {
+    const padded = String(month).padStart(2, "0");
+    const val = `${year}-${padded}`;
+    currentValidMonth = val;
+    if (monthInput) monthInput.value = val;
+    updateMonthDisplay(year, month);
+    handleMonthChange();
+  };
+
+  let popoverViewYear = now.getFullYear();
+
+  const closePopover = () => {
+    if (!monthPopover) return;
+    monthPopover.hidden = true;
+    if (monthDisplayBtn) monthDisplayBtn.setAttribute("aria-expanded", "false");
+  };
+
+  const renderPopoverContent = () => {
+    if (!monthPopover) return;
+    const { year: selectedYear, month: selectedMonth } = getSelectedMonth();
+    const todayYear = now.getFullYear();
+    const todayMonth = now.getMonth() + 1;
+    const monthNames = currentLanguage === "en" ? EN_MONTHS_SHORT : VI_MONTHS_SHORT;
+
+    monthPopover.innerHTML = `
+      <div class="tb-popover-year-row">
+        <button type="button" class="tb-popover-year-btn" id="tb-popover-year-prev" title="${reportMessage("report_prev_month")}" aria-label="${reportMessage("report_prev_month")}">
+          ${globalThis.TB_ICONS?.CHEVRON_LEFT || '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>'}
+        </button>
+        <span class="tb-popover-year-text">${popoverViewYear}</span>
+        <button type="button" class="tb-popover-year-btn" id="tb-popover-year-next" title="${reportMessage("report_next_month")}" aria-label="${reportMessage("report_next_month")}">
+          ${globalThis.TB_ICONS?.CHEVRON_RIGHT || '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>'}
+        </button>
+      </div>
+      <div class="tb-popover-month-grid">
+        ${monthNames
+          .map((name, idx) => {
+            const m = idx + 1;
+            const isSelected = popoverViewYear === selectedYear && m === selectedMonth;
+            const isToday = popoverViewYear === todayYear && m === todayMonth;
+            let cls = "tb-popover-month-btn";
+            if (isSelected) cls += " tb-popover-month-btn--active";
+            else if (isToday) cls += " tb-popover-month-btn--current";
+            return `<button type="button" class="${cls}" data-month="${m}">${name}</button>`;
+          })
+          .join("")}
+      </div>
+      <div class="tb-popover-footer">
+        <button type="button" class="tb-popover-quick-btn" id="tb-popover-today-btn">${reportMessage("report_this_month")}</button>
+        <button type="button" class="tb-popover-quick-btn" id="tb-popover-close-btn">${reportMessage("modal_cancel") || "Đóng"}</button>
+      </div>
+    `;
+
+    const yearPrev = monthPopover.querySelector("#tb-popover-year-prev");
+    const yearNext = monthPopover.querySelector("#tb-popover-year-next");
+    const todayBtn = monthPopover.querySelector("#tb-popover-today-btn");
+    const popCloseBtn = monthPopover.querySelector("#tb-popover-close-btn");
+
+    if (yearPrev) {
+      yearPrev.onclick = (e) => {
+        e.stopPropagation();
+        popoverViewYear -= 1;
+        renderPopoverContent();
+      };
+    }
+    if (yearNext) {
+      yearNext.onclick = (e) => {
+        e.stopPropagation();
+        popoverViewYear += 1;
+        renderPopoverContent();
+      };
+    }
+    if (todayBtn) {
+      todayBtn.onclick = (e) => {
+        e.stopPropagation();
+        closePopover();
+        setMonthValue(now.getFullYear(), now.getMonth() + 1);
+      };
+    }
+    if (popCloseBtn) {
+      popCloseBtn.onclick = (e) => {
+        e.stopPropagation();
+        closePopover();
+      };
+    }
+
+    const monthBtns = monthPopover.querySelectorAll(".tb-popover-month-btn");
+    monthBtns.forEach((btn) => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const m = Number(btn.getAttribute("data-month"));
+        closePopover();
+        setMonthValue(popoverViewYear, m);
+      };
+    });
+  };
+
+  const openPopover = () => {
+    if (!monthPopover) return;
+    const { year } = getSelectedMonth();
+    popoverViewYear = year;
+    renderPopoverContent();
+    monthPopover.hidden = false;
+    if (monthDisplayBtn) monthDisplayBtn.setAttribute("aria-expanded", "true");
+  };
+
+  const togglePopover = (e) => {
+    e?.stopPropagation();
+    if (monthPopover && !monthPopover.hidden) {
+      closePopover();
+    } else {
+      openPopover();
+    }
+  };
+
+  if (monthDisplayBtn) {
+    monthDisplayBtn.onclick = togglePopover;
+  }
+
+  if (monthInput) {
+    Object.defineProperty(monthInput, "disabled", {
+      set(val) {
+        if (val) {
+          this.setAttribute("disabled", "");
+        } else {
+          this.removeAttribute("disabled");
+        }
+        if (monthDisplayBtn) monthDisplayBtn.disabled = !!val;
+        if (prevMonthBtn) prevMonthBtn.disabled = !!val;
+        if (nextMonthBtn) nextMonthBtn.disabled = !!val;
+        if (todayMonthBtn) todayMonthBtn.disabled = !!val;
+        if (val && monthPopover) closePopover();
+      },
+      get() {
+        return this.hasAttribute("disabled");
+      },
+      configurable: true,
+    });
+  }
 
   monthInput.onchange = () => {
     enforceValidMonth();
@@ -1619,13 +1835,8 @@ function openMonthlyLogModal({
     enforceValidMonth();
   });
 
-  const setMonthValue = (year, month) => {
-    const padded = String(month).padStart(2, "0");
-    const val = `${year}-${padded}`;
-    currentValidMonth = val;
-    monthInput.value = val;
-    handleMonthChange();
-  };
+  const { year: initYear, month: initMonth } = getSelectedMonth();
+  updateMonthDisplay(initYear, initMonth);
 
   if (prevMonthBtn) {
     prevMonthBtn.onclick = () => {
@@ -1649,15 +1860,38 @@ function openMonthlyLogModal({
     };
   }
 
+  const onDocumentClick = (event) => {
+    if (
+      monthPopover &&
+      !monthPopover.hidden &&
+      !monthPopover.contains(event.target) &&
+      !monthDisplayBtn?.contains(event.target)
+    ) {
+      closePopover();
+    }
+  };
+  document.addEventListener("click", onDocumentClick);
+
   function onKeyDown(event) {
-    if (event.key === "Escape" && !closeButton.disabled) {
-      document.removeEventListener("keydown", onKeyDown);
-      overlay.remove();
-      document.body.classList.remove("tb-modal-open");
+    if (event.key === "Escape") {
+      if (monthPopover && !monthPopover.hidden) {
+        closePopover();
+        event.stopPropagation();
+        return;
+      }
+      if (!closeButton.disabled) {
+        document.removeEventListener("keydown", onKeyDown);
+        document.removeEventListener("click", onDocumentClick);
+        overlay.remove();
+        document.body.classList.remove("tb-modal-open");
+      }
     }
   }
+
   const close = () => {
+    closePopover();
     document.removeEventListener("keydown", onKeyDown);
+    document.removeEventListener("click", onDocumentClick);
     overlay.remove();
     document.body.classList.remove("tb-modal-open");
   };

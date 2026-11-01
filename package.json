@@ -1,6 +1,6 @@
 {
   "name": "backlog2redmine",
-  "version": "1.8.24",
+  "version": "1.8.25",
   "description": "Chrome extension to translate and sync comments between Backlog and Redmine",
   "scripts": {
     "bump": "node scripts/bump-version.js",

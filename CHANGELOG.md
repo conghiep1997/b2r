@@ -1,5 +1,14 @@
 # Changelog - Backlog2Redmine
 
+## [1.8.25] - 2026-11-01
+- **✨ Added**: Modern minimalist month-picker popover dialog with year selector and localized month pills, immune to Redmine host stylesheet overrides.
+- **✨ Added**: Status dot indicators (5px) for the monthly log progress feed replacing terminal-style thick borders.
+- **🔧 Fixed**: Fixed monthly log modal footer layout being rendered outside the dialog due to duplicate closing tags.
+- **🔧 Fixed**: Fixed dark mode contrast issues in `#tb-monthly-log-status`, monthly log progress text, and empty table state.
+- **🔧 Fixed**: Prevented Redmine's global button CSS from squishing year navigation icons (`<` / `>`) and injecting rogue borders into month buttons.
+- **🔧 Fixed**: Synchronized `#tb-monthly-log-preview` ("Kiểm tra task trong tháng") and action buttons with Design System tonal hierarchy, removing AI cliché hover jumps (`translateY(-1px)`), glowing drop-shadows, and unstyled focus outlines.
+
+
 ## [1.8.24] - 2026-10-31
 - **✨ Added**: Redesigned B2R brand identity icon using Google Material Design 3 (M3) continuous pure sync streams (`assets/icons/icon.svg`), generating pixel-perfect 128px, 48px, and 16px icons.
 - **✨ Added**: Automated Chrome Web Store promotional screenshot generator (`scripts/generate-cws-screenshots.js`) producing high-fidelity 1280x800 screenshots (5 for Vietnamese localization `store_assets/screenshots_vi/`, 5 for international default `store_assets/screenshots_en/`).

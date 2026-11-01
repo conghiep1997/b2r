@@ -4,6 +4,14 @@ Tất cả các thay đổi đáng chú ý của dự án Backlog2Redmine (B2R) 
 Định dạng dựa trên [Keep a Changelog](https://keepachangelog.com/).
 (Bản tiếng Anh chính thức: [CHANGELOG.md](./CHANGELOG.md))
 
+## [1.8.25] - 2026-11-01
+- **✨ Thêm mới**: Bộ chọn tháng (Month Picker Popover) phong cách tối giản hiện đại với bộ chọn năm và lưới tháng bản địa hóa, kháng hoàn toàn xung đột CSS từ Redmine.
+- **✨ Thêm mới**: Chấm trạng thái tinh gọn (5px status dot) cho khung tiến trình quét log time thay cho vạch viền kiểu terminal.
+- **🔧 Sửa lỗi**: Khắc phục lỗi vỡ layout footer modal Log time tháng bị tràn ra ngoài dialog do dư thẻ đóng HTML.
+- **🔧 Sửa lỗi**: Tăng độ tương phản cho Dark Mode ở dòng trạng thái `#tb-monthly-log-status`, nội dung tiến trình và bảng rỗng khi không tìm thấy report.
+- **🔧 Sửa lỗi**: Khắc phục CSS toàn cục của Redmine chèn đè làm co icon chuyển năm `<` `>` thành 1px và ép viền xanh lên các ô chọn tháng.
+- **🔧 Sửa lỗi**: Đồng bộ nút "Kiểm tra task trong tháng" và hệ thống nút bấm theo bảng màu Tonal chuẩn Design System; loại bỏ hoàn toàn các AI cliché (hiệu ứng nảy `translateY(-1px)`, bóng đổ phát sáng, focus outline thô).
+
 ## [1.8.24] - 2026-10-31
 - **✨ Thêm mới**: Thiết kế lại toàn diện biểu tượng thương hiệu B2R theo ngôn ngữ Google Material Design 3 (M3) liền khối (`assets/icons/icon.svg`), trích xuất pixel-perfect cho các cỡ 128px, 48px và 16px.
 - **✨ Thêm mới**: Công cụ tự động sinh ảnh chụp màn hình quảng bá Chrome Web Store (`scripts/generate-cws-screenshots.js`) chuẩn 1280x800 px (5 ảnh bản địa hóa Tiếng Việt `store_assets/screenshots_vi/`, 5 ảnh mặc định Quốc tế `store_assets/screenshots_en/`).

@@ -66,9 +66,12 @@
       "M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z",
       { size: 14 }
     ),
-    CHEVRON_LEFT:
-      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>',
-    CHEVRON_RIGHT:
-      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>',
+    CHEVRON_LEFT: svg("M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z", { size: 16 }),
+    CHEVRON_RIGHT: svg("M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z", { size: 16 }),
+    CHEVRON_DOWN: svg("M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z", { size: 14 }),
+    CALENDAR: svg(
+      "M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z",
+      { size: 16 }
+    ),
   };
 })(globalThis);

@@ -1262,8 +1262,7 @@ function openBacklogModal({
     if (backlogUsers.length === 0) {
       backlogSuggestionsEl.replaceChildren();
       const hint = document.createElement("div");
-      hint.className = "tb-suggestion-item";
-      hint.style.color = "#999";
+      hint.className = "tb-suggestion-item tb-suggestion-item--muted";
       hint.textContent = globalThis.TB_GET_MESSAGE("modal_no_users_loaded");
       backlogSuggestionsEl.appendChild(hint);
       return;
