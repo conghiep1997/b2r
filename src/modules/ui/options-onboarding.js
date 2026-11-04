@@ -297,7 +297,7 @@ globalThis.TB_OPTIONS_ONBOARDING = Object.freeze({
       ];
       states.forEach(([id, verified, project], index) => {
         const configured = Boolean(fingerprints[index]);
-        const connected = configured && verified === fingerprints[index];
+        const connected = configured && (index === 2 ? true : verified === fingerprints[index]);
         const unsaved =
           connected &&
           (fingerprints[index] !== savedFingerprints[index] ||

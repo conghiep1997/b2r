@@ -1,5 +1,12 @@
 # Changelog - Backlog2Redmine
 
+## [1.8.26] - 2026-11-02
+- **✨ Added**: Clarified the popup's primary Backlog-to-Redmine setup status and marked Redmine-to-Backlog sync as optional when Backlog credentials are not configured.
+- **🔧 Fixed**: Stopped automatic Backlog and AI connection checks on input, save, and Options page load to avoid unexpected network requests and AI quota use; connection checks remain available manually.
+- **🔧 Fixed**: Kept selected Gemini models selected when a model check fails, and clarified that unavailable models will be cooled down when used.
+- **🔧 Fixed**: Corrected localized message placeholders and ensured confirmation and success dialogs hide and reopen consistently.
+
+
 ## [1.8.25] - 2026-11-01
 - **✨ Added**: Modern minimalist month-picker popover dialog with year selector and localized month pills, immune to Redmine host stylesheet overrides.
 - **✨ Added**: Status dot indicators (5px) for the monthly log progress feed replacing terminal-style thick borders.

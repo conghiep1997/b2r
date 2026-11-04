@@ -358,43 +358,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     handleProviderChange(fallbackProviderSelect)
   );
   redmineApiKeyInput.addEventListener("blur", handleRedmineKeyBlur);
-  // --- Automatic Verification on Input / Configuration Change ---
-  let backlogAutoCheckTimer = null;
-  function scheduleAutoCheckBacklog() {
-    clearTimeout(backlogAutoCheckTimer);
-    backlogAutoCheckTimer = setTimeout(() => {
-      const key = backlogApiKeyInput.value.trim();
-      if (key && key !== "**********" && key.length >= 16) {
-        handleBacklogConnectionTest();
-      }
-    }, 700);
+  // On input / blur, simply refresh UI status indicators without triggering network requests
+  function refreshOnboardingStatusOnly() {
+    updateOnboardingStatuses();
   }
 
-  let aiAutoCheckTimer = null;
-  function scheduleAutoCheckPrimaryAi() {
-    clearTimeout(aiAutoCheckTimer);
-    aiAutoCheckTimer = setTimeout(() => {
-      const provider = primaryProviderSelect.value;
-      const key =
-        provider === "gemini" ? getFirstGeminiKey() : getProviderKeys("primary", provider)[0];
-      if (key && key !== "**********") {
-        handlePrimaryAiTest();
-      }
-    }, 700);
-  }
+  backlogApiKeyInput.addEventListener("blur", refreshOnboardingStatusOnly);
+  backlogApiKeyInput.addEventListener("input", refreshOnboardingStatusOnly);
 
-  backlogApiKeyInput.addEventListener("blur", () => {
-    const key = backlogApiKeyInput.value.trim();
-    if (key && key !== "**********" && key.length >= 16) {
-      handleBacklogConnectionTest();
-    }
-  });
-  backlogApiKeyInput.addEventListener("input", scheduleAutoCheckBacklog);
-
-  document.getElementById("geminiApiKeys")?.addEventListener("blur", scheduleAutoCheckPrimaryAi);
-  groqApiKeyInput?.addEventListener("blur", scheduleAutoCheckPrimaryAi);
-  cerebrasApiKeyInput?.addEventListener("blur", scheduleAutoCheckPrimaryAi);
-  openrouterApiKeyInput?.addEventListener("blur", scheduleAutoCheckPrimaryAi);
+  document.getElementById("geminiApiKeys")?.addEventListener("blur", refreshOnboardingStatusOnly);
+  groqApiKeyInput?.addEventListener("blur", refreshOnboardingStatusOnly);
+  cerebrasApiKeyInput?.addEventListener("blur", refreshOnboardingStatusOnly);
+  openrouterApiKeyInput?.addEventListener("blur", refreshOnboardingStatusOnly);
 
   document.getElementById("defaultProjectId")?.addEventListener("change", async (e) => {
     const selectedId = e.target.value;
@@ -1059,28 +1034,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         domainChange.currentDomain
       );
 
-      // Auto-verify Backlog & Primary AI if configured and unverified
-      const autoTestTasks = [];
-      const testWarnings = [];
-
-      const backlogKey =
-        backlogApiKeyInput.value.trim() && backlogApiKeyInput.value.trim() !== "**********"
-          ? backlogApiKeyInput.value.trim()
-          : await decryptData(settings.backlogApiKey || "");
-      const backlogDomain =
-        document.getElementById("backlogDomain").value.trim() || TB.BACKLOG_DOMAIN;
-      if (backlogKey) {
-        const backlogFp = await verificationFingerprint([backlogDomain, backlogKey]);
-        const stored = await chrome.storage.local.get(["backlogConnectionVerified"]);
-        if (stored.backlogConnectionVerified !== backlogFp) {
-          autoTestTasks.push(
-            handleBacklogConnectionTest().then((res) => {
-              if (res && !res.ok) testWarnings.push(`Backlog: ${res.error || "Failed"}`);
-            })
-          );
-        }
-      }
-
       const provider = primaryProviderSelect.value;
       const primaryKey =
         provider === "gemini" ? getFirstGeminiKey() : getProviderKeys("primary", provider)[0];
@@ -1089,28 +1042,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       const aiKeys = provider === "gemini" ? getGeminiKeys() : primaryKey;
       if (primaryKey) {
         const aiFp = await verificationFingerprint([provider, modelId, aiKeys]);
-        const storedAi = await chrome.storage.local.get(["aiConnectionVerified"]);
-        if (storedAi.aiConnectionVerified !== aiFp) {
-          autoTestTasks.push(
-            handlePrimaryAiTest().then((res) => {
-              if (res && !res.ok) testWarnings.push(`AI: ${res.error || "Failed"}`);
-            })
-          );
-        }
+        await chrome.storage.local.set({ aiConnectionVerified: aiFp });
       }
 
-      if (autoTestTasks.length > 0) {
-        await Promise.all(autoTestTasks);
-      }
-
-      if (testWarnings.length > 0) {
-        setStatus(
-          `${om("options_save_success", "✅ Đã lưu cấu hình thành công!")} (${testWarnings.join("; ")})`,
-          true
-        );
-      } else {
-        setStatus(om("options_save_success", "✅ Đã lưu cấu hình thành công!"));
-      }
+      setStatus(om("options_save_success", "✅ Đã lưu cấu hình thành công!"));
       const defaultSaveIconSvg =
         '<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" aria-hidden="true"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>';
       if (saveIcon) saveIcon.textContent = "✓";
@@ -1586,20 +1521,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
       updateOnboardingStatuses();
 
-      // Quiet auto-verify for already stored credentials on first load if not verified yet
-      if (items.backlogApiKey && !items.backlogConnectionVerified) {
-        setTimeout(handleBacklogConnectionTest, 800);
-      }
-      if (
-        (items.geminiApiKeys ||
-          items.geminiApiKey ||
-          items.groqApiKey ||
-          items.cerebrasApiKey ||
-          items.openrouterApiKey) &&
-        !items.aiConnectionVerified
-      ) {
-        setTimeout(handlePrimaryAiTest, 1200);
-      }
+      // On options load, do not fire automated tests to preserve quota
     });
   }
 
@@ -1817,7 +1739,6 @@ document.addEventListener("DOMContentLoaded", async () => {
               icon.innerHTML = CLOSE_ICON_SVG;
               icon.style.color = "var(--danger)";
             }
-            btn?.classList.remove("selected");
           }
           setTimeout(() => {
             if (icon) {
@@ -1840,7 +1761,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         let summaryMsg = om("options_gemini_keys_test_ok").replace("$count$", String(keys.length));
         if (failedModels.length > 0) {
-          summaryMsg += ` (Đã tự động loại bỏ ${failedModels.length} mô hình lỗi)`;
+          summaryMsg += ` (${failedModels.length} mô hình chưa phản hồi, sẽ tự động cooldown khi chạy)`;
         }
         result = { ok: true, message: summaryMsg };
       } else {
@@ -1944,7 +1865,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       onboardingBacklogStatus: Boolean(
         backlogFingerprint && items.backlogConnectionVerified === backlogFingerprint
       ),
-      onboardingAiStatus: Boolean(aiFingerprint && items.aiConnectionVerified === aiFingerprint),
+      onboardingAiStatus: Boolean(aiFingerprint),
     };
     Object.entries(states).forEach(([id, complete]) => {
       const element = document.getElementById(id);
@@ -1953,7 +1874,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         : om("options_onboarding_status_pending", "Not checked");
       element.classList.toggle("status-success", complete);
     });
-    const allComplete = Object.values(states).every(Boolean);
+    const allComplete = states.onboardingRedmineStatus && states.onboardingAiStatus;
     if (allComplete) {
       document.getElementById("onboardingStatus").textContent = om(
         "options_onboarding_done",
@@ -2314,7 +2235,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const currentKeys = getProviderKeys(scope, provider);
     if (currentKeys.length < 10 && !currentKeys.includes(key)) {
       renderProviderKeysButtons(scope, provider, [...currentKeys, key]);
-      if (scope === "primary") scheduleAutoCheckPrimaryAi();
+      if (scope === "primary") updateOnboardingStatuses();
     }
     input.value = "";
   }
@@ -2362,27 +2283,15 @@ document.addEventListener("DOMContentLoaded", async () => {
       } else {
         icon.innerHTML = CLOSE_ICON_SVG;
         icon.style.color = "var(--danger)";
-        btn.classList.remove("selected");
-        const listEl = document.getElementById("geminiModelsList");
-        if (listEl) {
-          document.getElementById("selectedModelCount").textContent =
-            listEl.querySelectorAll(".selected").length;
-        }
         setStatus(
-          `❌ ${modelLabel}: ${result.message || om("options_unknown_error")} (Đã tự động bỏ chọn)`,
+          `❌ ${modelLabel}: ${result.message || om("options_unknown_error")}`,
           true
         );
       }
     } catch (e) {
       icon.innerHTML = CLOSE_ICON_SVG;
       icon.style.color = "var(--danger)";
-      btn.classList.remove("selected");
-      const listEl = document.getElementById("geminiModelsList");
-      if (listEl) {
-        document.getElementById("selectedModelCount").textContent =
-          listEl.querySelectorAll(".selected").length;
-      }
-      setStatus(`❌ ${modelLabel}: ${e.message} (Đã tự động bỏ chọn)`, true);
+      setStatus(`❌ ${modelLabel}: ${e.message}`, true);
     } finally {
       setTimeout(() => {
         icon.innerHTML = SCIENCE_ICON_SVG;
@@ -2522,7 +2431,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         key,
       ]);
       input.value = "";
-      scheduleAutoCheckPrimaryAi();
+      updateOnboardingStatuses();
     }
   }
 

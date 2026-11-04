@@ -393,7 +393,7 @@
     "message": "Xem trên Backlog"
   },
   "modal_batch_title_multiple": {
-    "message": "Đã gửi thành công $ bình luận!",
+    "message": "Đã gửi thành công $count$ bình luận!",
     "placeholders": {
       "count": {
         "content": "$1"
@@ -499,7 +499,7 @@
     "message": "Cấu hình đã được lưu thành công!"
   },
   "options_save_error": {
-    "message": "Lỗi khi lưu: $",
+    "message": "Lỗi khi lưu: $error$",
     "placeholders": {
       "error": {
         "content": "$1"
@@ -507,7 +507,7 @@
     }
   },
   "settings_options_save_error": {
-    "message": "Lỗi khi lưu: $",
+    "message": "Lỗi khi lưu: $error$",
     "placeholders": {
       "error": {
         "content": "$1"
@@ -2197,5 +2197,8 @@
   "options_tab_advanced": {
     "message": "Nâng cao",
     "description": "Advanced settings tab"
+  },
+  "popup_optional": {
+    "message": "Tùy chọn (Chưa thiết lập)"
   }
 }

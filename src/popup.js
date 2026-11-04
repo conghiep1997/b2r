@@ -119,7 +119,7 @@ async function renderStatus() {
     openrouter: Boolean(items.openrouterApiKeys || items.openrouterApiKey),
   };
   const aiConfigured = Boolean(items.primaryProvider && providerKeyReadyMap[activeProvider]);
-  const aiVerified = Boolean(aiConfigured && items.aiConnectionVerified);
+  const aiVerified = aiConfigured;
 
   const providerLabel = PROVIDER_LABELS[activeProvider] || activeProvider;
   const pendingLabel = t("options_onboarding_status_pending") || "Chưa kiểm tra";
@@ -136,18 +136,18 @@ async function renderStatus() {
   } else if (!aiConfigured) {
     forwardState = "missing";
     forwardText = t("popup_missing_ai_provider");
-  } else if (!redmineVerified || !aiVerified) {
+  } else if (!redmineVerified) {
     forwardState = "warning";
     forwardText = pendingLabel;
   }
   setState("forwardStatus", forwardState, forwardText);
 
-  // Reverse Flow: Redmine -> Backlog (Needs Backlog + AI)
+  // Reverse Flow: Redmine -> Backlog (Optional; Needs Backlog + AI if configured)
   let reverseState = "ok";
   let reverseText = t("popup_active");
   if (!backlogConfigured) {
-    reverseState = "missing";
-    reverseText = t("popup_missing_backlog_key");
+    reverseState = "optional";
+    reverseText = t("popup_optional");
   } else if (!aiConfigured) {
     reverseState = "missing";
     reverseText = t("popup_missing_ai_provider");
@@ -163,20 +163,20 @@ async function renderStatus() {
   if (!aiConfigured) {
     providerState = "missing";
     providerText = t("popup_not_selected");
-  } else if (!aiVerified) {
-    providerState = "warning";
-    providerText = `${providerLabel} (${pendingLabel})`;
   }
   setState("providerStatus", providerState, providerText);
 
   // Overall Status Badge & Description
-  const allVerified = redmineVerified && backlogVerified && aiVerified;
-  const anyMissing =
-    !redmineConfigured || !backlogConfigured || !aiConfigured || !redmineProjectConfigured;
+  // Backlog -> Redmine is the primary workflow. Redmine -> Backlog is optional.
+  const primaryConfigured = redmineConfigured && redmineProjectConfigured && aiConfigured;
+  const primaryReady = redmineVerified && aiConfigured;
+  const reverseReady = !backlogConfigured || backlogVerified;
+  const allVerified = primaryReady && reverseReady;
+
+  const anyMissing = !primaryConfigured;
   const anyUnverified =
     (redmineConfigured && !redmineVerified) ||
-    (backlogConfigured && !backlogVerified) ||
-    (aiConfigured && !aiVerified);
+    (backlogConfigured && !backlogVerified);
 
   const badgeElement = document.getElementById("statusBadge");
   badgeElement.classList.remove("ready", "warning", "error");
@@ -189,9 +189,7 @@ async function renderStatus() {
     badgeElement.textContent = t("popup_needs_setup");
     badgeElement.classList.add("error");
     const missingSetup = [];
-    if (!redmineConfigured && !backlogConfigured) missingSetup.push(t("popup_missing_both_keys"));
-    else if (!redmineConfigured) missingSetup.push(t("popup_missing_redmine_key"));
-    else if (!backlogConfigured) missingSetup.push(t("popup_missing_backlog_key"));
+    if (!redmineConfigured) missingSetup.push(t("popup_missing_redmine_key"));
     if (!redmineProjectConfigured) missingSetup.push(t("popup_default_project"));
     if (!aiConfigured) missingSetup.push(t("popup_missing_ai_provider"));
     document.getElementById("overallStatus").textContent = missingSetup.join(" · ");
@@ -248,6 +246,7 @@ function setState(id, statusType, text) {
   element.classList.toggle("ok", statusType === "ok" || statusType === true);
   element.classList.toggle("warning", statusType === "warning");
   element.classList.toggle("missing", statusType === "missing" || statusType === false);
+  element.classList.toggle("optional", statusType === "optional");
 }
 
 function setupActions() {

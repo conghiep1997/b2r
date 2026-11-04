@@ -372,7 +372,7 @@
     "message": "View in Backlog"
   },
   "modal_batch_title_multiple": {
-    "message": "Sent $ notes successfully!",
+    "message": "Sent $count$ notes successfully!",
     "placeholders": {
       "count": {
         "content": "$1"
@@ -426,7 +426,7 @@
     "message": "Configuration saved successfully!"
   },
   "options_save_error": {
-    "message": "Error saving: $",
+    "message": "Error saving: $error$",
     "placeholders": {
       "error": {
         "content": "$1"
@@ -434,7 +434,7 @@
     }
   },
   "settings_options_save_error": {
-    "message": "Error saving: $",
+    "message": "Error saving: $error$",
     "placeholders": {
       "error": {
         "content": "$1"
@@ -2197,5 +2197,8 @@
   "options_tab_advanced": {
     "message": "Advanced",
     "description": "Advanced settings tab"
+  },
+  "popup_optional": {
+    "message": "Optional (Not set up)"
   }
 }

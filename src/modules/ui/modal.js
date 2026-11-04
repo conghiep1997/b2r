@@ -443,6 +443,14 @@ function closeModal() {
     overlay.style.display = "none";
     document.body.classList.remove("tb-modal-open");
   }
+  if (modalElements.confirmModal) {
+    modalElements.confirmModal.style.display = "none";
+    modalElements.confirmModal.hidden = false;
+  }
+  if (modalElements.successModal) {
+    modalElements.successModal.style.display = "none";
+    modalElements.successModal.hidden = true;
+  }
   if (modalPreviousFocus?.isConnected) modalPreviousFocus.focus();
   modalPreviousFocus = null;
 }
@@ -1085,7 +1093,9 @@ function openConfirmModal(options) {
   };
 
   updateModalState();
+  modalElements.confirmModal.hidden = false;
   modalElements.confirmModal.style.display = "flex";
+  modalElements.successModal.hidden = true;
   modalElements.successModal.style.display = "none";
   overlay.style.display = "flex";
   document.body.classList.add("tb-modal-open");
@@ -1474,7 +1484,9 @@ function openBacklogModal({
     });
   };
 
+  modalElements.confirmModal.hidden = false;
   modalElements.confirmModal.style.display = "flex";
+  modalElements.successModal.hidden = true;
   modalElements.successModal.style.display = "none";
   overlay.style.display = "flex";
   document.body.classList.add("tb-modal-open");
@@ -1557,7 +1569,9 @@ async function openSuccessModal({
     closeModal();
     onClose?.();
   };
+  modalElements.confirmModal.hidden = true;
   modalElements.confirmModal.style.display = "none";
+  modalElements.successModal.hidden = false;
   modalElements.successModal.style.display = "flex";
   overlay.style.display = "flex";
   setModalLoading(false);

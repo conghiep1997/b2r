@@ -4,6 +4,12 @@ Tất cả các thay đổi đáng chú ý của dự án Backlog2Redmine (B2R) 
 Định dạng dựa trên [Keep a Changelog](https://keepachangelog.com/).
 (Bản tiếng Anh chính thức: [CHANGELOG.md](./CHANGELOG.md))
 
+## [1.8.26] - 2026-11-02
+- **✨ Thêm mới**: Làm rõ trạng thái thiết lập luồng Backlog sang Redmine trong popup và đánh dấu đồng bộ Redmine sang Backlog là tùy chọn khi chưa cấu hình thông tin Backlog.
+- **🔧 Sửa lỗi**: Ngừng tự động kiểm tra kết nối Backlog và AI khi nhập liệu, lưu cấu hình hoặc mở trang Options để tránh gọi mạng ngoài ý muốn và tiêu hao quota AI; vẫn có thể kiểm tra thủ công.
+- **🔧 Sửa lỗi**: Giữ nguyên lựa chọn model Gemini khi kiểm tra thất bại và làm rõ rằng model chưa phản hồi sẽ được cooldown khi sử dụng.
+- **🔧 Sửa lỗi**: Sửa placeholder trong thông báo bản địa hóa và đảm bảo modal xác nhận/thành công được ẩn, mở lại nhất quán.
+
 ## [1.8.25] - 2026-11-01
 - **✨ Thêm mới**: Bộ chọn tháng (Month Picker Popover) phong cách tối giản hiện đại với bộ chọn năm và lưới tháng bản địa hóa, kháng hoàn toàn xung đột CSS từ Redmine.
 - **✨ Thêm mới**: Chấm trạng thái tinh gọn (5px status dot) cho khung tiến trình quét log time thay cho vạch viền kiểu terminal.

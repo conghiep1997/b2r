@@ -458,15 +458,8 @@ globalThis.TB_OPTIONS_PROVIDERS = Object.freeze({
             globalThis.TB_ICONS?.CLOSE ||
             '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>';
           icon.style.color = "var(--danger)";
-          btn
-            .closest(".model-choice")
-            ?.querySelector("button[data-model-id]")
-            ?.classList.remove("selected");
-          document.getElementById("selectedModelCount").textContent = document.querySelectorAll(
-            "#geminiModelsList .selected"
-          ).length;
           setStatus(
-            `❌ ${modelLabel}: ${result.message || om("options_unknown_error")} (Đã tự động bỏ chọn)`,
+            `❌ ${modelLabel}: ${result.message || om("options_unknown_error")}`,
             true
           );
         }
@@ -475,14 +468,7 @@ globalThis.TB_OPTIONS_PROVIDERS = Object.freeze({
           globalThis.TB_ICONS?.CLOSE ||
           '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>';
         icon.style.color = "var(--danger)";
-        btn
-          .closest(".model-choice")
-          ?.querySelector("button[data-model-id]")
-          ?.classList.remove("selected");
-        document.getElementById("selectedModelCount").textContent = document.querySelectorAll(
-          "#geminiModelsList .selected"
-        ).length;
-        setStatus(`❌ ${modelLabel}: ${e.message} (Đã tự động bỏ chọn)`, true);
+        setStatus(`❌ ${modelLabel}: ${e.message}`, true);
       } finally {
         setTimeout(() => {
           icon.innerHTML =
