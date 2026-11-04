@@ -4,6 +4,11 @@ Tất cả các thay đổi đáng chú ý của dự án Backlog2Redmine (B2R) 
 Định dạng dựa trên [Keep a Changelog](https://keepachangelog.com/).
 (Bản tiếng Anh chính thức: [CHANGELOG.md](./CHANGELOG.md))
 
+## [1.8.27] - 2026-11-04
+- **✨ Thêm mới**: Hỗ trợ sao chép danh sách task ID trực tiếp từ bản preview hàng tháng trước khi gửi log time.
+- **🔧 Sửa lỗi**: Căn chỉnh lại giao diện ô nhập giờ hàng tháng, kích thước bộ chọn hoạt động và đồng bộ thuộc tính theme dark mode.
+- **📝 Tài liệu**: Nâng phiên bản lên 1.8.27.
+
 ## [1.8.26] - 2026-11-02
 - **✨ Thêm mới**: Làm rõ trạng thái thiết lập luồng Backlog sang Redmine trong popup và đánh dấu đồng bộ Redmine sang Backlog là tùy chọn khi chưa cấu hình thông tin Backlog.
 - **🔧 Sửa lỗi**: Ngừng tự động kiểm tra kết nối Backlog và AI khi nhập liệu, lưu cấu hình hoặc mở trang Options để tránh gọi mạng ngoài ý muốn và tiêu hao quota AI; vẫn có thể kiểm tra thủ công.

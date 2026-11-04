@@ -1692,10 +1692,10 @@
     "message": "Check this month's tasks"
   },
   "report_confirm_logging": {
-    "message": "Confirm and log time"
+    "message": "Log time"
   },
   "report_preview_complete": {
-    "message": "Found $count$ reports. Review the list before logging time.",
+    "message": "Found $count$ reports",
     "placeholders": {
       "count": {
         "content": "$1"
@@ -1703,7 +1703,7 @@
     }
   },
   "report_preview_confirm_hint": {
-    "message": "Review the dates, tasks, and hours. Confirm when everything looks correct."
+    "message": "Review the dates, tasks, and hours. Click Log time when ready."
   },
   "report_select_existing_entries": {
     "message": "Select existing time entries to replace"
@@ -2199,6 +2199,6 @@
     "description": "Advanced settings tab"
   },
   "popup_optional": {
-    "message": "Optional (Not set up)"
+    "message": "Optional"
   }
 }

@@ -242,6 +242,7 @@ function formatDomain(value) {
 function setState(id, statusType, text) {
   const element = document.getElementById(id);
   element.textContent = text;
+  element.title = text;
   element.classList.toggle("ok", statusType === "ok" || statusType === true);
   element.classList.toggle("warning", statusType === "warning");
   element.classList.toggle("missing", statusType === "missing" || statusType === false);

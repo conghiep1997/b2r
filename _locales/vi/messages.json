@@ -1692,10 +1692,10 @@
     "message": "Kiểm tra task trong tháng"
   },
   "report_confirm_logging": {
-    "message": "Xác nhận & ghi time"
+    "message": "Ghi time"
   },
   "report_preview_complete": {
-    "message": "Đã tìm thấy $count$ report. Kiểm tra danh sách trước khi ghi time.",
+    "message": "Đã tìm thấy $count$ report",
     "placeholders": {
       "count": {
         "content": "$1"
@@ -1703,7 +1703,7 @@
     }
   },
   "report_preview_confirm_hint": {
-    "message": "Kiểm tra ngày, task và số giờ. Bấm Xác nhận & ghi time khi đã đúng."
+    "message": "Kiểm tra ngày, task và số giờ. Bấm Ghi time khi đã đúng."
   },
   "report_select_existing_entries": {
     "message": "Chọn spent time cũ cần thay thế"
@@ -2199,6 +2199,6 @@
     "description": "Advanced settings tab"
   },
   "popup_optional": {
-    "message": "Tùy chọn (Chưa thiết lập)"
+    "message": "Tùy chọn"
   }
 }

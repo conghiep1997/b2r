@@ -1,5 +1,11 @@
 # Changelog - Backlog2Redmine
 
+## [1.8.27] - 2026-11-04
+- **✨ Added**: Added support for copying task IDs directly from monthly preview before time submission.
+- **🔧 Fixed**: Refined monthly log hours input layout, activity selector sizing, and dark mode theme attribute synchronization.
+- **📝 Docs**: Bumped version to 1.8.27.
+
+
 ## [1.8.26] - 2026-11-02
 - **✨ Added**: Clarified the popup's primary Backlog-to-Redmine setup status and marked Redmine-to-Backlog sync as optional when Backlog credentials are not configured.
 - **🔧 Fixed**: Stopped automatic Backlog and AI connection checks on input, save, and Options page load to avoid unexpected network requests and AI quota use; connection checks remain available manually.

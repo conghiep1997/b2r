@@ -1036,48 +1036,6 @@ function injectStyles() {
     .tb-monthly-log-table th {
       position: sticky; top: 0; background: #f8fafc; color: #475569; font-weight: 700; z-index: 1;
     }
-    .tb-monthly-log-table tfoot td {
-      position: sticky;
-      bottom: 0;
-      background: #f1f5f9;
-      border-top: 2px solid #cbd5e1;
-      font-size: 12px;
-      font-weight: 700;
-      z-index: 2;
-      color: #1e293b;
-      padding: 8px 10px;
-      vertical-align: middle;
-      white-space: nowrap;
-    }
-    .tb-cell-total-label {
-      text-align: right !important;
-      padding-right: 14px !important;
-      color: #334155;
-      white-space: nowrap;
-    }
-    .tb-cell-total-hours {
-      white-space: nowrap;
-    }
-    .tb-cell-total-hours .tb-hours-total {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 2px 8px;
-      background: #eef2f9;
-      border: 1px solid #cbd5e1;
-      border-radius: 5px;
-      color: #3e5ba3;
-      font-weight: 700;
-      font-size: 12px;
-      white-space: nowrap;
-    }
-    .tb-cell-total-days {
-      text-align: center !important;
-      color: #64748b;
-      font-weight: 600;
-      font-size: 11.5px;
-      white-space: nowrap;
-    }
     .tb-monthly-log-table td:nth-child(2) {
       word-break: keep-all;
       overflow-wrap: break-word;
@@ -1124,9 +1082,12 @@ function injectStyles() {
       justify-content: space-between;
       gap: 8px;
       margin-top: 2px;
+      width: 100%;
+      box-sizing: border-box;
     }
     .tb-activity-select {
-      flex: 1;
+      flex: 1 1 auto;
+      min-width: 0;
       max-width: 220px;
       padding: 2px 4px;
       border: 1px solid #cbd5e1;
@@ -1159,12 +1120,13 @@ function injectStyles() {
     .tb-hours-input-wrapper {
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       background: #ffffff;
       border: 1px solid #cbd5e1;
       border-radius: 6px;
-      padding: 0 5px 0 6px;
-      height: 26px;
-      box-sizing: border-box;
+      padding: 0 6px 0 4px;
+      height: 24px;
+      box-sizing: border-box !important;
       gap: 2px;
       transition: all 0.15s ease;
       box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
@@ -1178,33 +1140,43 @@ function injectStyles() {
       background: #ffffff;
       box-shadow: 0 0 0 2px rgba(62, 91, 163, 0.2);
     }
+    .tb-hours-input-wrapper .tb-hours-input,
     .tb-hours-input {
-      width: 38px;
-      height: 22px;
-      border: none;
-      outline: none;
-      background: transparent;
-      color: #0f172a;
-      font-size: 12px;
-      font-weight: 700;
-      text-align: right;
-      padding: 0;
-      margin: 0;
-      -moz-appearance: textfield;
-      font-family: inherit;
+      width: 28px !important;
+      max-width: 32px !important;
+      min-width: 0 !important;
+      height: 20px !important;
+      line-height: 20px !important;
+      border: none !important;
+      outline: none !important;
+      box-shadow: none !important;
+      background: transparent !important;
+      color: #0f172a !important;
+      font-size: 12px !important;
+      font-weight: 700 !important;
+      text-align: right !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      box-sizing: border-box !important;
+      -moz-appearance: textfield !important;
+      font-family: inherit !important;
     }
     .tb-hours-input::-webkit-outer-spin-button,
     .tb-hours-input::-webkit-inner-spin-button {
-      -webkit-appearance: none;
-      margin: 0;
+      -webkit-appearance: none !important;
+      margin: 0 !important;
     }
     .tb-hours-unit {
       color: #64748b;
-      font-size: 11px;
-      font-weight: 700;
+      font-size: 12px;
+      font-weight: 600;
       user-select: none;
-      line-height: 1;
-      padding-bottom: 1px;
+      line-height: 20px;
+      height: 20px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0;
+      margin: 0;
     }
     .tb-hours-badge {
       display: inline-flex; align-items: center; justify-content: center;
@@ -1940,39 +1912,34 @@ function injectStyles() {
     .tb-monthly-log-overlay[data-tb-theme="dark"] .tb-monthly-total-summary .tb-total-days-val {
       color: #94a3b8 !important;
     }
-    :root[data-tb-theme="dark"] .tb-monthly-log-table tfoot td {
-      background: #0f172a;
-      border-top-color: #334155;
-      color: #f1f5f9;
+    :root[data-tb-theme="dark"] .tb-hours-input-wrapper,
+    .tb-monthly-log-overlay[data-tb-theme="dark"] .tb-hours-input-wrapper {
+      background: #0f172a !important;
+      border-color: #334155 !important;
     }
-    :root[data-tb-theme="dark"] .tb-cell-total-label {
-      color: #cbd5e1;
+    :root[data-tb-theme="dark"] .tb-hours-input-wrapper:hover,
+    .tb-monthly-log-overlay[data-tb-theme="dark"] .tb-hours-input-wrapper:hover {
+      border-color: #475569 !important;
     }
-    :root[data-tb-theme="dark"] .tb-cell-total-hours .tb-hours-total {
-      background: rgba(62, 91, 163, 0.25);
-      border-color: rgba(155, 180, 245, 0.3);
-      color: #9bb4f5;
+    :root[data-tb-theme="dark"] .tb-hours-input-wrapper:focus-within,
+    .tb-monthly-log-overlay[data-tb-theme="dark"] .tb-hours-input-wrapper:focus-within {
+      border-color: #3e5ba3 !important;
+      background: #0f172a !important;
+      box-shadow: 0 0 0 2px rgba(62, 91, 163, 0.3) !important;
     }
-    :root[data-tb-theme="dark"] .tb-cell-total-days {
-      color: #94a3b8;
+    :root[data-tb-theme="dark"] .tb-hours-input-wrapper .tb-hours-input,
+    .tb-monthly-log-overlay[data-tb-theme="dark"] .tb-hours-input-wrapper .tb-hours-input,
+    :root[data-tb-theme="dark"] .tb-hours-input,
+    .tb-monthly-log-overlay[data-tb-theme="dark"] .tb-hours-input {
+      color: #f8fafc !important;
+      background: transparent !important;
+      border: none !important;
+      outline: none !important;
+      box-shadow: none !important;
     }
-    :root[data-tb-theme="dark"] .tb-hours-input-wrapper {
-      background: #0f172a;
-      border-color: #334155;
-    }
-    :root[data-tb-theme="dark"] .tb-hours-input-wrapper:hover {
-      border-color: #475569;
-    }
-    :root[data-tb-theme="dark"] .tb-hours-input-wrapper:focus-within {
-      border-color: #3e5ba3;
-      background: #0f172a;
-      box-shadow: 0 0 0 2px rgba(62, 91, 163, 0.3);
-    }
-    :root[data-tb-theme="dark"] .tb-hours-input {
-      color: #f8fafc;
-    }
-    :root[data-tb-theme="dark"] .tb-hours-unit {
-      color: #94a3b8;
+    :root[data-tb-theme="dark"] .tb-hours-unit,
+    .tb-monthly-log-overlay[data-tb-theme="dark"] .tb-hours-unit {
+      color: #94a3b8 !important;
     }
     :root[data-tb-theme="dark"] .tb-modal-title,
     :root[data-tb-theme="dark"] .tb-monthly-log-header h2,

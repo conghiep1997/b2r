@@ -287,14 +287,8 @@ async function logTimeForMonth() {
               modalInstance.totalDaysVal.textContent = `(${totalDays} ${daysLabel})`;
               modalInstance.totalSummary.hidden = false;
             }
-            if (modalInstance.tableFooter) {
-              modalInstance.tableTotalHours.textContent = `∑ ${formattedHours}`;
-              modalInstance.tableTotalDays.textContent = `${totalDays} ${daysLabel}`;
-              modalInstance.tableFooter.hidden = false;
-            }
           } else {
             if (modalInstance.totalSummary) modalInstance.totalSummary.hidden = true;
-            if (modalInstance.tableFooter) modalInstance.tableFooter.hidden = true;
           }
 
           const blocked = previews.every(
@@ -410,6 +404,13 @@ async function logTimeForMonth() {
                 task.hours !== null && task.hours !== undefined ? String(task.hours) : "0";
               hoursInput.setAttribute("aria-label", reportMessage("report_edit_hours_tooltip"));
 
+              // Chỉ cho phép nhập số dương: chặn dấu trừ, dấu cộng và số mũ e/E
+              hoursInput.addEventListener("keydown", (e) => {
+                if (e.key === "-" || e.key === "+" || e.key === "e" || e.key === "E") {
+                  e.preventDefault();
+                }
+              });
+
               const hoursUnit = document.createElement("span");
               hoursUnit.className = "tb-hours-unit";
               hoursUnit.textContent = "h";
@@ -441,9 +442,13 @@ async function logTimeForMonth() {
             inputs.forEach((inputEl, taskIdx) => {
               const taskObj = preview.tasks[taskIdx];
               const onHourChange = () => {
-                const parsed = parseFloat(inputEl.value);
-                const validatedHours =
-                  isNaN(parsed) || parsed < 0 ? 0 : Math.round(parsed * 100) / 100;
+                let parsed = parseFloat(inputEl.value);
+                if (isNaN(parsed) || parsed < 0) {
+                  parsed = 0;
+                } else if (parsed > 24) {
+                  parsed = 24;
+                }
+                const validatedHours = Math.round(parsed * 100) / 100;
                 taskObj.customHours = validatedHours;
                 taskObj.hours = validatedHours;
                 const updated = planReportSync(
@@ -462,6 +467,16 @@ async function logTimeForMonth() {
               };
               inputEl.addEventListener("input", onHourChange);
               inputEl.addEventListener("change", onHourChange);
+              inputEl.addEventListener("blur", () => {
+                let parsed = parseFloat(inputEl.value);
+                if (isNaN(parsed) || parsed < 0) {
+                  parsed = 0;
+                } else if (parsed > 24) {
+                  parsed = 24;
+                }
+                const formatted = Math.round(parsed * 100) / 100;
+                inputEl.value = String(formatted);
+              });
             });
 
             taskCell.appendChild(taskList);
@@ -513,6 +528,7 @@ async function logTimeForMonth() {
         updateMonthTotals();
 
         if (previews.length === 0) {
+          copyButton.disabled = true;
           statusText.textContent = reportMessage("report_not_found");
           updateProgress(reportMessage("report_no_matching_issue"), "skip");
           const emptyRow = document.createElement("tr");
@@ -528,6 +544,9 @@ async function logTimeForMonth() {
           emptyRow.appendChild(emptyCell);
           resultBody.appendChild(emptyRow);
         } else {
+          copyButton.disabled = !previews.some((p) => p.tasks?.length);
+          copyButton.onclick = () => handlePreviewCopy(modalInstance);
+
           statusText.textContent = reportMessage("report_preview_complete", {
             count: previews.length,
           });
@@ -694,7 +713,6 @@ async function logTimeForMonth() {
       } = modalInstance;
       if (bulkActivityToolbar) bulkActivityToolbar.hidden = true;
       if (modalInstance.totalSummary) modalInstance.totalSummary.hidden = true;
-      if (modalInstance.tableFooter) modalInstance.tableFooter.hidden = true;
       startButton.disabled = true;
       startButton.textContent = reportMessage("report_logging_now");
       modalInstance.previewButton.disabled = true;
@@ -1010,27 +1028,11 @@ async function logTimeForMonth() {
               modalInstance.totalDaysVal.textContent = `(${loggedDays} ${daysLabel})`;
               modalInstance.totalSummary.hidden = false;
             }
-            if (modalInstance.tableFooter) {
-              modalInstance.tableTotalHours.textContent = `∑ ${formattedLoggedHours}`;
-              modalInstance.tableTotalDays.textContent = `${loggedDays} ${daysLabel}`;
-              modalInstance.tableFooter.hidden = false;
-            }
           }
         }
 
         copyButton.disabled = resultsForSheet.length === 0;
-        copyButton.onclick = () => {
-          const copyText = [...copyRowsByDate.values()].join("\n");
-          navigator.clipboard
-            .writeText(copyText)
-            .then(() => {
-              showToast(reportMessage("report_copied_tasks"), "success");
-            })
-            .catch(() => {
-              copyTextWithSelectionFallback(copyText);
-              showToast(reportMessage("report_copied_tasks"), "success");
-            });
-        };
+        copyButton.onclick = () => copyTasksToClipboard(copyRowsByDate);
 
         startButton.disabled = true;
         startButton.textContent = reportMessage("report_logged_button");
@@ -1205,6 +1207,35 @@ function copyTextWithSelectionFallback(text) {
   }
 }
 
+function copyTasksToClipboard(copyRowsByDate) {
+  const copyText = [...copyRowsByDate.values()].join("\n");
+  navigator.clipboard
+    .writeText(copyText)
+    .then(() => {
+      showToast(reportMessage("report_copied_tasks"), "success");
+    })
+    .catch(() => {
+      copyTextWithSelectionFallback(copyText);
+      showToast(reportMessage("report_copied_tasks"), "success");
+    });
+}
+
+function handlePreviewCopy(modalInstance) {
+  const { year, month } = modalInstance.getSelectedMonth();
+  const copyRows = createMonthlyCopyRows(year, month);
+  const previews = modalInstance.previewIssues || [];
+  for (const preview of previews) {
+    if (!preview.date || !preview.tasks?.length) continue;
+    const validTaskIds = preview.tasks
+      .filter((task) => !task.error && (task.hours === undefined || Number(task.hours) > 0))
+      .map((task) => `#${task.id}`);
+    if (validTaskIds.length) {
+      copyRows.set(preview.date, validTaskIds.join(","));
+    }
+  }
+  copyTasksToClipboard(copyRows);
+}
+
 function getLogResultStatusText(logResult) {
   if (logResult.synchronized) return reportSyncSummary(logResult);
   if (logResult.dayUpserted) {
@@ -1345,6 +1376,7 @@ function openMonthlyLogModal({
       ? "dark"
       : "light");
   overlay.setAttribute("data-tb-theme", initialResolvedTheme);
+  document.documentElement.dataset.tbTheme = initialResolvedTheme;
   try {
     chrome.storage?.local?.get?.(["themePreference"], (res) => {
       const pref = res?.themePreference || "system";
@@ -1440,15 +1472,6 @@ function openMonthlyLogModal({
                     </td>
                   </tr>
                 </tbody>
-                <tfoot id="tb-monthly-log-tfoot" hidden>
-                  <tr class="tb-monthly-log-total-row">
-                    <td colspan="2" class="tb-cell-total-label">${reportMessage("report_total_label")}</td>
-                    <td class="tb-cell-total-hours">
-                      <span class="tb-hours-total" id="tb-table-total-hours">0h</span>
-                    </td>
-                    <td class="tb-cell-total-days" id="tb-table-total-days">0</td>
-                  </tr>
-                </tfoot>
               </table>
             </div>
           </section>
@@ -1585,9 +1608,6 @@ function openMonthlyLogModal({
     totalSummary: overlay.querySelector("#tb-monthly-total-summary"),
     totalHoursVal: overlay.querySelector("#tb-total-hours-val"),
     totalDaysVal: overlay.querySelector("#tb-total-days-val"),
-    tableFooter: overlay.querySelector("#tb-monthly-log-tfoot"),
-    tableTotalHours: overlay.querySelector("#tb-table-total-hours"),
-    tableTotalDays: overlay.querySelector("#tb-table-total-days"),
     bulkActivityToolbar: overlay.querySelector("#tb-bulk-activity-toolbar"),
     bulkActivitySelect: overlay.querySelector("#tb-bulk-activity-select"),
     bulkActivityApply: overlay.querySelector("#tb-bulk-activity-apply"),
@@ -1601,7 +1621,6 @@ function openMonthlyLogModal({
     modalInstance.copyButton.disabled = true;
     if (modalInstance.bulkActivityToolbar) modalInstance.bulkActivityToolbar.hidden = true;
     if (modalInstance.totalSummary) modalInstance.totalSummary.hidden = true;
-    if (modalInstance.tableFooter) modalInstance.tableFooter.hidden = true;
     modalInstance.statusText.textContent = reportMessage("report_ready_to_scan");
     const readyProgress = document.createElement("div");
     readyProgress.className = "tb-monthly-log-progress-empty";
