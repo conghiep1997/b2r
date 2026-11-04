@@ -9,16 +9,8 @@
     "128": "assets/icons/icon-128.png"
   },
   "default_locale": "en",
-  "permissions": [
-    "storage",
-    "alarms",
-    "notifications",
-    "scripting"
-  ],
-  "optional_host_permissions": [
-    "http://*/*",
-    "https://*/*"
-  ],
+  "permissions": ["storage", "alarms", "notifications", "scripting"],
+  "optional_host_permissions": ["http://*/*", "https://*/*"],
   "host_permissions": [
     "*://*.backlog.com/*",
     "*://*.backlog.jp/*",
@@ -36,10 +28,7 @@
   },
   "content_scripts": [
     {
-      "matches": [
-        "*://*.backlog.com/*",
-        "*://*.backlog.jp/*"
-      ],
+      "matches": ["*://*.backlog.com/*", "*://*.backlog.jp/*"],
       "js": [
         "src/modules/constants/models.js",
         "src/modules/constants/icons.js",
@@ -60,9 +49,7 @@
       "run_at": "document_idle"
     },
     {
-      "matches": [
-        "https://redmine.splus-software.com/*"
-      ],
+      "matches": ["https://redmine.splus-software.com/*"],
       "js": [
         "src/modules/constants/models.js",
         "src/modules/constants/icons.js",
@@ -87,14 +74,8 @@
   "options_page": "src/options.html",
   "web_accessible_resources": [
     {
-      "resources": [
-        "_locales/*/messages.json"
-      ],
-      "matches": [
-        "*://*.backlog.com/*",
-        "*://*.backlog.jp/*",
-        "https://redmine.splus-software.com/*"
-      ]
+      "resources": ["_locales/*/messages.json"],
+      "matches": ["*://*.backlog.com/*", "*://*.backlog.jp/*", "https://redmine.splus-software.com/*"]
     }
   ],
   "action": {

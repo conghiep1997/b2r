@@ -2283,10 +2283,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       } else {
         icon.innerHTML = CLOSE_ICON_SVG;
         icon.style.color = "var(--danger)";
-        setStatus(
-          `❌ ${modelLabel}: ${result.message || om("options_unknown_error")}`,
-          true
-        );
+        setStatus(`❌ ${modelLabel}: ${result.message || om("options_unknown_error")}`, true);
       }
     } catch (e) {
       icon.innerHTML = CLOSE_ICON_SVG;

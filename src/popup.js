@@ -175,8 +175,7 @@ async function renderStatus() {
 
   const anyMissing = !primaryConfigured;
   const anyUnverified =
-    (redmineConfigured && !redmineVerified) ||
-    (backlogConfigured && !backlogVerified);
+    (redmineConfigured && !redmineVerified) || (backlogConfigured && !backlogVerified);
 
   const badgeElement = document.getElementById("statusBadge");
   badgeElement.classList.remove("ready", "warning", "error");
