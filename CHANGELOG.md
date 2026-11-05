@@ -1,5 +1,11 @@
 # Changelog - Backlog2Redmine
 
+## [1.8.28] - 2026-11-05
+- **✨ Added**: Enforce block-level line isolation and strict prompt rules for image (`[[TB_IMG:id]]`) and file attachment markers to preserve their exact relative placement across translation.
+- **🔧 Fixed**: Added automated recovery (`recoverMissingImageMarkers`) using ID-based matching to restore any image or file markers inadvertently dropped by AI models inside the translated content.
+- **📝 Docs**: Bumped version to 1.8.28.
+
+
 ## [1.8.27] - 2026-11-04
 - **✨ Added**: Added support for copying task IDs directly from monthly preview before time submission.
 - **🔧 Fixed**: Refined monthly log hours input layout, activity selector sizing, and dark mode theme attribute synchronization.

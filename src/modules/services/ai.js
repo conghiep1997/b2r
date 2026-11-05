@@ -215,7 +215,7 @@ async function translateText(
     selectedPrompt.translationLabel || languagePair.target.toUpperCase();
   configuredPrompt.includeOriginal = promptFn === TB.PROMPTS.USER;
   configuredPrompt.targetLanguage = selectedPrompt.translationLabel || languagePair.target;
-  let sourceText = cleanInputText;
+  let sourceText = isolateImageMarkers(cleanInputText);
   let restoreGlossary = (output) => output;
   if (globalThis.TB_GLOSSARY?.prepare && settings.currentProjectKey && !selectedPrompt.extract) {
     const prepared = await TB_GLOSSARY.prepare(
@@ -836,11 +836,7 @@ async function callGeminiAPI(
     throw new Error(TB.MESSAGES.GEMINI.EMPTY_TRANSLATION);
   }
 
-  const cleaned = extractCleanedTranslation(rawText);
-  if (promptFn.includeOriginal) {
-    return formatTranslation(commentText, cleaned, commentUrl, promptFn.targetLanguage);
-  }
-  return cleaned;
+  return finalizeTranslationOutput(rawText, commentText, commentUrl, promptFn);
 }
 
 function extractRetryAfterDelay(response) {
@@ -898,11 +894,7 @@ async function callCerebrasAPI(
     throw new Error("AI returned no content.");
   }
 
-  const cleaned = extractCleanedTranslation(rawText);
-  if (promptFn.includeOriginal) {
-    return formatTranslation(commentText, cleaned, commentUrl, promptFn.targetLanguage);
-  }
-  return cleaned;
+  return finalizeTranslationOutput(rawText, commentText, commentUrl, promptFn);
 }
 
 async function callGroqAPI(
@@ -950,11 +942,7 @@ async function callGroqAPI(
     throw new Error("AI returned no content.");
   }
 
-  const cleaned = extractCleanedTranslation(rawText);
-  if (promptFn.includeOriginal) {
-    return formatTranslation(commentText, cleaned, commentUrl, promptFn.targetLanguage);
-  }
-  return cleaned;
+  return finalizeTranslationOutput(rawText, commentText, commentUrl, promptFn);
 }
 
 async function callOpenRouterAPI(
@@ -1003,11 +991,7 @@ async function callOpenRouterAPI(
     throw new Error("AI returned no content.");
   }
 
-  const cleaned = extractCleanedTranslation(rawText);
-  if (promptFn.includeOriginal) {
-    return formatTranslation(commentText, cleaned, commentUrl, promptFn.targetLanguage);
-  }
-  return cleaned;
+  return finalizeTranslationOutput(rawText, commentText, commentUrl, promptFn);
 }
 
 function assertCompleteTranslation(finishReason) {
@@ -1187,7 +1171,78 @@ function fixMangledMarkers(text) {
     "[[TB_FILE:$1:$2]]"
   );
 
+  // 8. Ensure markers stay isolated on their own line blocks
+  result = isolateImageMarkers(result);
+
   return result;
+}
+
+/**
+ * Isolates image and file markers onto their own line blocks with empty lines around them.
+ * This prevents LLM from treating markers as inline words and shifting them during grammar translation.
+ * @param {string} text
+ * @returns {string}
+ */
+function isolateImageMarkers(text) {
+  if (!text) return "";
+  return text
+    .replace(/([^\n])\s*(\[\[TB_(?:IMG|FILE):[^\]]+\]\])/gi, "$1\n\n$2")
+    .replace(/(\[\[TB_(?:IMG|FILE):[^\]]+\]\])\s*([^\n])/gi, "$1\n\n$2");
+}
+
+/**
+ * Recovers any image/file markers present in the original text that were dropped by the AI.
+ * Uses ID matching so variations in spacing or file labels don't cause duplicate markers.
+ * @param {string} originalText
+ * @param {string} translatedText
+ * @returns {string}
+ */
+function recoverMissingImageMarkers(originalText, translatedText) {
+  if (!originalText || !translatedText) return translatedText;
+  const imgMatches = Array.from(originalText.matchAll(/\[\[TB_IMG:\s*(\d+)\s*\]\]/gi));
+  const fileMatches = Array.from(
+    originalText.matchAll(/\[\[TB_FILE:\s*(\d+)\s*:\s*([^\]]+?)\s*\]\]/gi)
+  );
+
+  if (imgMatches.length === 0 && fileMatches.length === 0) return translatedText;
+
+  let result = translatedText;
+
+  for (const match of imgMatches) {
+    const id = match[1];
+    const existsPattern = new RegExp(`\\[\\[TB_IMG:\\s*${id}\\s*\\]\\]`, "i");
+    if (!existsPattern.test(result)) {
+      result = `${result.trimEnd()}\n\n[[TB_IMG:${id}]]\n`;
+    }
+  }
+
+  for (const match of fileMatches) {
+    const id = match[1];
+    const filename = match[2].trim();
+    const existsPattern = new RegExp(`\\[\\[TB_FILE:\\s*${id}\\s*:[^\\]]+\\]\\]`, "i");
+    if (!existsPattern.test(result)) {
+      result = `${result.trimEnd()}\n\n[[TB_FILE:${id}:${filename}]]\n`;
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Normalizes, recovers dropped markers, and formats final translation output.
+ * @param {string} rawText - Raw provider output
+ * @param {string} commentText - Source text input
+ * @param {string|null} commentUrl - Optional comment URL
+ * @param {object} promptFn - Prompt configuration
+ * @returns {string}
+ */
+function finalizeTranslationOutput(rawText, commentText, commentUrl, promptFn) {
+  const cleaned = extractCleanedTranslation(rawText);
+  const recovered = recoverMissingImageMarkers(commentText, cleaned);
+  if (promptFn?.includeOriginal) {
+    return formatTranslation(commentText, recovered, commentUrl, promptFn.targetLanguage);
+  }
+  return recovered;
 }
 
 function formatTranslation(originalText, cleanedText, commentUrl = null, targetLanguage = "vi") {

@@ -118,7 +118,7 @@ ${text}
         ? `Extract only original ${ENGLISH_LANGUAGE_NAMES[target]} passages from the input. Do not translate or paraphrase.`
         : `Translate from ${ENGLISH_LANGUAGE_NAMES[source]} into ${ENGLISH_LANGUAGE_NAMES[target]}.`;
     const builder = (text = "") => `${instruction}\n[BẮT ĐẦU]\n${text}\n[KẾT THÚC]`;
-    builder.system = `Translate from ${ENGLISH_LANGUAGE_NAMES[source]} into ${ENGLISH_LANGUAGE_NAMES[target]}. Preserve markup, URLs, identifiers and placeholders exactly. Return only the translated content.`;
+    builder.system = `Translate from ${ENGLISH_LANGUAGE_NAMES[source]} into ${ENGLISH_LANGUAGE_NAMES[target]}. Preserve markup, URLs, identifiers, placeholders, and the exact line placement and relative order of [[TB_IMG:id]] and [[TB_FILE:...]] image/file markers without moving them. Return only the translated content.`;
     if (reverse && rules.reverseMode === "extract") {
       builder.system = `Extract only original ${ENGLISH_LANGUAGE_NAMES[target]} passages from the input. Do not translate or paraphrase. Preserve markup and placeholders.`;
       builder.extract = true;
@@ -147,6 +147,7 @@ ${text}
     SYSTEM: `Thực hiện yêu cầu dịch hoặc trích xuất theo ngôn ngữ trong lời nhắc. Chỉ trả về <result>...</result>. Không giải thích/chào hỏi.
 
 Giữ nguyên 100%: @mention (không bọc link Markdown/HTML), URL, số, markdown/HTML (<u>, <span style>, <mark>), code (\`\`\`/\`), [[TB_IMG:id]], [[TB_FILE:id:name]], !file.ext!, placeholder kiểu <flow_guide_id> / <id> (giữ nguyên ký tự <>, tuyệt đối không HTML-escape thành &lt; &gt;).
+Vị trí hình ảnh/tệp đính kèm: Các marker [[TB_IMG:id]] và [[TB_FILE:id:name]] là các khối phân cách cố định, phải giữ nguyên trên dòng riêng biệt và đúng vị trí tương đối giữa các đoạn văn bản (tuyệt đối không di chuyển lên đầu, xuống cuối hay gộp chung các ảnh lại).
 Không tóm tắt, không bỏ câu, không đổi marker/code.
 Thuật ngữ kỹ thuật thông dụng giữ tiếng Anh.
 Với tên chức năng khó hiểu, giữ tên gốc rồi thêm bản dịch trong ngoặc.

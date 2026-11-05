@@ -4,6 +4,11 @@ Tất cả các thay đổi đáng chú ý của dự án Backlog2Redmine (B2R) 
 Định dạng dựa trên [Keep a Changelog](https://keepachangelog.com/).
 (Bản tiếng Anh chính thức: [CHANGELOG.md](./CHANGELOG.md))
 
+## [1.8.28] - 2026-11-05
+- **✨ Thêm mới**: Tách biệt marker hình ảnh (`[[TB_IMG:id]]`) và tệp đính kèm thành khối dòng riêng biệt kết hợp tăng cường system prompt nhằm giữ chuẩn xác 100% vị trí ảnh trước và sau khi dịch comment.
+- **🔧 Sửa lỗi**: Bổ sung cơ chế tự động đối soát và khôi phục marker theo ID (`recoverMissingImageMarkers`) ngăn ngừa trường hợp AI vô tình lược bỏ ảnh trong nội dung dịch.
+- **📝 Tài liệu**: Nâng phiên bản lên 1.8.28.
+
 ## [1.8.27] - 2026-11-04
 - **✨ Thêm mới**: Hỗ trợ sao chép danh sách task ID trực tiếp từ bản preview hàng tháng trước khi gửi log time.
 - **🔧 Sửa lỗi**: Căn chỉnh lại giao diện ô nhập giờ hàng tháng, kích thước bộ chọn hoạt động và đồng bộ thuộc tính theme dark mode.

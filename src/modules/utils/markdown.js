@@ -342,7 +342,13 @@ function extractBacklogContent(element) {
         if (node.classList.contains("loom-internal-image") || src.includes("ViewAttachmentImage")) {
           const match = src.match(/attachmentId=(\d+)/);
           if (match) {
-            result += ` [[TB_IMG:${match[1]}]] `;
+            const prefix =
+              result.length > 0 && !result.endsWith("\n\n")
+                ? result.endsWith("\n")
+                  ? "\n"
+                  : "\n\n"
+                : "";
+            result += `${prefix}[[TB_IMG:${match[1]}]]\n\n`;
           }
         } else {
           result += `![${alt}](${src}) `;
