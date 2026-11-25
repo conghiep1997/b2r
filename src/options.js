@@ -8,6 +8,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   let cachedProjects = null;
   let cachedProjectsFingerprint = "";
   let cacheTimestamp = 0;
+  let projectProfilesLoadFailed = false;
+  let policyLoadWarnings = [];
   const CACHE_DURATION = 5 * 60 * 1000;
   const DEFAULT_MANUAL_FIELDS = {
     Severity: 46,
@@ -50,6 +52,40 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function om(key, fallback = key) {
     return optionsMessages[key]?.message || fallback;
+  }
+
+  function normalizeWithFallback(label, normalize, value, fallback, warnings = null) {
+    try {
+      return normalize(value);
+    } catch (error) {
+      console.warn(`[OPTIONS] Invalid ${label}; using defaults:`, error);
+      warnings?.push(`Đã dùng mặc định cho ${label} vì dữ liệu không hợp lệ.`);
+      return fallback();
+    }
+  }
+
+  function normalizeTranslationRulesForOptions(value) {
+    const defaults = TB.PROMPTS.TRANSLATION.defaults;
+    const languages = TB.PROMPTS.TRANSLATION.languages;
+    const candidate = {
+      ...defaults,
+      ...(value && typeof value === "object" && !Array.isArray(value) ? value : {}),
+    };
+    for (const field of ["source", "target", "reverseSource", "reverseTarget"]) {
+      if (
+        !Object.hasOwn(languages, candidate[field]) ||
+        (field !== "source" && candidate[field] === "auto")
+      ) {
+        candidate[field] = defaults[field];
+      }
+    }
+    if (!["extract", "translate", "original"].includes(candidate.reverseMode)) {
+      candidate.reverseMode = defaults.reverseMode;
+    }
+    if (!["technical", "formal", "concise"].includes(candidate.tone)) {
+      candidate.tone = defaults.tone;
+    }
+    return TB.PROMPTS.TRANSLATION.normalize(candidate);
   }
 
   function escapeHtml(value) {
@@ -616,6 +652,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     const refreshBtn = document.getElementById("refreshRetryQueueBtn");
     if (!listContainer) return;
 
+    async function sendQueueMessage(message) {
+      const response = await chrome.runtime.sendMessage(message);
+      if (!response?.ok) {
+        throw new Error(response?.error || "Retry queue request failed.");
+      }
+      return response.data;
+    }
+
     function setQueueStatus(msg, isError = false) {
       if (statusElem) {
         statusElem.textContent = msg;
@@ -630,7 +674,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     async function refreshQueue() {
       try {
-        const queue = (await chrome.runtime.sendMessage({ type: "GET_RETRY_QUEUE" })) || [];
+        const result = await sendQueueMessage({ type: "GET_RETRY_QUEUE" });
+        const queue = Array.isArray(result) ? result : [];
         listContainer.replaceChildren();
 
         if (emptyNotice) {
@@ -676,7 +721,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             retryBtn.disabled = true;
             retryBtn.textContent = "⏳...";
             try {
-              await chrome.runtime.sendMessage({ type: "PROCESS_RETRY_ITEM", itemId: item.id });
+              await sendQueueMessage({ type: "PROCESS_RETRY_ITEM", itemId: item.id });
               setQueueStatus(`✓ Đã gửi lại thành công: ${item.label}`);
               await refreshQueue();
             } catch (err) {
@@ -690,7 +735,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           removeBtn.className = "secondary";
           removeBtn.textContent = om("options_remove_item", "Xóa");
           removeBtn.addEventListener("click", async () => {
-            await chrome.runtime.sendMessage({ type: "REMOVE_RETRY_ITEM", itemId: item.id });
+            await sendQueueMessage({ type: "REMOVE_RETRY_ITEM", itemId: item.id });
             await refreshQueue();
           });
 
@@ -708,7 +753,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const originalText = retryAllBtn.textContent;
       retryAllBtn.textContent = "⏳ Đang gửi lại…";
       try {
-        const result = await chrome.runtime.sendMessage({ type: "PROCESS_RETRY_ALL" });
+        const result = await sendQueueMessage({ type: "PROCESS_RETRY_ALL" });
         const resText = om(
           "options_retry_all_result",
           "Đã xử lý hàng đợi: $success$ thành công, $failed$ thất bại."
@@ -727,7 +772,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     clearBtn?.addEventListener("click", async () => {
       if (!confirm(om("options_confirm_clear_queue", "Xóa toàn bộ hàng đợi thử lại?"))) return;
-      await chrome.runtime.sendMessage({ type: "CLEAR_RETRY_QUEUE" });
+      await sendQueueMessage({ type: "CLEAR_RETRY_QUEUE" });
       setQueueStatus("Đã xóa sạch hàng đợi thử lại.");
       await refreshQueue();
     });
@@ -1018,22 +1063,8 @@ document.addEventListener("DOMContentLoaded", async () => {
           `${om("options_redmine_permission_required", "Redmine host permission required")}: ${error.message}`
         );
       }
-      const settings = await gatherSettings();
+      const { settings, warnings } = await gatherSettings();
       settings.redmineDomain = domainChange.currentDomain;
-      await chrome.storage.local.set(settings);
-      try {
-        await applyRedmineRegistration(domainChange.currentDomain);
-      } catch (registrationError) {
-        const rollbackDomain = domainChange.previousDomain || TB.REDMINE_DOMAIN;
-        await chrome.storage.local.set({ redmineDomain: rollbackDomain });
-        await applyRedmineRegistration(rollbackDomain);
-        throw registrationError;
-      }
-      await removePreviousRedminePermission(
-        domainChange.previousDomain,
-        domainChange.currentDomain
-      );
-
       const provider = primaryProviderSelect.value;
       const primaryKey =
         provider === "gemini" ? getFirstGeminiKey() : getProviderKeys("primary", provider)[0];
@@ -1041,11 +1072,64 @@ document.addEventListener("DOMContentLoaded", async () => {
         getSelectedModelsForProvider("primary", provider)[0] || getDefaultModel(provider);
       const aiKeys = provider === "gemini" ? getGeminiKeys() : primaryKey;
       if (primaryKey) {
-        const aiFp = await verificationFingerprint([provider, modelId, aiKeys]);
-        await chrome.storage.local.set({ aiConnectionVerified: aiFp });
+        settings.aiConnectionVerified = await verificationFingerprint([provider, modelId, aiKeys]);
       }
 
-      setStatus(om("options_save_success", "✅ Đã lưu cấu hình thành công!"));
+      try {
+        await applyRedmineRegistration(domainChange.currentDomain, { inject: false });
+      } catch (registrationError) {
+        const rollbackDomain = domainChange.previousDomain || TB.REDMINE_DOMAIN;
+        try {
+          await applyRedmineRegistration(rollbackDomain, { inject: false });
+        } catch (rollbackError) {
+          console.error(
+            "[OPTIONS] Could not restore previous Redmine registration:",
+            rollbackError
+          );
+        }
+        throw registrationError;
+      }
+
+      try {
+        await chrome.storage.local.set(settings);
+      } catch (storageError) {
+        const rollbackDomain = domainChange.previousDomain || TB.REDMINE_DOMAIN;
+        try {
+          await applyRedmineRegistration(rollbackDomain, { inject: false });
+        } catch (rollbackError) {
+          console.error(
+            "[OPTIONS] Could not restore previous Redmine registration:",
+            rollbackError
+          );
+        }
+        throw storageError;
+      }
+
+      if (!TB_REDMINE_DOMAIN.isDefault(domainChange.currentDomain, TB.REDMINE_DOMAIN)) {
+        await injectIntoOpenRedmineTabs(
+          TB_REDMINE_DOMAIN.toMatchPattern(domainChange.currentDomain)
+        );
+      }
+      try {
+        await removePreviousRedminePermission(
+          domainChange.previousDomain,
+          domainChange.currentDomain
+        );
+      } catch (permissionError) {
+        console.warn(
+          "[OPTIONS] Could not remove the previous Redmine permission:",
+          permissionError
+        );
+        warnings.push("Không thể thu hồi quyền truy cập domain Redmine cũ.");
+      }
+      projectProfilesLoadFailed = false;
+      policyLoadWarnings = [];
+
+      const successMessage = om("options_save_success", "✅ Đã lưu cấu hình thành công!");
+      setStatus(
+        warnings.length ? `${successMessage}\n⚠️ ${warnings.join("\n⚠️ ")}` : successMessage,
+        warnings.length > 0
+      );
       const defaultSaveIconSvg =
         '<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" aria-hidden="true"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>';
       if (saveIcon) saveIcon.textContent = "✓";
@@ -1110,50 +1194,97 @@ document.addEventListener("DOMContentLoaded", async () => {
       showRedmineSuccessModal: showRedmineSuccessModalInput?.checked !== false,
       enableTranslationCache: document.getElementById("enableTranslationCache")?.checked !== false,
     };
-    const globalPolicy = TB_OPTIONS_PROJECT_PROFILES.readGlobal();
-    const projectProfiles = TB_OPTIONS_PROJECT_PROFILES.readProfiles();
+    const savedPolicy = await chrome.storage.local.get([
+      "syncRules",
+      "translationRules",
+      "logTimeRules",
+      "customFields",
+      "manualFields",
+      "projectProfiles",
+    ]);
+    const warnings = [...policyLoadWarnings];
+    let globalPolicy;
+    try {
+      globalPolicy = TB_OPTIONS_PROJECT_PROFILES.readGlobal();
+    } catch (policyError) {
+      console.warn("[OPTIONS] Error reading global policy:", policyError);
+      warnings.push(`Các policy chưa lưu do dữ liệu không hợp lệ: ${policyError.message}`);
+      globalPolicy = {
+        syncRules: normalizeWithFallback(
+          "sync rules",
+          TB_SYNC_RULES.normalize,
+          savedPolicy.syncRules,
+          () => TB_SYNC_RULES.normalize(),
+          warnings
+        ),
+        translationRules: normalizeWithFallback(
+          "translation rules",
+          TB.PROMPTS.TRANSLATION.normalize,
+          savedPolicy.translationRules || {
+            source: savedPolicy.translationSourceLanguage,
+            target: savedPolicy.translationTargetLanguage,
+          },
+          () => normalizeTranslationRulesForOptions(savedPolicy.translationRules),
+          warnings
+        ),
+        logTimeRules: normalizeWithFallback(
+          "log-time rules",
+          TB_LOG_TIME_RULES.normalize,
+          savedPolicy.logTimeRules,
+          () => TB_LOG_TIME_RULES.normalize(),
+          warnings
+        ),
+        customFields: normalizeWithFallback(
+          "custom fields",
+          TB_CUSTOM_FIELDS.normalize,
+          savedPolicy.customFields,
+          () => null,
+          warnings
+        ),
+        manualFields: savedPolicy.manualFields || "{}",
+      };
+    }
     settings.syncRules = globalPolicy.syncRules;
     settings.translationRules = globalPolicy.translationRules;
-    settings.translationSourceLanguage = globalPolicy.translationRules.source;
-    settings.translationTargetLanguage = globalPolicy.translationRules.target;
+    settings.translationSourceLanguage =
+      globalPolicy.translationRules.source || TB.PROMPTS.TRANSLATION.defaults.source;
+    settings.translationTargetLanguage =
+      globalPolicy.translationRules.target || TB.PROMPTS.TRANSLATION.defaults.target;
     settings.logTimeRules = globalPolicy.logTimeRules;
     settings.customFields = globalPolicy.customFields;
     settings.manualFields = globalPolicy.manualFields;
-    settings.projectProfiles = await encryptData(JSON.stringify(projectProfiles));
 
+    let projectProfiles;
     try {
-      const validatedGlobalPolicy = TB_OPTIONS_PROJECT_PROFILES.readGlobal();
-      if (validatedGlobalPolicy) {
-        if (validatedGlobalPolicy.syncRules) {
-          settings.syncRules = validatedGlobalPolicy.syncRules;
-        }
-        if (validatedGlobalPolicy.translationRules) {
-          settings.translationRules = validatedGlobalPolicy.translationRules;
-          settings.translationSourceLanguage = validatedGlobalPolicy.translationRules.source;
-          settings.translationTargetLanguage = validatedGlobalPolicy.translationRules.target;
-        }
-        if (validatedGlobalPolicy.logTimeRules) {
-          settings.logTimeRules = validatedGlobalPolicy.logTimeRules;
-        }
-        if (validatedGlobalPolicy.customFields) {
-          settings.customFields = validatedGlobalPolicy.customFields;
-        }
-        if (validatedGlobalPolicy.manualFields) {
-          settings.manualFields = validatedGlobalPolicy.manualFields;
-        }
+      if (projectProfilesLoadFailed) {
+        throw new Error("Saved project profiles could not be loaded.");
       }
-    } catch (policyError) {
-      console.warn("[OPTIONS] Error reading global policy:", policyError);
-    }
-
-    try {
-      const validatedProjectProfiles = TB_OPTIONS_PROJECT_PROFILES.readProfiles();
-      if (validatedProjectProfiles) {
-        settings.projectProfiles = await encryptData(JSON.stringify(validatedProjectProfiles));
-      }
+      projectProfiles = TB_OPTIONS_PROJECT_PROFILES.readProfiles();
     } catch (profileError) {
       console.warn("[OPTIONS] Error reading project profiles:", profileError);
+      warnings.push(
+        projectProfilesLoadFailed
+          ? "Cấu hình dự án không tải được; đang khôi phục bản đã lưu nếu hợp lệ."
+          : `Cấu hình dự án chưa lưu: ${profileError.message}`
+      );
+      try {
+        const saved = savedPolicy.projectProfiles
+          ? JSON.parse(await decryptData(savedPolicy.projectProfiles))
+          : [];
+        projectProfiles = globalThis.TB_PROJECT_PROFILES.normalize(saved, {
+          backlogDomain: settings.backlogDomain,
+          redmineDomain: settings.redmineDomain,
+        });
+      } catch (savedProfileError) {
+        console.warn(
+          "[OPTIONS] Invalid saved project profiles; resetting them:",
+          savedProfileError
+        );
+        warnings.push("Cấu hình dự án đã lưu không hợp lệ và được đặt lại rỗng.");
+        projectProfiles = [];
+      }
     }
+    settings.projectProfiles = await encryptData(JSON.stringify(projectProfiles));
 
     await Promise.all([
       handleApiKeyUpdate(settings, "redmineApiKey", redmineApiKeyInput),
@@ -1242,7 +1373,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       settings.geminiApiKey = storedGemini.geminiApiKey || "";
     }
 
-    return settings;
+    return { settings, warnings };
   }
 
   function normalizeManualFields(storedValue) {
@@ -1281,7 +1412,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
   }
 
-  async function applyRedmineRegistration(domain) {
+  async function applyRedmineRegistration(domain, { inject = true } = {}) {
     await unregisterCustomRedmineScript();
     if (TB_REDMINE_DOMAIN.isDefault(domain, TB.REDMINE_DOMAIN)) return;
 
@@ -1295,7 +1426,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         persistAcrossSessions: true,
       },
     ]);
-    await injectIntoOpenRedmineTabs(originPattern);
+    if (inject) await injectIntoOpenRedmineTabs(originPattern);
   }
 
   async function injectIntoOpenRedmineTabs(originPattern) {
@@ -1414,28 +1545,60 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     chrome.storage.local.get(keys, async (items) => {
       const languagePair = TB.PROMPTS.resolveLanguagePair(items);
-      const translationRules = TB.PROMPTS.TRANSLATION.normalize(
-        items.translationRules || { source: languagePair.source, target: languagePair.target }
+      const recoveredPolicyWarnings = [];
+      const translationRules = normalizeWithFallback(
+        "translation rules",
+        TB.PROMPTS.TRANSLATION.normalize,
+        items.translationRules || { source: languagePair.source, target: languagePair.target },
+        () => normalizeTranslationRulesForOptions(items.translationRules),
+        recoveredPolicyWarnings
       );
       document.getElementById("redmineDomain").value = items.redmineDomain || TB.REDMINE_DOMAIN;
       document.getElementById("backlogDomain").value = items.backlogDomain || TB.BACKLOG_DOMAIN;
       document.getElementById("manualFields").value = normalizeManualFields(items.manualFields);
       const policy = {
-        syncRules: TB_SYNC_RULES.normalize(items.syncRules),
+        syncRules: normalizeWithFallback(
+          "sync rules",
+          TB_SYNC_RULES.normalize,
+          items.syncRules,
+          () => TB_SYNC_RULES.normalize(),
+          recoveredPolicyWarnings
+        ),
         translationRules,
-        logTimeRules: TB_LOG_TIME_RULES.normalize(items.logTimeRules),
+        logTimeRules: normalizeWithFallback(
+          "log-time rules",
+          TB_LOG_TIME_RULES.normalize,
+          items.logTimeRules,
+          () => TB_LOG_TIME_RULES.normalize(),
+          recoveredPolicyWarnings
+        ),
         manualFields: normalizeManualFields(items.manualFields),
-        customFields: TB_CUSTOM_FIELDS.normalize(items.customFields),
+        customFields: normalizeWithFallback(
+          "custom fields",
+          TB_CUSTOM_FIELDS.normalize,
+          items.customFields,
+          () => null,
+          recoveredPolicyWarnings
+        ),
       };
+      policyLoadWarnings = recoveredPolicyWarnings;
       let projectProfiles = [];
+      projectProfilesLoadFailed = false;
       if (items.projectProfiles) {
         try {
           projectProfiles = JSON.parse(await decryptData(items.projectProfiles));
         } catch (error) {
           console.warn("[OPTIONS] Saved project profiles could not be loaded:", error.message);
+          projectProfilesLoadFailed = true;
         }
       }
-      TB_OPTIONS_PROJECT_PROFILES.load(projectProfiles, policy);
+      try {
+        TB_OPTIONS_PROJECT_PROFILES.load(projectProfiles, policy);
+      } catch (error) {
+        console.warn("[OPTIONS] Saved project profiles are invalid:", error);
+        projectProfilesLoadFailed = true;
+        TB_OPTIONS_PROJECT_PROFILES.load([], policy);
+      }
       if (showRedmineSuccessModalInput) {
         showRedmineSuccessModalInput.checked = items.showRedmineSuccessModal !== false;
       }

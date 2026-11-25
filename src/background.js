@@ -2,6 +2,7 @@
  * Service Worker Entry Point for Backlog2Redmine Extension.
  * Loads modules and coordinates message handling between content scripts and external APIs.
  */
+/* global getIssueDetails */
 
 /* global TB_LOGGER, TB_SYNC_ACTIVITY, TB_SYNC_STATE, TB_COMMENT_SYNC, TB_MIGRATION, TB_PROJECT_PROFILES, TB_GLOSSARY, TB_SYNC_RULES, TB_LOG_TIME_RULES, TB_CUSTOM_FIELDS, TB_RETRY_QUEUE, getUserStorageId, getBacklogIssueInfo, getBacklogUsers, testModelAvailability, deleteTimeEntry, updateTimeEntry */
 
@@ -1122,16 +1123,37 @@ async function handleRedmineAuthorizedFetch(settings, msg) {
   if (method === "PUT" && /^\/time_entries\/\d+\.json$/.test(msg.path)) {
     const body = JSON.parse(msg.body || "null")?.time_entry;
     const approval = msg.mutationApproval;
+    const approvedDate = new Date(`${approval?.date || ""}T00:00:00Z`);
     if (
       !body ||
       !approval ||
+      (!/^\d+$/.test(String(approval.reportId)) &&
+        String(approval.reportId) !== `auto-${approval.date}`) ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(approval.date || "") ||
+      !Number.isFinite(approvedDate.getTime()) ||
+      approvedDate.toISOString().slice(0, 10) !== approval.date ||
       String(body.issue_id) !== String(approval.targetIssueId) ||
       body.spent_on !== approval.date ||
-      body.comments !== `[B2R report:${approval.reportId}]` ||
+      !isBackgroundAllowedTimeEntrySource(approval.reportId, approval.source) ||
+      (body.comments !== undefined && body.comments !== "") ||
       !Number.isFinite(Number(body.hours)) ||
       Number(body.hours) < 0
     ) {
       throw new Error("Time-entry update does not match the approved plan.");
+    }
+    if (/^\d+$/.test(String(approval.reportId))) {
+      const report = await getIssueDetails(
+        settings.redmineDomain,
+        settings.redmineApiKey,
+        approval.reportId
+      );
+      const match = report?.subject?.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
+      const reportDate = match
+        ? `${match[1]}-${String(Number(match[2])).padStart(2, "0")}-${String(Number(match[3])).padStart(2, "0")}`
+        : "";
+      if (reportDate !== approval.date) {
+        throw new Error("Time-entry update does not match the approved report date.");
+      }
     }
     await updateTimeEntry(
       settings.redmineDomain,
@@ -1210,6 +1232,12 @@ function assertAllowedRedmineAuthorizedPath(path) {
   if (!allowed.some((pattern) => pattern.test(pathname))) {
     throw new Error("Unsupported Redmine path.");
   }
+}
+
+function isBackgroundAllowedTimeEntrySource(reportId, source) {
+  return /^\d+$/.test(String(reportId))
+    ? ["daily-report", "legacy-selected"].includes(source)
+    : ["fallback-project", "fallback-all", "legacy-selected"].includes(source);
 }
 function getSenderScope(sender) {
   const senderUrl = sender?.tab?.url || sender?.url || "";

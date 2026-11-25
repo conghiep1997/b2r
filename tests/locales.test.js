@@ -17,6 +17,16 @@ test("Chrome locale catalogs declare every named placeholder", () => {
   }
 });
 
+test("monthly scan filter label exists in Vietnamese and English", () => {
+  const catalogs = ["en", "vi"].map((locale) =>
+    JSON.parse(fs.readFileSync(`_locales/${locale}/messages.json`, "utf8"))
+  );
+  assert.ok(catalogs.every((catalog) => catalog.report_only_dates_without_spent_time?.message));
+  assert.ok(catalogs.every((catalog) => catalog.report_sync_legacy?.message));
+  assert.ok(catalogs.every((catalog) => catalog.report_sync_hint?.message));
+  assert.ok(catalogs.every((catalog) => catalog.report_select_legacy_entries?.message));
+});
+
 test("new Vietnamese recovery labels preserve accented UTF-8 text", () => {
   const messages = JSON.parse(fs.readFileSync("_locales/vi/messages.json", "utf8"));
   assert.equal(messages.recovery_title.message, "Khôi phục migration và mapping issue");

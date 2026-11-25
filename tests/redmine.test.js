@@ -62,6 +62,88 @@ test("time-entry reads consume every page before returning data to report workfl
   assert.match(calls[1], /user_id=7/);
 });
 
+test("findAllIssues reports when the scan limit would return a partial result", async () => {
+  const context = vm.createContext({ URLSearchParams });
+  vm.runInContext(source, context);
+  const calls = [];
+  context.redmineAuthorizedFetch = async (_domain, _key, requestPath) => {
+    calls.push(requestPath);
+    const offset = Number(new URL(requestPath, "https://redmine.test").searchParams.get("offset"));
+    return {
+      ok: true,
+      json: async () => ({
+        issues: Array.from({ length: 100 }, (_, index) => ({ id: offset + index || 1 })),
+        total_count: 1500,
+      }),
+    };
+  };
+  await assert.rejects(
+    context.findAllIssues("https://redmine.test", "", { assigned_to_id: 7 }),
+    /1,000 issue scan limit/
+  );
+  assert.equal(calls.length, 10);
+});
+
+test("findAllIssues keeps paging when Redmine omits total_count", async () => {
+  const context = vm.createContext({ URLSearchParams });
+  vm.runInContext(source, context);
+  const calls = [];
+  context.redmineAuthorizedFetch = async (_domain, _key, requestPath) => {
+    calls.push(requestPath);
+    const offset = Number(new URL(requestPath, "https://redmine.test").searchParams.get("offset"));
+    const count = offset < 200 ? 100 : 50;
+    return {
+      ok: true,
+      json: async () => ({
+        issues: Array.from({ length: count }, (_, index) => ({ id: offset + index + 1 })),
+      }),
+    };
+  };
+  const issues = await context.findAllIssues("https://redmine.test", "", { assigned_to_id: 7 });
+  assert.equal(calls.length, 3);
+  assert.equal(issues.length, 250);
+});
+
+test("findAllIssues deduplicates overlapping issue pages", async () => {
+  const context = vm.createContext({ URLSearchParams });
+  vm.runInContext(source, context);
+  context.redmineAuthorizedFetch = async (_domain, _key, requestPath) => {
+    const offset = Number(new URL(requestPath, "https://redmine.test").searchParams.get("offset"));
+    return {
+      ok: true,
+      json: async () => ({
+        issues:
+          offset === 0
+            ? [...Array.from({ length: 100 }, (_, id) => ({ id: id + 1 }))]
+            : [{ id: 100 }, { id: 101 }],
+        total_count: offset === 0 ? 101 : 101,
+      }),
+    };
+  };
+  const issues = await context.findAllIssues("https://redmine.test", "", {});
+  assert.equal(issues.length, 101);
+  assert.equal(new Set(issues.map((issue) => issue.id)).size, 101);
+});
+
+test("findAllIssues rejects an early empty page when total_count proves results were truncated", async () => {
+  const context = vm.createContext({ URLSearchParams });
+  vm.runInContext(source, context);
+  context.redmineAuthorizedFetch = async (_domain, _key, requestPath) => {
+    const offset = Number(new URL(requestPath, "https://redmine.test").searchParams.get("offset"));
+    return {
+      ok: true,
+      json: async () => ({
+        issues: offset === 0 ? Array.from({ length: 100 }, (_, id) => ({ id: id + 1 })) : [],
+        total_count: 150,
+      }),
+    };
+  };
+  await assert.rejects(
+    context.findAllIssues("https://redmine.test", "", {}),
+    /incomplete issue list/
+  );
+});
+
 test("time-entry reads reject incomplete or repeated pages instead of returning a partial list", async () => {
   for (const secondPage of [[], [{ id: 1 }]]) {
     const context = vm.createContext({ URLSearchParams });

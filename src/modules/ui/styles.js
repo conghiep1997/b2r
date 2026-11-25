@@ -604,6 +604,32 @@ function injectStyles() {
       gap: 10px;
       flex-wrap: wrap;
     }
+    .tb-monthly-log-scan-filter {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 9px;
+      border: 1px solid #dbe2ea;
+      border-radius: 8px;
+      background: #f8fafc;
+      color: #475569;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.25;
+    }
+    .tb-monthly-log-scan-filter input {
+      width: 14px;
+      height: 14px;
+      margin: 0;
+      accent-color: #3e5ba3;
+      cursor: pointer;
+      flex: 0 0 auto;
+    }
+    .tb-monthly-log-scan-filter input:focus-visible {
+      outline: 2px solid #3e5ba3;
+      outline-offset: 2px;
+    }
     .tb-monthly-log-user-badge {
       display: inline-flex;
       align-items: center;
@@ -1026,6 +1052,7 @@ function injectStyles() {
     .tb-monthly-log-table col.col-report { width: 230px; }
     .tb-monthly-log-table col.col-tasks  { width: auto; }
     .tb-monthly-log-table col.col-status { width: 104px; }
+    .tb-monthly-log-table col.col-action { width: 44px; }
     .tb-monthly-log-table th, .tb-monthly-log-table td {
       padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: left; vertical-align: top;
     }
@@ -1058,8 +1085,21 @@ function injectStyles() {
       color: #94a3b8;
       font-weight: 500;
     }
+    .tb-monthly-preview-remove-date {
+      float: right; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 4px;
+      background: transparent; color: #dc2626; cursor: pointer; font-size: 18px; line-height: 20px;
+    }
+    .tb-monthly-preview-remove-date:hover { background: #fee2e2; color: #991b1b; }
+    .tb-monthly-preview-remove-date:focus-visible { outline: 2px solid #dc2626; outline-offset: 2px; }
+    .tb-monthly-preview-remove-date:disabled { opacity: .45; cursor: not-allowed; }
+    .tb-monthly-legacy-entry-picker { margin-top: 6px; font-size: 10px; color: #475569; }
+    .tb-monthly-legacy-entry-picker summary { cursor: pointer; font-weight: 600; }
+    .tb-monthly-legacy-entry-picker p { margin: 5px 0; line-height: 1.4; }
+    .tb-monthly-legacy-entry-option { display: flex; align-items: flex-start; gap: 5px; margin: 4px 0; overflow-wrap: anywhere; }
+    .tb-monthly-legacy-entry-option input { flex: 0 0 auto; margin: 1px 0 0; }
     /* Task list & cards */
     .tb-task-list { display: flex; flex-direction: column; gap: 5px; }
+    .tb-task-project-badge, .tb-task-source-badge { display: inline-flex; width: fit-content; max-width: 100%; box-sizing: border-box; padding: 2px 7px; border-radius: 999px; background: #e0f2fe; color: #075985; font-size: 10px; font-weight: 600; overflow-wrap: anywhere; white-space: normal; }
     .tb-task-card {
       padding: 6px 8px;
       background: #f8fafc;
@@ -1233,7 +1273,9 @@ function injectStyles() {
       background: #fee2e2;
       color: #dc2626;
       border: 1px solid #fca5a5;
+      cursor: pointer;
     }
+    .tb-status-badge--error:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }
     /* Warning row overrides */
     .tb-monthly-log-row-warning td { color: #78350f; background: #fef3c7; }
     .tb-monthly-log-row-warning .tb-task-card { background: #fffbeb; border-color: #fde68a; }
@@ -1894,6 +1936,14 @@ function injectStyles() {
       border-color: #334155;
       color: #f1f5f9;
     }
+    :root[data-tb-theme="dark"] .tb-monthly-log-scan-filter,
+    .tb-monthly-log-overlay[data-tb-theme="dark"] .tb-monthly-log-scan-filter {
+      background: #1e293b;
+      border-color: #475569;
+      color: #cbd5e1;
+    }
+    :root[data-tb-theme="dark"] .tb-monthly-legacy-entry-picker,
+    .tb-monthly-log-overlay[data-tb-theme="dark"] .tb-monthly-legacy-entry-picker { color: #cbd5e1; }
     :root[data-tb-theme="dark"] .tb-monthly-total-summary,
     .tb-monthly-log-overlay[data-tb-theme="dark"] .tb-monthly-total-summary {
       background: rgba(62, 91, 163, 0.25) !important;
@@ -2161,6 +2211,7 @@ function injectStyles() {
       border-color: #334155;
       color: #e2e8f0;
     }
+    :root[data-tb-theme="dark"] .tb-task-project-badge, :root[data-tb-theme="dark"] .tb-task-source-badge { background: #164e63; color: #cffafe; }
     :root[data-tb-theme="dark"] .tb-migration-selection-summary,
     :root[data-tb-theme="dark"] .tb-migration-file-item {
       color: #e2e8f0;

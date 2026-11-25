@@ -1,4 +1,218 @@
-/* globals getCurrentUser, getIssueDetails, getTimeEntryActivities, findTimeEntries, logTimeEntry, updateTimeEntry, deleteTimeEntry */
+/* globals getCurrentUser, getIssueDetails, getTimeEntryActivities, findTimeEntries, findAllIssues, logTimeEntry, updateTimeEntry, deleteTimeEntry */
+
+function getMissingWorkingDates(year, month, reportDates = [], today = new Date()) {
+  const now = new Date(today);
+  const end =
+    year === now.getFullYear() && month === now.getMonth() + 1
+      ? now.getDate()
+      : new Date(year, month, 0).getDate();
+  const existing = new Set(reportDates);
+  const dates = [];
+  for (let day = 1; day <= end; day++) {
+    const date = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    const weekday = new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+    if (weekday > 0 && weekday < 6 && !existing.has(date)) dates.push(date);
+  }
+  return dates;
+}
+
+async function getMonthlySpentTimeEntries(redmineDomain, apiKey, userId, year, month) {
+  if (!userId || !Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) {
+    throw new Error("The selected Redmine user or month is invalid.");
+  }
+
+  const from = `${year}-${String(month).padStart(2, "0")}-01`;
+  const lastDay = new Date(year, month, 0).getDate();
+  const to = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+  const entries = await findTimeEntries(redmineDomain, apiKey, {
+    user_id: userId,
+    from,
+    to,
+  });
+
+  for (const entry of entries) {
+    const entryUserId = entry?.user?.id ?? entry?.user_id;
+    const spentOn = entry?.spent_on;
+    if (
+      !entryUserId ||
+      String(entryUserId) !== String(userId) ||
+      typeof spentOn !== "string" ||
+      spentOn < from ||
+      spentOn > to ||
+      !Number.isFinite(Number(entry.hours)) ||
+      Number(entry.hours) < 0
+    ) {
+      throw new Error("Redmine returned a time entry outside the requested user or month.");
+    }
+  }
+
+  return entries;
+}
+
+function filterDatesWithoutSpentTime(dates, entries) {
+  const hoursByDate = new Map();
+  for (const entry of entries) {
+    const hours = Number(entry?.hours);
+    if (Number.isFinite(hours) && hours > 0) {
+      hoursByDate.set(entry.spent_on, (hoursByDate.get(entry.spent_on) || 0) + hours);
+    }
+  }
+  const spentDates = new Set();
+  for (const [date, hours] of hoursByDate) {
+    if (hours > 0) spentDates.add(date);
+  }
+  return dates.filter((date) => !spentDates.has(date));
+}
+
+function filterMonthlyScanDates(dates, entries, onlyDatesWithoutSpentTime) {
+  return onlyDatesWithoutSpentTime ? filterDatesWithoutSpentTime(dates, entries) : [...dates];
+}
+
+function filterMonthlyPreviewsByExcludedDates(previews, excludedDates) {
+  return previews.filter((preview) => !excludedDates.has(preview.date));
+}
+
+function filterMonthlyCopyRowsByExcludedDates(copyRows, excludedDates) {
+  return new Map([...copyRows].filter(([date]) => !excludedDates.has(date)));
+}
+
+const B2R_TIME_ENTRY_OWNERSHIP_KEY = "b2r_time_entry_ownership_v1";
+
+function timeEntryOwnershipId(domain, entryId) {
+  return `${normalizeRedmineDomain(domain)}:${String(entryId)}`;
+}
+
+function normalizeRedmineDomain(domain) {
+  return new URL(domain).href.replace(/\/+$/, "");
+}
+
+async function readTimeEntryOwnership(domain, userId, date, reportId, entries) {
+  const { [B2R_TIME_ENTRY_OWNERSHIP_KEY]: records = {} } = await chrome.storage.local.get(
+    B2R_TIME_ENTRY_OWNERSHIP_KEY
+  );
+  return entries.map((entry) => {
+    const record = records[timeEntryOwnershipId(domain, entry.id)];
+    const exactMatch =
+      record &&
+      record.domain === normalizeRedmineDomain(domain) &&
+      String(record.userId) === String(userId) &&
+      record.date === date &&
+      String(record.issueId) === getTimeEntryIssueId(entry) &&
+      String(record.reportId) === String(reportId) &&
+      ["daily-report", "fallback-project", "fallback-all"].includes(record.source);
+    return exactMatch ? { ...entry, b2rOwnership: record } : entry;
+  });
+}
+
+async function saveTimeEntryOwnership(domain, userId, date, reportId, source, entry, issueId) {
+  if (!entry?.id) throw new Error("Redmine did not return the created time-entry ID.");
+  const { [B2R_TIME_ENTRY_OWNERSHIP_KEY]: records = {} } = await chrome.storage.local.get(
+    B2R_TIME_ENTRY_OWNERSHIP_KEY
+  );
+  const record = {
+    domain: normalizeRedmineDomain(domain),
+    userId: String(userId),
+    date,
+    issueId: String(entry.issue?.id ?? entry.issue_id ?? issueId),
+    entryId: String(entry.id),
+    reportId: String(reportId),
+    source,
+  };
+  await chrome.storage.local.set({
+    [B2R_TIME_ENTRY_OWNERSHIP_KEY]: {
+      ...records,
+      [timeEntryOwnershipId(domain, entry.id)]: record,
+    },
+  });
+  return record;
+}
+
+async function deleteTimeEntryOwnership(domain, entryId) {
+  const { [B2R_TIME_ENTRY_OWNERSHIP_KEY]: records = {} } = await chrome.storage.local.get(
+    B2R_TIME_ENTRY_OWNERSHIP_KEY
+  );
+  const updated = { ...records };
+  delete updated[timeEntryOwnershipId(domain, entryId)];
+  await chrome.storage.local.set({ [B2R_TIME_ENTRY_OWNERSHIP_KEY]: updated });
+}
+
+function isMonthlyReportDateInScanRange(date, year, month, today = new Date()) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date || "")) {
+    return false;
+  }
+  const parsedDate = new Date(`${date}T00:00:00Z`);
+  if (!Number.isFinite(parsedDate.getTime()) || parsedDate.toISOString().slice(0, 10) !== date) {
+    return false;
+  }
+  if (Number(date.slice(0, 4)) !== year || Number(date.slice(5, 7)) !== month) {
+    return false;
+  }
+  const now = new Date(today);
+  const todayString = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  return date <= todayString || year !== now.getFullYear() || month !== now.getMonth() + 1;
+}
+
+function isIssueMatchingDateForUser(issue, date, userId, reportTrackerId) {
+  const trackerId = issue?.tracker?.id ?? issue?.tracker_id;
+  const trackerName = String(issue?.tracker?.name || "").toLowerCase();
+  if (
+    String(issue?.assigned_to?.id ?? issue?.assigned_to_id) !== String(userId) ||
+    trackerName === "report" ||
+    (reportTrackerId !== null &&
+      reportTrackerId !== undefined &&
+      (!trackerId || String(trackerId) === String(reportTrackerId)))
+  ) {
+    return false;
+  }
+  const start = issue.start_date;
+  const due = issue.due_date;
+  const closed = issue.closed_on?.slice(0, 10);
+  // A task scheduled to start in an earlier month should not be reused as a
+  // monthly fallback just because its due/closed date reaches the selected day.
+  if (start && start.slice(0, 7) !== date.slice(0, 7)) return false;
+  if (start && closed) return start <= date && date <= closed;
+  if (start && due) return start <= due && start <= date && date <= due;
+  if (start) return start === date || (closed && start <= date && date <= closed);
+  if (due) return due === date;
+  return false;
+}
+
+async function resolveFallbackTasksByDate(
+  redmineDomain,
+  apiKey,
+  dates,
+  currentUser,
+  reportProjectId,
+  reportTrackerId
+) {
+  const projectIssues = await findAllIssues(redmineDomain, apiKey, {
+    project_id: reportProjectId,
+    assigned_to_id: currentUser.id,
+    status_id: "*",
+  });
+  const resolved = new Map();
+  const remaining = new Set(dates);
+  const useIssues = (issues, source) => {
+    for (const date of [...remaining]) {
+      const issue = issues.find((item) =>
+        isIssueMatchingDateForUser(item, date, currentUser.id, reportTrackerId)
+      );
+      if (issue) {
+        resolved.set(date, { issue, source });
+        remaining.delete(date);
+      }
+    }
+  };
+  useIssues(projectIssues, "project");
+  if (remaining.size) {
+    const allIssues = await findAllIssues(redmineDomain, apiKey, {
+      assigned_to_id: currentUser.id,
+      status_id: "*",
+    });
+    useIssues(allIssues, "all");
+  }
+  return resolved;
+}
 
 /**
  * Feature: Automated Time Logging from Report Issues.
@@ -102,6 +316,7 @@ async function executeReportTimeSync(
       return {
         id: taskId,
         subject: taskIssueDetails[index]?.subject || "",
+        projectName: taskIssueDetails[index]?.project?.name || "",
         estimatedHours: Number(taskIssueDetails[index]?.estimated_hours) || 0,
         activityId,
         activityName,
@@ -124,6 +339,13 @@ async function executeReportTimeSync(
       expectedPreview?.tasks?.length === tasks.length
         ? tasks.map((t, idx) => ({ ...t, ...(expectedPreview.tasks[idx] || {}) }))
         : tasks;
+    const reportEntries = await readTimeEntryOwnership(
+      redmineDomain,
+      currentUser.id,
+      effectiveSpentOn,
+      String(reportIssueId),
+      existingDailyEntries
+    );
     const preview = planReportSync(
       {
         date: effectiveSpentOn,
@@ -131,7 +353,7 @@ async function executeReportTimeSync(
         reportIssueId: String(reportIssueId),
         userId: String(currentUser.id),
         tasks: candidateTasks,
-        entries: existingDailyEntries,
+        entries: reportEntries,
         existingEntriesSnapshot: snapshotTimeEntries(existingDailyEntries),
       },
       expectedPreview?.selectedEntryIds || [],
@@ -163,8 +385,6 @@ async function executeReportTimeSync(
       logTimeRules
     );
     const loggedTaskIds = [];
-    // Tag every written entry so later syncs and the monthly cleanup can recognise it.
-    const reportTag = `[B2R report:${reportIssueId}]`;
     // Reductions precede increases. Stop on the first failure; a fresh preview
     // reads actual server state before retrying any partially completed plan.
     for (const operation of preview.operations) {
@@ -176,8 +396,11 @@ async function executeReportTimeSync(
             date: effectiveSpentOn,
             domain: redmineDomain,
             confirmedAt: expectedPreview.confirmedAt,
-            allowLegacy: true,
+            allowLegacy:
+              expectedPreview.selectedEntryIds?.includes(String(operation.entryId)) || false,
+            source: "daily-report",
           });
+          await deleteTimeEntryOwnership(redmineDomain, operation.entryId);
         } else {
           const originalEntry = existingDailyEntries.find(
             (entry) => entry.id === operation.entryId
@@ -191,7 +414,7 @@ async function executeReportTimeSync(
               operation.entryId,
               operation.taskId,
               operation.hours,
-              reportTag,
+              "",
               effectiveSpentOn,
               activity,
               {
@@ -200,19 +423,39 @@ async function executeReportTimeSync(
                 date: effectiveSpentOn,
                 domain: redmineDomain,
                 confirmedAt: expectedPreview.confirmedAt,
-                allowLegacy: true,
+                allowLegacy:
+                  expectedPreview.selectedEntryIds?.includes(String(operation.entryId)) || false,
+                source: "daily-report",
                 targetIssueId: operation.taskId,
               }
             );
+            await saveTimeEntryOwnership(
+              redmineDomain,
+              currentUser.id,
+              effectiveSpentOn,
+              String(reportIssueId),
+              "daily-report",
+              { id: operation.entryId, issue_id: operation.taskId },
+              operation.taskId
+            );
           } else {
-            await logTimeEntry(
+            const createdEntry = await logTimeEntry(
               redmineDomain,
               redmineApiKey,
               operation.taskId,
               operation.hours,
-              reportTag,
+              "",
               effectiveSpentOn,
               activity
+            );
+            await saveTimeEntryOwnership(
+              redmineDomain,
+              currentUser.id,
+              effectiveSpentOn,
+              String(reportIssueId),
+              "daily-report",
+              createdEntry,
+              operation.taskId
             );
           }
           loggedTaskIds.push(operation.taskId);
@@ -563,15 +806,20 @@ function planReportSync(preview, selectedEntryIds = [], rules = {}) {
   if (entries.some((entry) => !Number.isFinite(Number(entry.hours)) || Number(entry.hours) < 0)) {
     throw new Error("Redmine returned invalid logged hours.");
   }
-  const taskIds = new Set(preview.tasks.map((task) => String(task.id)));
-  const reportOwned = (entry) =>
-    String(entry.comments || "").startsWith("[B2R report:") ||
-    (entry.spent_on === preview.date && taskIds.has(getTimeEntryIssueId(entry)));
-  const candidates = entries.filter((entry) => !reportOwned(entry));
+  const candidates = entries;
   if ([...selected].some((id) => !candidates.some((entry) => String(entry.id) === id))) {
     throw new Error(globalThis.TB_GET_MESSAGE("report_preview_stale"));
   }
-  const managed = entries.filter((entry) => reportOwned(entry) || selected.has(String(entry.id)));
+  const reportId = String(preview.reportIssueId || "");
+  const managed = entries.filter(
+    (entry) =>
+      selected.has(String(entry.id)) ||
+      (entry.b2rOwnership &&
+        String(entry.b2rOwnership.reportId) === reportId &&
+        String(entry.b2rOwnership.userId) === String(preview.userId) &&
+        entry.b2rOwnership.date === preview.date &&
+        String(entry.b2rOwnership.issueId) === getTimeEntryIssueId(entry))
+  );
   const preservedHours = sumTimeEntryHours(entries.filter((entry) => !managed.includes(entry)));
   const budget =
     Math.floor(Math.max(0, logTimeRules.dailyHours - preservedHours) * 100 + 1e-8) / 100;
@@ -645,6 +893,155 @@ function planReportSync(preview, selectedEntryIds = [], rules = {}) {
     willReplaceDailyEntries: false,
     dayAlreadyFull: preservedHours >= logTimeRules.dailyHours,
     dailyHours: logTimeRules.dailyHours,
+  };
+}
+
+async function logTimeFromFallbackTasks(
+  date,
+  task,
+  source,
+  previewOnly = false,
+  expectedPreview = null,
+  scopedSettings = null
+) {
+  if (!previewOnly) {
+    return navigator.locks.request("b2r-report-time-write", { ifAvailable: true }, (lock) => {
+      if (!lock) {
+        throw new Error("Another Log Time operation is running. Try again after it finishes.");
+      }
+      return logTimeFromFallbackTasks(
+        date,
+        task,
+        source,
+        true,
+        expectedPreview,
+        scopedSettings
+      ).then(async (fresh) => {
+        if (
+          !expectedPreview ||
+          fresh.existingEntriesSnapshot !== expectedPreview.existingEntriesSnapshot ||
+          JSON.stringify(fresh.operations) !== JSON.stringify(expectedPreview.operations) ||
+          expectedPreview.confirmedAt < Date.now() - 300000 ||
+          expectedPreview.confirmedAt > Date.now() ||
+          expectedPreview.redmineDomain !== fresh.redmineDomain ||
+          expectedPreview.reportIssueId !== `auto-${date}` ||
+          String(expectedPreview.userId) !== String(fresh.userId)
+        ) {
+          throw new Error(globalThis.TB_GET_MESSAGE("report_preview_stale"));
+        }
+        const settings = scopedSettings || (await getSettings());
+        const key = "";
+        const user = fresh.currentUser;
+        for (const op of fresh.operations) {
+          const approval = {
+            entry: fresh.entries.find((entry) => entry.id === op.entryId),
+            reportId: `auto-${date}`,
+            date,
+            domain: settings.redmineDomain,
+            confirmedAt: expectedPreview.confirmedAt,
+            targetIssueId: task.id,
+            allowLegacy: expectedPreview.selectedEntryIds?.includes(String(op.entryId)) || false,
+            source: source === "project" ? "fallback-project" : "fallback-all",
+          };
+          if (op.type === "delete") {
+            await deleteTimeEntry(settings.redmineDomain, key, op.entryId, approval);
+            await deleteTimeEntryOwnership(settings.redmineDomain, op.entryId);
+          } else if (op.type === "update") {
+            await updateTimeEntry(
+              settings.redmineDomain,
+              key,
+              op.entryId,
+              task.id,
+              op.hours,
+              "",
+              date,
+              op.activityId,
+              approval
+            );
+            await saveTimeEntryOwnership(
+              settings.redmineDomain,
+              user.id,
+              date,
+              `auto-${date}`,
+              source === "project" ? "fallback-project" : "fallback-all",
+              { id: op.entryId, issue_id: task.id },
+              task.id
+            );
+          } else {
+            const createdEntry = await logTimeEntry(
+              settings.redmineDomain,
+              key,
+              task.id,
+              op.hours,
+              "",
+              date,
+              op.activityId
+            );
+            await saveTimeEntryOwnership(
+              settings.redmineDomain,
+              user.id,
+              date,
+              `auto-${date}`,
+              source === "project" ? "fallback-project" : "fallback-all",
+              createdEntry,
+              task.id
+            );
+          }
+        }
+        return createLogResult([String(task.id)], [String(task.id)], [], [], {
+          date,
+          userId: user.id,
+        });
+      });
+    });
+  }
+  const settings = scopedSettings || (await getSettings());
+  const domain = settings.redmineDomain;
+  const user = await getCurrentUser(domain, "");
+  const activities = await getTimeEntryActivities(domain, "");
+  const details = await getIssueDetails(domain, "", task.id);
+  const taskInfo = {
+    ...task,
+    ...(expectedPreview?.tasks?.[0] || {}),
+    subject: details.subject || task.subject,
+    projectName: details.project?.name || task.projectName || "",
+    activityId:
+      expectedPreview?.tasks?.[0]?.activityId ??
+      resolveTimeEntryActivityId(details, user, activities, settings.logTimeRules),
+    activityName:
+      activities.find(
+        (item) =>
+          Number(item.id) === Number(expectedPreview?.tasks?.[0]?.activityId ?? task.activityId)
+      )?.name || "",
+  };
+  const rawEntries = await findTimeEntries(domain, "", {
+    spent_on: date,
+    user_id: user.id,
+    limit: 100,
+  });
+  if (rawEntries.some((entry) => !isSafeDailyUserTimeEntry(entry, user, date))) {
+    throw new Error("Redmine returned time entries outside the current user and report date.");
+  }
+  const entries = await readTimeEntryOwnership(domain, user.id, date, `auto-${date}`, rawEntries);
+  const preview = planReportSync(
+    {
+      date,
+      redmineDomain: domain,
+      reportIssueId: `auto-${date}`,
+      userId: String(user.id),
+      tasks: [taskInfo],
+      entries,
+      existingEntriesSnapshot: snapshotTimeEntries(entries),
+    },
+    expectedPreview?.selectedEntryIds || [],
+    settings.logTimeRules
+  );
+  return {
+    ...preview,
+    currentUser: user,
+    entries,
+    availableActivities: activities.filter((a) => a.active !== false),
+    source,
   };
 }
 

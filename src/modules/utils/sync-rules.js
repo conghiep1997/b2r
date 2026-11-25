@@ -20,11 +20,11 @@
       typeof rules.subjectTemplate !== "string" ||
       !rules.subjectTemplate.trim() ||
       rules.subjectTemplate.length > 500 ||
-      !/\{(?:issueKey|summary)\}/.test(rules.subjectTemplate) ||
+      !/\{(?:issueKey|summary|translatedSummary)\}/.test(rules.subjectTemplate) ||
       /\{(?!issueKey\}|summary\}|translatedSummary\})[^}]*\}/.test(rules.subjectTemplate)
     ) {
       throw new TypeError(
-        "Title template needs {issueKey} or {summary}; supported placeholders: {issueKey}, {summary}, {translatedSummary}."
+        "Title template needs at least one supported placeholder: {issueKey}, {summary}, {translatedSummary}."
       );
     }
     if (

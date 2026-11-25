@@ -4,6 +4,13 @@ Tất cả các thay đổi đáng chú ý của dự án Backlog2Redmine (B2R) 
 Định dạng dựa trên [Keep a Changelog](https://keepachangelog.com/).
 (Bản tiếng Anh chính thức: [CHANGELOG.md](./CHANGELOG.md))
 
+## [1.8.29] - 2026-11-25
+- **✨ Thêm mới**: Cho phép bỏ từng ngày khỏi preview Log Time tháng, quét ngày làm việc còn thiếu và tìm task thay thế khi không có Daily Report.
+- **🔧 Sửa lỗi**: Giới hạn đồng bộ report tháng và xóa spent time vào các entry đã xác minh hoặc được chọn rõ ràng; kiểm tra lại preview trước khi ghi hoặc xóa dữ liệu.
+- **🔧 Sửa lỗi**: Mặc định chỉ quét ngày chưa có spent time, không dùng task bắt đầu từ tháng trước làm fallback, chỉ hiện liên kết Daily Report ở cột Report và tách thao tác xóa sang cột riêng.
+- **🎨 Giao diện**: Làm rõ chi tiết lỗi khi bấm trạng thái, hiển thị tên dự án trên task và dùng icon thùng rác màu đỏ.
+- **📝 Tài liệu**: Nâng phiên bản lên 1.8.29.
+
 ## [1.8.28] - 2026-11-05
 - **✨ Thêm mới**: Tách biệt marker hình ảnh (`[[TB_IMG:id]]`) và tệp đính kèm thành khối dòng riêng biệt kết hợp tăng cường system prompt nhằm giữ chuẩn xác 100% vị trí ảnh trước và sau khi dịch comment.
 - **🔧 Sửa lỗi**: Bổ sung cơ chế tự động đối soát và khôi phục marker theo ID (`recoverMissingImageMarkers`) ngăn ngừa trường hợp AI vô tình lược bỏ ảnh trong nội dung dịch.

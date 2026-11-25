@@ -84,7 +84,7 @@ ${text}
     const rules = { ...translationDefaults, ...value };
     for (const key of ["source", "target", "reverseSource", "reverseTarget"]) {
       if (!supportedLanguages.has(rules[key]) || (key !== "source" && rules[key] === "auto")) {
-        throw new TypeError("Invalid translation language.");
+        throw new TypeError(`Invalid translation language in "${key}": ${String(rules[key])}.`);
       }
     }
     if (!["extract", "translate", "original"].includes(rules.reverseMode)) {

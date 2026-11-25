@@ -112,6 +112,48 @@ async function findIssues(redmineDomain, apiKey, params) {
   return data.issues || [];
 }
 
+async function findAllIssues(redmineDomain, apiKey, params = {}) {
+  const issues = [];
+  const seen = new Set();
+  const limit = 100;
+  const base = { ...params, limit };
+  delete base.offset;
+  for (let page = 0; page < 10; page++) {
+    const query = new URLSearchParams({ ...base, offset: page * limit }).toString();
+    const response = await redmineAuthorizedFetch(redmineDomain, apiKey, `/issues.json?${query}`, {
+      headers: { "Content-Type": "application/json" },
+    });
+    if (!response.ok) throw new Error(`Failed to find issues: ${await readErrorMessage(response)}`);
+    const data = await response.json();
+    if (!Array.isArray(data?.issues)) throw new Error("Redmine returned invalid issues.");
+    const totalCount = Number(data.total_count);
+    const hasTotalCount = Number.isFinite(totalCount) && totalCount > 0;
+    if (!data.issues.length) {
+      if (hasTotalCount && issues.length < totalCount) {
+        throw new Error("Redmine returned an incomplete issue list.");
+      }
+      break;
+    }
+    for (const issue of data.issues) {
+      if (!issue?.id || seen.has(String(issue.id))) continue;
+      seen.add(String(issue.id));
+      issues.push(issue);
+    }
+    const fetchedCount = page * limit + data.issues.length;
+    if (hasTotalCount && issues.length >= totalCount) break;
+    if (data.issues.length < limit) {
+      if (hasTotalCount && (fetchedCount < totalCount || issues.length < totalCount)) {
+        throw new Error("Redmine returned an incomplete issue list.");
+      }
+      break;
+    }
+    if (page === 9 && (!hasTotalCount || totalCount > fetchedCount || issues.length < totalCount)) {
+      throw new Error("Redmine returned more issues than the 1,000 issue scan limit.");
+    }
+  }
+  return issues;
+}
+
 /**
  * Finds time entries based on a set of criteria.
  * @param {string} redmineDomain - The domain of the Redmine instance.
@@ -933,6 +975,7 @@ async function updateTimeEntry(
     !approval ||
     String(issueId) !== String(approval.targetIssueId) ||
     spentOn !== approval.date ||
+    comments !== "" ||
     !Number.isFinite(Number(hours)) ||
     Number(hours) < 0
   ) {
@@ -999,7 +1042,7 @@ async function verifyTimeEntryMutation(redmineDomain, apiKey, timeEntryId, appro
     !original ||
     !/^\d+$/.test(String(timeEntryId)) ||
     String(original.id) !== String(timeEntryId) ||
-    !/^\d+$/.test(String(approval.reportId)) ||
+    !isAllowedReportIdForDate(approval.reportId, approval.date) ||
     approval.domain !== redmineDomain ||
     !Number.isFinite(approval.confirmedAt) ||
     Date.now() - approval.confirmedAt > 300000 ||
@@ -1007,13 +1050,29 @@ async function verifyTimeEntryMutation(redmineDomain, apiKey, timeEntryId, appro
     !/^\d{4}-\d{2}-\d{2}$/.test(approval.date || "") ||
     !Number.isFinite(Number(original.hours)) ||
     Number(original.hours) < 0 ||
-    (!String(original.comments || "").startsWith("[B2R report:") &&
-      approval.allowLegacy !== true) ||
+    !isAllowedTimeEntrySource(approval.reportId, approval.source) ||
     (action === "update" && !approval.targetIssueId)
   ) {
     fail();
   }
   const user = await getCurrentUser(redmineDomain, apiKey);
+  if (/^\d+$/.test(String(approval.reportId))) {
+    const report = await getIssueDetails(redmineDomain, apiKey, approval.reportId);
+    if (extractJapaneseReportDateFromSubject(report?.subject) !== approval.date) fail();
+  }
+  const ownershipKey = "b2r_time_entry_ownership_v1";
+  const { [ownershipKey]: ownershipRecords = {} } = await chrome.storage.local.get(ownershipKey);
+  const normalizedDomain = new URL(redmineDomain).href.replace(/\/+$/, "");
+  const ownership = ownershipRecords[`${normalizedDomain}:${timeEntryId}`];
+  const metadataOwned =
+    ownership &&
+    ownership.domain === normalizedDomain &&
+    String(ownership.userId) === String(user.id) &&
+    ownership.date === approval.date &&
+    String(ownership.issueId) === String(original.issue?.id ?? original.issue_id) &&
+    String(ownership.reportId) === String(approval.reportId) &&
+    ownership.source === approval.source;
+  if (!metadataOwned && approval.allowLegacy !== true) fail();
   const responseBefore = await redmineAuthorizedFetch(
     redmineDomain,
     apiKey,
@@ -1054,6 +1113,26 @@ async function verifyTimeEntryMutation(redmineDomain, apiKey, timeEntryId, appro
     },
   });
   return current;
+}
+
+function isAllowedReportIdForDate(reportId, date) {
+  if (!/^\d+$/.test(String(reportId)) && String(reportId) !== `auto-${date}`) return false;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date || "")) return false;
+  const parsed = new Date(`${date}T00:00:00Z`);
+  return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === date;
+}
+
+function isAllowedTimeEntrySource(reportId, source) {
+  return /^\d+$/.test(String(reportId))
+    ? ["daily-report", "legacy-selected"].includes(source)
+    : ["fallback-project", "fallback-all", "legacy-selected"].includes(source);
+}
+
+function extractJapaneseReportDateFromSubject(subject = "") {
+  const match = subject.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
+  if (!match) return null;
+  const date = `${match[1]}-${String(Number(match[2])).padStart(2, "0")}-${String(Number(match[3])).padStart(2, "0")}`;
+  return isAllowedReportIdForDate(`auto-${date}`, date) ? date : null;
 }
 
 /**

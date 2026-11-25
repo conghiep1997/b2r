@@ -802,6 +802,9 @@
   "report_ready_to_scan": {
     "message": "Sẵn sàng quét các report trong tháng hiện tại."
   },
+  "report_only_dates_without_spent_time": {
+    "message": "Chỉ quét ngày chưa có spent time"
+  },
   "report_reports": {
     "message": "Reports"
   },
@@ -2130,6 +2133,12 @@
   "report_badge_error": {
     "message": "⚠️ Lỗi"
   },
+  "report_actions": {
+    "message": "Thao tác"
+  },
+  "report_click_error_details": {
+    "message": "Bấm để xem chi tiết lỗi"
+  },
   "report_badge_duplicate": {
     "message": "⚠️ Trùng ($hours$h)",
     "placeholders": {
@@ -2200,5 +2209,23 @@
   },
   "popup_optional": {
     "message": "Tùy chọn"
+  },
+  "report_fallback_project": {
+    "message": "Tự tìm (Dự án)"
+  },
+  "report_fallback_all": {
+    "message": "Tự tìm (Tất cả dự án)"
+  },
+  "report_select_legacy_entries": {
+    "message": "Không thể xác nhận entry cũ do B2R quản lý. Chỉ nhập ID time entry bạn muốn xóa rõ ràng, cách nhau bằng dấu phẩy. Để trống để giữ lại tất cả entry cũ."
+  },
+  "report_sync_legacy": {
+    "message": "Entry cũ (chọn để quản lý)"
+  },
+  "report_sync_hint": {
+    "message": "Entry B2R của report này được đồng bộ tự động. Chỉ chọn entry cũ nếu bạn muốn report này sửa hoặc xóa entry đó."
+  },
+  "report_remove_preview_date": {
+    "message": "Bỏ ngày này khỏi bản xem trước"
   }
 }

@@ -729,6 +729,9 @@
   "report_ready_to_scan": {
     "message": "Ready to scan this month's reports."
   },
+  "report_only_dates_without_spent_time": {
+    "message": "Only scan dates without spent time"
+  },
   "report_reports": {
     "message": "Reports"
   },
@@ -2130,6 +2133,12 @@
   "report_badge_error": {
     "message": "⚠️ Error"
   },
+  "report_actions": {
+    "message": "Actions"
+  },
+  "report_click_error_details": {
+    "message": "Click to view error details"
+  },
   "report_badge_duplicate": {
     "message": "⚠️ Duplicate ($hours$h)",
     "placeholders": {
@@ -2200,5 +2209,23 @@
   },
   "popup_optional": {
     "message": "Optional"
+  },
+  "report_fallback_project": {
+    "message": "Auto-found (Project)"
+  },
+  "report_fallback_all": {
+    "message": "Auto-found (All projects)"
+  },
+  "report_select_legacy_entries": {
+    "message": "Legacy entries are not verified as B2R-managed. Enter only the time-entry IDs you explicitly want to delete, separated by commas. Leave blank to keep all legacy entries."
+  },
+  "report_sync_legacy": {
+    "message": "Legacy entries (select to manage)"
+  },
+  "report_sync_hint": {
+    "message": "B2R-managed entries for this report are synchronized automatically. Select a legacy entry only if you want this report to update or remove it."
+  },
+  "report_remove_preview_date": {
+    "message": "Remove this date from the preview"
   }
 }

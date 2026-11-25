@@ -1,5 +1,13 @@
 # Changelog - Backlog2Redmine
 
+## [1.8.29] - 2026-11-25
+- **✨ Added**: Added a monthly Log Time preview option to remove individual dates, scan missing workdays, and find fallback tasks when a Daily Report is unavailable.
+- **🔧 Fixed**: Limited monthly report synchronization and spent-time deletion to verified or explicitly selected entries, with fresh-preview checks before mutations.
+- **🔧 Fixed**: Defaulted the scan to dates without spent time, excluded tasks that started in earlier months from fallback matching, kept only Daily Report links in the Report column, and moved row removal into its own column.
+- **🎨 UI**: Made error details available from the status badge, kept project names on task cards, and highlighted the trash action in red.
+- **📝 Docs**: Bumped version to 1.8.29.
+
+
 ## [1.8.28] - 2026-11-05
 - **✨ Added**: Enforce block-level line isolation and strict prompt rules for image (`[[TB_IMG:id]]`) and file attachment markers to preserve their exact relative placement across translation.
 - **🔧 Fixed**: Added automated recovery (`recoverMissingImageMarkers`) using ID-based matching to restore any image or file markers inadvertently dropped by AI models inside the translated content.

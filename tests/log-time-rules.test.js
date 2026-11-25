@@ -11,8 +11,18 @@ function setup() {
     activityMode: "default",
     defaultActivityId: "42",
   };
+  const ownership = {};
   const context = vm.createContext({
     console: { error() {}, log() {} },
+    URL,
+    chrome: {
+      storage: {
+        local: {
+          get: async (key) => ({ [key]: ownership }),
+          set: async (data) => Object.assign(ownership, data.b2r_time_entry_ownership_v1 || {}),
+        },
+      },
+    },
     navigator: { locks: { request: async (_name, _options, callback) => callback({}) } },
     TB_GET_MESSAGE: (key) => key,
     getSettings: async () => ({
@@ -27,7 +37,10 @@ function setup() {
         : { id, subject: "Coding", estimated_hours: id === "1" ? 1 : 3 },
     getTimeEntryActivities: async () => [{ id: 42, name: "Development" }],
     findTimeEntries: async () => [],
-    logTimeEntry: async (...args) => writes.push(args),
+    logTimeEntry: async (...args) => {
+      writes.push(args);
+      return { id: writes.length, issue: { id: args[2] } };
+    },
   });
   vm.runInContext(fs.readFileSync("src/modules/utils/sync-rules.js", "utf8"), context);
   vm.runInContext(fs.readFileSync("src/modules/services/report-log-time.js", "utf8"), context);

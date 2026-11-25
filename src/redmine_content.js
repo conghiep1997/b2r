@@ -1,4 +1,4 @@
-/* globals getTrackers, findIssues, findTimeEntries, deleteTimeEntry, getCurrentUser, getIssueDetails, logTimeFromReport, planReportSync */
+/* globals getTrackers, findIssues, findAllIssues, findTimeEntries, deleteTimeEntry, getCurrentUser, getIssueDetails, getTimeEntryIssueId, logTimeFromReport, logTimeFromFallbackTasks, planReportSync, getMissingWorkingDates, getMonthlySpentTimeEntries, filterMonthlyScanDates, filterMonthlyPreviewsByExcludedDates, filterMonthlyCopyRowsByExcludedDates, resolveFallbackTasksByDate, isMonthlyReportDateInScanRange */
 
 globalThis.__B2R_REDMINE_LOADED__ = true;
 
@@ -198,18 +198,26 @@ async function logTimeForMonth() {
         bulkActivitySelect,
         bulkActivityApply,
       } = modalInstance;
+      const onlyDatesWithoutSpentTime = !!modalInstance.onlyMissingSpentTimeCheckbox?.checked;
+      let monthlySpentTimeEntries = [];
+      let currentUserForScan = null;
       previewButton.disabled = true;
       startButton.disabled = true;
       startButton.textContent = reportMessage("report_confirm_logging");
       deleteButton.disabled = true;
       closeButton.disabled = true;
       if (modalInstance.monthInput) modalInstance.monthInput.disabled = true;
+      if (modalInstance.onlyMissingSpentTimeCheckbox) {
+        modalInstance.onlyMissingSpentTimeCheckbox.disabled = true;
+      }
       previewButton.textContent = reportMessage("report_scanning");
       resultBody.replaceChildren();
       progressList.replaceChildren();
       copyButton.disabled = true;
       if (bulkActivityToolbar) bulkActivityToolbar.hidden = true;
       modalInstance.previewIssues = [];
+      modalInstance.previewFilterState = null;
+      modalInstance.previewMonth = null;
       modalInstance.hasUnsafeReplacement = false;
 
       const updateProgress = (message, type = "info") => {
@@ -223,21 +231,47 @@ async function logTimeForMonth() {
         statusText.textContent = reportMessage("report_scanning");
         const { year, month, monthLabel } = modalInstance.getSelectedMonth();
         updateProgress(reportMessage("report_searching", { month: monthLabel }));
-        const trackers = await getTrackers(redmineDomain, redmineApiKey);
-        const reportTracker = trackers.find((tracker) => tracker.name.toLowerCase() === "report");
-        if (!reportTracker) throw new Error(reportMessage("report_missing_tracker"));
-
-        const issues = await findMonthlyReportIssues(redmineDomain, redmineApiKey, {
-          projectId: reportProjectId,
-          trackerId: reportTracker.id,
-          year,
-          month,
-          updateProgress,
-        });
+        if (onlyDatesWithoutSpentTime) {
+          currentUserForScan = await getCurrentUser(redmineDomain, redmineApiKey);
+          monthlySpentTimeEntries = await getMonthlySpentTimeEntries(
+            redmineDomain,
+            redmineApiKey,
+            currentUserForScan?.id,
+            year,
+            month
+          );
+        }
+        let trackers = [];
+        try {
+          const responseTrackers = await getTrackers(redmineDomain, redmineApiKey);
+          trackers = Array.isArray(responseTrackers) ? responseTrackers : [];
+        } catch (_error) {
+          // Tracker lookup is only needed for Daily Report discovery; fallback can still run.
+        }
+        const reportTracker = trackers.find((tracker) => tracker?.name?.toLowerCase() === "report");
+        const issues = reportTracker
+          ? await findMonthlyReportIssues(redmineDomain, redmineApiKey, {
+              projectId: reportProjectId,
+              trackerId: reportTracker.id,
+              year,
+              month,
+              updateProgress,
+            })
+          : [];
+        const reportDateCandidates = issues
+          .map((issue) => extractJapaneseReportDate(issue.subject))
+          .filter((date) => isMonthlyReportDateInScanRange(date, year, month));
+        const eligibleReportDates = new Set(
+          filterMonthlyScanDates(
+            reportDateCandidates.filter(Boolean),
+            monthlySpentTimeEntries,
+            onlyDatesWithoutSpentTime
+          )
+        );
         const previews = [];
         for (const issue of issues) {
           const date = extractJapaneseReportDate(issue.subject);
-          if (!date) continue;
+          if (!date || !eligibleReportDates.has(date)) continue;
           try {
             const initialPreview = await logTimeFromReport(
               issue.id,
@@ -260,13 +294,57 @@ async function logTimeForMonth() {
           }
         }
 
+        const reportDates = reportDateCandidates;
+        const missingDates = filterMonthlyScanDates(
+          getMissingWorkingDates(year, month, reportDates),
+          monthlySpentTimeEntries,
+          onlyDatesWithoutSpentTime
+        );
+        if (missingDates.length) {
+          const user = currentUserForScan || (await getCurrentUser(redmineDomain, redmineApiKey));
+          const fallback = await resolveFallbackTasksByDate(
+            redmineDomain,
+            redmineApiKey,
+            missingDates,
+            user,
+            reportProjectId,
+            reportTracker?.id
+          );
+          for (const [date, result] of fallback) {
+            const details = await getIssueDetails(redmineDomain, redmineApiKey, result.issue.id);
+            const initial = await logTimeFromFallbackTasks(
+              date,
+              {
+                id: String(result.issue.id),
+                subject: details.subject,
+                projectName: details.project?.name || "",
+              },
+              result.source,
+              true,
+              null,
+              settings
+            );
+            previews.push({
+              ...initial,
+              reportId: `auto-${date}`,
+              fallbackSource: result.source,
+            });
+          }
+        }
+
         modalInstance.previewIssues = previews;
+        modalInstance.previewFilterState = onlyDatesWithoutSpentTime;
+        modalInstance.previewMonth = `${year}-${String(month).padStart(2, "0")}`;
         modalInstance.hasUnsafeReplacement = previews.some(
           (preview) => preview.willReplaceDailyEntries
         );
 
         const updateMonthTotals = () => {
-          const activePreviews = previews.filter(
+          const visiblePreviews = filterMonthlyPreviewsByExcludedDates(
+            previews,
+            modalInstance.excludedDates
+          );
+          const activePreviews = visiblePreviews.filter(
             (preview) => !preview.error && !preview.dayAlreadyFull && preview.tasks?.length
           );
           const totalHours = activePreviews.reduce((sum, preview) => {
@@ -291,8 +369,13 @@ async function logTimeForMonth() {
             if (modalInstance.totalSummary) modalInstance.totalSummary.hidden = true;
           }
 
-          const blocked = previews.every(
-            (preview) => preview.error || preview.dayAlreadyFull || !preview.tasks.length
+          const blocked =
+            visiblePreviews.length === 0 ||
+            visiblePreviews.every(
+              (preview) => preview.error || preview.dayAlreadyFull || !preview.tasks.length
+            );
+          modalInstance.hasUnsafeReplacement = visiblePreviews.some(
+            (preview) => preview.willReplaceDailyEntries
           );
           startButton.disabled = blocked;
           if (!blocked && totalHours > 0) {
@@ -302,22 +385,56 @@ async function logTimeForMonth() {
           }
         };
 
-        for (const preview of previews) {
+        const visiblePreviews = filterMonthlyPreviewsByExcludedDates(
+          previews,
+          modalInstance.excludedDates
+        );
+        for (const preview of visiblePreviews) {
           const row = document.createElement("tr");
           row.className = preview.willReplaceDailyEntries ? "tb-monthly-log-row-warning" : "";
           const dateCell = document.createElement("td");
           const reportCell = document.createElement("td");
           const taskCell = document.createElement("td");
           const statusCell = document.createElement("td");
+          const actionCell = document.createElement("td");
 
           const dateInfo = formatMonthlyTableDate(preview.date);
-          dateCell.textContent = dateInfo.formatted;
+          const dateLabel = document.createElement("span");
+          dateLabel.textContent = dateInfo.formatted;
+          const removeButton = document.createElement("button");
+          removeButton.type = "button";
+          removeButton.className = "tb-monthly-preview-remove-date";
+          removeButton.setAttribute("aria-label", reportMessage("report_remove_preview_date"));
+          removeButton.title = reportMessage("report_remove_preview_date");
+          removeButton.innerHTML =
+            '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2m3 0-.9 14H5.9L5 6m4 4v7m6-7v7"/></svg>';
+          removeButton.onclick = () => {
+            modalInstance.excludedDates.add(preview.date);
+            row.remove();
+            if (
+              !filterMonthlyPreviewsByExcludedDates(previews, modalInstance.excludedDates).length
+            ) {
+              const emptyRow = document.createElement("tr");
+              const emptyCell = document.createElement("td");
+              emptyCell.colSpan = 5;
+              emptyCell.className = "tb-table-empty-state";
+              emptyCell.textContent = reportMessage("report_no_matching_issue");
+              emptyRow.appendChild(emptyCell);
+              resultBody.appendChild(emptyRow);
+            }
+            updateMonthTotals();
+            copyButton.disabled = !filterMonthlyPreviewsByExcludedDates(
+              previews,
+              modalInstance.excludedDates
+            ).some((item) => item.tasks?.length);
+          };
+          dateCell.append(dateLabel);
           if (dateInfo.isWeekend) {
             dateCell.classList.add("tb-cell-weekend");
             row.classList.add("tb-row-weekend");
           }
 
-          if (preview.reportIssueId) {
+          if (preview.reportIssueId && !String(preview.reportIssueId).startsWith("auto-")) {
             const reportLink = document.createElement("a");
             reportLink.className = "tb-issue-link tb-report-link";
             reportLink.href = `/issues/${preview.reportIssueId}`;
@@ -335,6 +452,53 @@ async function logTimeForMonth() {
             reportCell.textContent = preview.reportSubject || "—";
           }
 
+          const legacyCandidates = (preview.candidates || []).filter(
+            (entry) => !entry.b2rOwnership
+          );
+          if (legacyCandidates.length) {
+            const picker = document.createElement("details");
+            picker.className = "tb-monthly-legacy-entry-picker";
+            const pickerSummary = document.createElement("summary");
+            pickerSummary.textContent = reportMessage("report_sync_legacy");
+            const pickerHint = document.createElement("p");
+            pickerHint.textContent = reportMessage("report_sync_hint");
+            picker.append(pickerSummary, pickerHint);
+            for (const entry of legacyCandidates) {
+              const label = document.createElement("label");
+              label.className = "tb-monthly-legacy-entry-option";
+              const checkbox = document.createElement("input");
+              checkbox.type = "checkbox";
+              checkbox.checked = (preview.selectedEntryIds || []).includes(String(entry.id));
+              const entryText = document.createElement("span");
+              entryText.textContent = `#${entry.id} / #${getTimeEntryIssueId(entry)} / ${entry.hours}h${entry.comments ? ` — ${entry.comments}` : ""}`;
+              checkbox.onchange = () => {
+                const selected = new Set((preview.selectedEntryIds || []).map(String));
+                if (checkbox.checked) selected.add(String(entry.id));
+                else selected.delete(String(entry.id));
+                const updated = planReportSync(preview, [...selected], settings.logTimeRules);
+                preview.tasks.forEach((task, index) => Object.assign(task, updated.tasks[index]));
+                Object.assign(preview, { ...updated, tasks: preview.tasks });
+                taskCell.querySelectorAll(".tb-hours-input").forEach((input, index) => {
+                  input.value = String(preview.tasks[index]?.hours ?? 0);
+                });
+                const summary = taskCell.querySelector(".tb-hours-total");
+                if (summary) {
+                  const total = preview.tasks.reduce(
+                    (sum, task) => sum + (Number(task.hours) || 0),
+                    0
+                  );
+                  const rounded = Math.round(total * 100) / 100;
+                  summary.textContent = `∑ ${Number.isInteger(rounded) ? rounded : rounded.toFixed(1)}h`;
+                }
+                renderMonthlyPreviewStatus(statusCell, preview);
+                updateMonthTotals();
+              };
+              label.append(checkbox, entryText);
+              picker.appendChild(label);
+            }
+            reportCell.appendChild(picker);
+          }
+
           if (preview.error || preview.tasks.length === 0) {
             taskCell.textContent = "—";
           } else {
@@ -346,6 +510,12 @@ async function logTimeForMonth() {
               // Task card
               const card = document.createElement("div");
               card.className = "tb-task-card";
+              if (task.projectName) {
+                const badge = document.createElement("span");
+                badge.className = "tb-task-project-badge";
+                badge.textContent = task.projectName;
+                card.appendChild(badge);
+              }
 
               // Row 1: Full-width task title
               const nameEl = document.createElement("div");
@@ -482,58 +652,22 @@ async function logTimeForMonth() {
             taskCell.appendChild(taskList);
           }
 
-          statusCell.replaceChildren();
-          const statusBadge = document.createElement("span");
-          statusBadge.className = "tb-status-badge";
+          renderMonthlyPreviewStatus(statusCell, preview);
+          actionCell.appendChild(removeButton);
 
-          if (preview.error) {
-            statusBadge.classList.add("tb-status-badge--error");
-            statusBadge.textContent = reportMessage("report_badge_error");
-            statusBadge.title = reportMessage("report_preview_failed", { error: preview.error });
-          } else if (preview.willReplaceDailyEntries) {
-            statusBadge.classList.add("tb-status-badge--warning");
-            statusBadge.textContent = reportMessage("report_badge_duplicate", {
-              hours: preview.existingDailyHours,
-            });
-            statusBadge.title = reportMessage("report_preview_replace_warning", {
-              hours: preview.existingDailyHours,
-            });
-          } else if (preview.dayAlreadyFull) {
-            statusBadge.classList.add("tb-status-badge--full");
-            statusBadge.textContent = reportMessage("report_badge_full", {
-              hours: preview.existingDailyHours,
-            });
-            statusBadge.title = reportMessage("report_day_full", {
-              hours: preview.existingDailyHours,
-            });
-          } else if (preview.tasks.length === 0) {
-            statusBadge.classList.add("tb-status-badge--empty");
-            statusBadge.textContent = reportMessage("report_badge_empty");
-            statusBadge.title = reportMessage("report_no_tasks");
-          } else if (preview.tasks.some((task) => task.alreadyLogged)) {
-            statusBadge.classList.add("tb-status-badge--warning");
-            statusBadge.textContent = reportMessage("report_badge_partial_existing");
-            statusBadge.title = reportMessage("report_preview_duplicate");
-          } else {
-            statusBadge.classList.add("tb-status-badge--ready");
-            statusBadge.textContent = reportMessage("report_badge_ready");
-            statusBadge.title = reportMessage("report_preview_ready");
-          }
-          statusCell.appendChild(statusBadge);
-
-          row.append(dateCell, reportCell, taskCell, statusCell);
+          row.append(dateCell, reportCell, taskCell, statusCell, actionCell);
           resultBody.appendChild(row);
         }
 
         updateMonthTotals();
 
-        if (previews.length === 0) {
+        if (visiblePreviews.length === 0) {
           copyButton.disabled = true;
           statusText.textContent = reportMessage("report_not_found");
           updateProgress(reportMessage("report_no_matching_issue"), "skip");
           const emptyRow = document.createElement("tr");
           const emptyCell = document.createElement("td");
-          emptyCell.colSpan = 4;
+          emptyCell.colSpan = 5;
           emptyCell.className = "tb-table-empty-state";
           emptyCell.innerHTML = `
             <div class="tb-table-empty-wrap">
@@ -544,15 +678,24 @@ async function logTimeForMonth() {
           emptyRow.appendChild(emptyCell);
           resultBody.appendChild(emptyRow);
         } else {
-          copyButton.disabled = !previews.some((p) => p.tasks?.length);
+          copyButton.disabled = !filterMonthlyPreviewsByExcludedDates(
+            previews,
+            modalInstance.excludedDates
+          ).some((p) => p.tasks?.length);
           copyButton.onclick = () => handlePreviewCopy(modalInstance);
 
           statusText.textContent = reportMessage("report_preview_complete", {
-            count: previews.length,
+            count: visiblePreviews.length,
           });
-          const blocked = previews.every(
-            (preview) => preview.error || preview.dayAlreadyFull || !preview.tasks.length
+          const activePreviews = filterMonthlyPreviewsByExcludedDates(
+            previews,
+            modalInstance.excludedDates
           );
+          const blocked =
+            activePreviews.length === 0 ||
+            activePreviews.every(
+              (preview) => preview.error || preview.dayAlreadyFull || !preview.tasks.length
+            );
           updateProgress(
             reportMessage("report_preview_confirm_hint"),
             blocked ? "skip" : "success"
@@ -560,13 +703,13 @@ async function logTimeForMonth() {
 
           // Populate bulk activity toolbar if activities exist
           const allActivities =
-            previews.find((p) => p.availableActivities?.length)?.availableActivities || [];
+            activePreviews.find((p) => p.availableActivities?.length)?.availableActivities || [];
 
           if (
             bulkActivityToolbar &&
             bulkActivitySelect &&
             allActivities.length &&
-            previews.some((p) => p.tasks?.length)
+            activePreviews.some((p) => p.tasks?.length)
           ) {
             bulkActivitySelect.replaceChildren();
             allActivities.forEach((act) => {
@@ -645,6 +788,9 @@ async function logTimeForMonth() {
         deleteButton.disabled = false;
         closeButton.disabled = false;
         if (modalInstance.monthInput) modalInstance.monthInput.disabled = false;
+        if (modalInstance.onlyMissingSpentTimeCheckbox) {
+          modalInstance.onlyMissingSpentTimeCheckbox.disabled = false;
+        }
       }
     },
     onDelete: async (modalInstance) => {
@@ -659,6 +805,9 @@ async function logTimeForMonth() {
       deleteButton.disabled = true;
       closeButton.disabled = true;
       if (modalInstance.monthInput) modalInstance.monthInput.disabled = true;
+      if (modalInstance.onlyMissingSpentTimeCheckbox) {
+        modalInstance.onlyMissingSpentTimeCheckbox.disabled = true;
+      }
       statusText.textContent = reportMessage("report_deleting");
 
       const updateProgress = (message, type = "info") => {
@@ -685,6 +834,8 @@ async function logTimeForMonth() {
         updateProgress(`${reportMessage("report_delete_error")}: ${error.message}`, "error");
       } finally {
         modalInstance.previewIssues = [];
+        modalInstance.previewFilterState = null;
+        modalInstance.previewMonth = null;
         modalInstance.hasUnsafeReplacement = false;
         startButton.disabled = true;
         startButton.textContent = reportMessage("report_confirm_logging");
@@ -694,9 +845,26 @@ async function logTimeForMonth() {
         deleteButton.disabled = false;
         closeButton.disabled = false;
         if (modalInstance.monthInput) modalInstance.monthInput.disabled = false;
+        if (modalInstance.onlyMissingSpentTimeCheckbox) {
+          modalInstance.onlyMissingSpentTimeCheckbox.disabled = false;
+        }
       }
     },
     onStart: async (modalInstance) => {
+      const { year, month } = modalInstance.getSelectedMonth();
+      const selectedFilterState = !!modalInstance.onlyMissingSpentTimeCheckbox?.checked;
+      if (
+        modalInstance.previewFilterState !== selectedFilterState ||
+        modalInstance.previewMonth !== `${year}-${String(month).padStart(2, "0")}` ||
+        !modalInstance.previewIssues?.length
+      ) {
+        modalInstance.previewIssues = [];
+        modalInstance.previewFilterState = null;
+        modalInstance.previewMonth = null;
+        modalInstance.startButton.disabled = true;
+        modalInstance.statusText.textContent = reportMessage("report_preview_stale");
+        return;
+      }
       if (modalInstance.hasUnsafeReplacement) {
         if (!confirm(reportMessage("report_preview_review_warning"))) {
           return;
@@ -719,6 +887,9 @@ async function logTimeForMonth() {
       modalInstance.deleteButton.disabled = true;
       closeButton.disabled = true;
       if (modalInstance.monthInput) modalInstance.monthInput.disabled = true;
+      if (modalInstance.onlyMissingSpentTimeCheckbox) {
+        modalInstance.onlyMissingSpentTimeCheckbox.disabled = true;
+      }
       resultBody.replaceChildren();
       copyButton.disabled = true;
 
@@ -822,32 +993,20 @@ async function logTimeForMonth() {
         }
         statusCell.replaceChildren(badge);
 
-        row.append(dateCell, reportCell, tasksCell, statusCell);
+        row.append(dateCell, reportCell, tasksCell, statusCell, document.createElement("td"));
         resultBody.appendChild(row);
       };
 
       try {
         statusText.textContent = reportMessage("report_starting_logging");
-        const { year, month } = modalInstance.getSelectedMonth();
-        const copyRowsByDate = createMonthlyCopyRows(year, month);
+        const { year: selectedYear, month: selectedMonth } = modalInstance.getSelectedMonth();
+        const copyRowsByDate = createMonthlyCopyRows(selectedYear, selectedMonth);
         let issues = modalInstance.previewIssues || [];
 
-        if (issues.length === 0) {
-          issues = await scanCurrentMonthReports({
-            redmineDomain,
-            redmineApiKey,
-            reportProjectId,
-            settings,
-            updateProgress,
-            year,
-            month,
-          });
-          modalInstance.previewIssues = issues;
-        }
+        issues = filterMonthlyPreviewsByExcludedDates(issues, modalInstance.excludedDates);
 
         if (issues.length === 0) {
-          statusText.textContent = reportMessage("report_not_found");
-          updateProgress(reportMessage("report_no_matching_issue"));
+          statusText.textContent = reportMessage("report_no_matching_issue");
           startButton.disabled = true;
           closeButton.disabled = false;
           return;
@@ -887,14 +1046,16 @@ async function logTimeForMonth() {
           const dateLabel = issue.date || `issue #${issue.reportIssueId}`;
           try {
             updateProgress(dateLabel, "date");
-            const fresh = await logTimeFromReport(
-              issue.reportIssueId,
-              true,
-              dateLabel,
-              true,
-              null,
-              settings
-            );
+            const fresh = issue.fallbackSource
+              ? await logTimeFromFallbackTasks(
+                  dateLabel,
+                  issue.tasks[0],
+                  issue.fallbackSource,
+                  true,
+                  null,
+                  settings
+                )
+              : await logTimeFromReport(issue.reportIssueId, true, dateLabel, true, null, settings);
             const candidateTasks = fresh.tasks.map((t, idx) => ({
               ...t,
               ...(issue.tasks?.[idx] || {}),
@@ -920,28 +1081,44 @@ async function logTimeForMonth() {
               throw new Error(reportMessage("report_preview_stale"));
             }
             const approvedPlan = { ...currentPlan, confirmedAt: Date.now() };
-            const logResult = await logTimeFromReport(
-              issue.reportIssueId,
-              true,
-              dateLabel,
-              false,
-              approvedPlan,
-              settings
-            );
+            const logResult = issue.fallbackSource
+              ? await logTimeFromFallbackTasks(
+                  dateLabel,
+                  issue.tasks[0],
+                  issue.fallbackSource,
+                  false,
+                  { ...approvedPlan, existingEntriesSnapshot: issue.existingEntriesSnapshot },
+                  settings
+                )
+              : await logTimeFromReport(
+                  issue.reportIssueId,
+                  true,
+                  dateLabel,
+                  false,
+                  approvedPlan,
+                  settings
+                );
 
-            if (logResult.taskIds.length > 0) {
+            const loggedTaskIds = logResult.taskIds || logResult.loggedTaskIds || [];
+            if (loggedTaskIds.length > 0) {
               const taskById = new Map((issue.tasks || []).map((task) => [String(task.id), task]));
               const status = getLogResultStatusText(logResult);
               resultsForSheet.push({
                 date: dateLabel,
-                report: `#${issue.reportIssueId} ${issue.reportSubject}`,
-                tasks: logResult.taskIds
+                report: issue.fallbackSource
+                  ? reportMessage(
+                      issue.fallbackSource === "project"
+                        ? "report_fallback_project"
+                        : "report_fallback_all"
+                    )
+                  : `#${issue.reportIssueId} ${issue.reportSubject}`,
+                tasks: loggedTaskIds
                   .map((taskId) => `#${taskId} ${taskById.get(String(taskId))?.subject || ""}`)
                   .join("\n"),
                 hours: issue.tasks.map((task) => `${task.hours}h`).join(" + "),
                 status,
               });
-              copyRowsByDate.set(dateLabel, logResult.taskIds.map((t) => `#${t}`).join(","));
+              copyRowsByDate.set(dateLabel, loggedTaskIds.map((t) => `#${t}`).join(","));
               renderResultRow(resultsForSheet[resultsForSheet.length - 1]);
               if (logResult.dayUpserted) {
                 updateProgress(
@@ -958,8 +1135,8 @@ async function logTimeForMonth() {
               } else {
                 updateProgress(
                   reportMessage("report_logged_tasks", {
-                    logged: logResult.loggedTaskIds.length,
-                    skipped: logResult.skippedTaskIds.length,
+                    logged: loggedTaskIds.length,
+                    skipped: (logResult.skippedTaskIds || []).length,
                   }),
                   "success"
                 );
@@ -1032,7 +1209,10 @@ async function logTimeForMonth() {
         }
 
         copyButton.disabled = resultsForSheet.length === 0;
-        copyButton.onclick = () => copyTasksToClipboard(copyRowsByDate);
+        copyButton.onclick = () =>
+          copyTasksToClipboard(
+            filterMonthlyCopyRowsByExcludedDates(copyRowsByDate, modalInstance.excludedDates)
+          );
 
         startButton.disabled = true;
         startButton.textContent = reportMessage("report_logged_button");
@@ -1047,54 +1227,12 @@ async function logTimeForMonth() {
         modalInstance.previewButton.disabled = false;
         modalInstance.deleteButton.disabled = false;
         if (modalInstance.monthInput) modalInstance.monthInput.disabled = false;
+        if (modalInstance.onlyMissingSpentTimeCheckbox) {
+          modalInstance.onlyMissingSpentTimeCheckbox.disabled = false;
+        }
       }
     },
   });
-}
-
-async function scanCurrentMonthReports({
-  redmineDomain,
-  redmineApiKey,
-  reportProjectId,
-  settings,
-  updateProgress = () => {},
-  year: selectedYear,
-  month: selectedMonth,
-}) {
-  const now = new Date();
-  const year = selectedYear || now.getFullYear();
-  const month = selectedMonth || now.getMonth() + 1;
-  const trackers = await getTrackers(redmineDomain, redmineApiKey);
-  const reportTracker = trackers.find((tracker) => tracker.name.toLowerCase() === "report");
-  if (!reportTracker) throw new Error(reportMessage("report_missing_tracker"));
-  const issues = await findMonthlyReportIssues(redmineDomain, redmineApiKey, {
-    projectId: reportProjectId,
-    trackerId: reportTracker.id,
-    year,
-    month,
-    updateProgress,
-  });
-  const previews = [];
-  for (const issue of issues) {
-    const date = extractJapaneseReportDate(issue.subject);
-    if (!date) continue;
-    try {
-      const initial = await logTimeFromReport(issue.id, true, date, true, null, settings);
-      previews.push({
-        ...planReportSync(initial, [], settings.logTimeRules),
-        reportSubject: issue.subject,
-      });
-    } catch (error) {
-      previews.push({
-        date,
-        reportIssueId: String(issue.id),
-        reportSubject: issue.subject,
-        tasks: [],
-        error: error.message,
-      });
-    }
-  }
-  return previews;
 }
 
 function chooseReportProject(projects, preferredId = "") {
@@ -1223,7 +1361,10 @@ function copyTasksToClipboard(copyRowsByDate) {
 function handlePreviewCopy(modalInstance) {
   const { year, month } = modalInstance.getSelectedMonth();
   const copyRows = createMonthlyCopyRows(year, month);
-  const previews = modalInstance.previewIssues || [];
+  const previews = filterMonthlyPreviewsByExcludedDates(
+    modalInstance.previewIssues || [],
+    modalInstance.excludedDates
+  );
   for (const preview of previews) {
     if (!preview.date || !preview.tasks?.length) continue;
     const validTaskIds = preview.tasks
@@ -1233,7 +1374,7 @@ function handlePreviewCopy(modalInstance) {
       copyRows.set(preview.date, validTaskIds.join(","));
     }
   }
-  copyTasksToClipboard(copyRows);
+  copyTasksToClipboard(filterMonthlyCopyRowsByExcludedDates(copyRows, modalInstance.excludedDates));
 }
 
 function getLogResultStatusText(logResult) {
@@ -1276,11 +1417,17 @@ async function executeMonthlyTimeDelete(
   selectedMonth
 ) {
   const currentUser = await getCurrentUser(redmineDomain, redmineApiKey);
+  const normalizedRedmineDomain = new URL(redmineDomain).href.replace(/\/+$/, "");
+  const ownershipRecords =
+    (await chrome.storage.local.get("b2r_time_entry_ownership_v1"))[
+      "b2r_time_entry_ownership_v1"
+    ] || {};
   const now = new Date();
   const year = selectedYear || now.getFullYear();
   const month = selectedMonth || now.getMonth() + 1;
   const dates = [...createMonthlyCopyRows(year, month).keys()];
   const entriesToDelete = [];
+  const legacyCandidates = [];
 
   updateProgress(
     `${reportMessage("report_checking_spent_time")} ${year}-${String(month).padStart(2, "0")}...`
@@ -1299,10 +1446,38 @@ async function executeMonthlyTimeDelete(
           `${reportMessage("report_entry_not_verified")} #${entry?.id || "unknown"} (${spentOn}).`
         );
       }
-      if (/^\[B2R report:\d+\]$/.test(entry.comments || "")) entriesToDelete.push(entry);
+      const ownership = ownershipRecords[`${normalizedRedmineDomain}:${entry.id}`];
+      const metadataOwned =
+        ownership &&
+        ownership.domain === normalizedRedmineDomain &&
+        String(ownership.userId) === String(currentUser.id) &&
+        ownership.date === spentOn &&
+        String(ownership.issueId) === String(entry.issue?.id ?? entry.issue_id) &&
+        String(ownership.entryId) === String(entry.id) &&
+        ["daily-report", "fallback-project", "fallback-all"].includes(ownership.source);
+      if (metadataOwned) entriesToDelete.push({ ...entry, b2rOwnership: ownership });
+      else legacyCandidates.push(entry);
     }
   }
 
+  if (legacyCandidates.length) {
+    const legacyList = legacyCandidates
+      .map(
+        (entry) =>
+          `${entry.spent_on}: #${entry.id} / #${entry.issue?.id ?? entry.issue_id} / ${entry.hours}h`
+      )
+      .join("\n");
+    const answer = prompt(`${reportMessage("report_select_legacy_entries")}\n\n${legacyList}`, "");
+    if (answer === null) throw new Error(reportMessage("report_sync_cancelled"));
+    const selectedIds = new Set(answer.split(/[\s,;]+/).filter(Boolean));
+    const candidatesById = new Map(legacyCandidates.map((entry) => [String(entry.id), entry]));
+    if ([...selectedIds].some((id) => !candidatesById.has(id))) {
+      throw new Error(reportMessage("report_entry_not_verified"));
+    }
+    for (const id of selectedIds) {
+      entriesToDelete.push({ ...candidatesById.get(id), b2rOwnership: null });
+    }
+  }
   updateProgress(`${reportMessage("report_entries_to_delete")} ${entriesToDelete.length}.`);
   if (!entriesToDelete.length) return 0;
   const detail = entriesToDelete
@@ -1318,25 +1493,18 @@ async function executeMonthlyTimeDelete(
   let deleted = 0;
 
   for (const entry of entriesToDelete) {
-    const reportId = String(
-      entry.comments?.match(/^\[B2R report:(\d+)\]$/)?.[1] ??
-        entry.issue?.id ??
-        entry.issue_id ??
-        ""
-    );
-    if (!/^\d+$/.test(reportId)) {
-      throw new Error(
-        `${reportMessage("report_entry_not_verified")} #${entry.id} (${entry.spent_on}).`
-      );
-    }
+    const reportId = entry.b2rOwnership?.reportId || `auto-${entry.spent_on}`;
     await deleteTimeEntry(redmineDomain, redmineApiKey, entry.id, {
       entry,
       domain: redmineDomain,
       date: entry.spent_on,
       reportId,
       confirmedAt,
-      allowLegacy: !String(entry.comments || "").startsWith("[B2R report:"),
+      allowLegacy: !entry.b2rOwnership,
+      source: entry.b2rOwnership?.source || "legacy-selected",
     });
+    delete ownershipRecords[`${normalizedRedmineDomain}:${entry.id}`];
+    await chrome.storage.local.set({ b2r_time_entry_ownership_v1: ownershipRecords });
     deleted += 1;
     updateProgress(
       `${reportMessage("report_deleted_count", { count: deleted })} / ${entriesToDelete.length}`
@@ -1410,6 +1578,10 @@ function openMonthlyLogModal({
               <button type="button" id="tb-month-today" class="tb-month-today-btn" title="${reportMessage("report_this_month")}">${reportMessage("report_this_month")}</button>
               <div id="tb-month-popover" class="tb-month-popover" role="dialog" aria-label="${reportMessage("report_log_time_month")}" hidden></div>
             </div>
+            <label class="tb-monthly-log-scan-filter" for="tb-monthly-log-only-missing-spent-time">
+              <input type="checkbox" id="tb-monthly-log-only-missing-spent-time" checked>
+              <span>${reportMessage("report_only_dates_without_spent_time")}</span>
+            </label>
           </div>
           <div class="tb-monthly-log-meta-area">
             <span id="tb-monthly-log-status" class="tb-monthly-log-status">${reportMessage("report_ready_to_scan")}</span>
@@ -1458,13 +1630,14 @@ function openMonthlyLogModal({
                   <col class="col-report">
                   <col class="col-tasks">
                   <col class="col-status">
+                  <col class="col-action">
                 </colgroup>
                 <thead>
-                  <tr><th>${reportMessage("report_date")}</th><th>${reportMessage("report_issue")}</th><th>${reportMessage("report_tasks")}</th><th>${reportMessage("report_status")}</th></tr>
+                  <tr><th>${reportMessage("report_date")}</th><th>${reportMessage("report_issue")}</th><th>${reportMessage("report_tasks")}</th><th>${reportMessage("report_status")}</th><th aria-label="${reportMessage("report_actions")}"></th></tr>
                 </thead>
                 <tbody id="tb-monthly-log-results">
                   <tr>
-                    <td colspan="4" class="tb-table-empty-state">
+                    <td colspan="5" class="tb-table-empty-state">
                       <div class="tb-table-empty-wrap">
                         <span class="tb-table-empty-icon" aria-hidden="true">${globalThis.TB_ICONS?.CALENDAR || '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/></svg>'}</span>
                         <p class="tb-table-empty-title">${reportMessage("report_ready_to_scan")}</p>
@@ -1594,10 +1767,13 @@ function openMonthlyLogModal({
 
   const modalInstance = {
     overlay,
+    previewIssues: [],
+    excludedDates: new Set(),
     previewButton,
     startButton,
     closeButton,
     monthInput,
+    onlyMissingSpentTimeCheckbox: overlay.querySelector("#tb-monthly-log-only-missing-spent-time"),
     getSelectedMonth,
     deleteButton: overlay.querySelector("#tb-monthly-log-delete"),
     copyButton: overlay.querySelector("#tb-monthly-log-copy"),
@@ -1615,6 +1791,9 @@ function openMonthlyLogModal({
 
   const handleMonthChange = () => {
     modalInstance.previewIssues = [];
+    modalInstance.previewFilterState = null;
+    modalInstance.previewMonth = null;
+    modalInstance.excludedDates.clear();
     modalInstance.hasUnsafeReplacement = false;
     startButton.disabled = true;
     startButton.textContent = reportMessage("report_confirm_logging");
@@ -1628,7 +1807,7 @@ function openMonthlyLogModal({
     modalInstance.progressList.replaceChildren(readyProgress);
     const emptyRow = document.createElement("tr");
     const emptyCell = document.createElement("td");
-    emptyCell.colSpan = 4;
+    emptyCell.colSpan = 5;
     emptyCell.className = "tb-table-empty-state";
     emptyCell.innerHTML = `
       <div class="tb-table-empty-wrap">
@@ -1840,6 +2019,7 @@ function openMonthlyLogModal({
     enforceValidMonth();
     handleMonthChange();
   };
+  modalInstance.onlyMissingSpentTimeCheckbox.onchange = handleMonthChange;
   monthInput.oninput = () => {
     if (!monthInput.value) {
       enforceValidMonth();
@@ -1931,13 +2111,14 @@ async function findMonthlyReportIssues(
   redmineApiKey,
   { projectId, trackerId, year, month, updateProgress }
 ) {
+  if (typeof updateProgress !== "function") updateProgress = () => {};
   const searchTerms = [`${year}年${month}月`, `${year}年${String(month).padStart(2, "0")}月`];
   const uniqueTerms = [...new Set(searchTerms)];
   const issuesById = new Map();
 
   for (const subjectQuery of uniqueTerms) {
     updateProgress(`${reportMessage("report_search_subject")} "${subjectQuery}"`);
-    const issues = await findIssues(redmineDomain, redmineApiKey, {
+    const issues = await findAllIssues(redmineDomain, redmineApiKey, {
       project_id: projectId,
       tracker_id: trackerId,
       subject: `~${subjectQuery}`,
@@ -2064,6 +2245,65 @@ function reportSyncSummary(preview) {
     update: preview.operations.filter((op) => op.type === "update").length,
     delete: preview.operations.filter((op) => op.type === "delete").length,
   });
+}
+
+function renderMonthlyPreviewStatus(statusCell, preview) {
+  const statusBadge = document.createElement("span");
+  statusBadge.className = "tb-status-badge";
+  if (preview.error) {
+    statusBadge.classList.add("tb-status-badge--error");
+    statusBadge.textContent = reportMessage("report_badge_error");
+    statusBadge.title = reportMessage("report_click_error_details");
+    statusBadge.setAttribute("role", "button");
+    statusBadge.tabIndex = 0;
+    statusBadge.setAttribute(
+      "aria-label",
+      `${reportMessage("report_badge_error")}: ${reportMessage("report_click_error_details")}`
+    );
+    const showErrorDetails = () =>
+      showToast(reportMessage("report_preview_failed", { error: preview.error }), "error");
+    statusBadge.addEventListener("click", showErrorDetails);
+    statusBadge.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        showErrorDetails();
+      }
+    });
+  } else if (
+    preview.willReplaceDailyEntries ||
+    preview.operations?.some(
+      (operation) => operation.type === "delete" || operation.type === "update"
+    )
+  ) {
+    statusBadge.classList.add("tb-status-badge--warning");
+    statusBadge.textContent = reportMessage("report_badge_duplicate", {
+      hours: preview.existingDailyHours,
+    });
+    statusBadge.title = reportMessage("report_preview_replace_warning", {
+      hours: preview.existingDailyHours,
+    });
+  } else if (preview.dayAlreadyFull) {
+    statusBadge.classList.add("tb-status-badge--full");
+    statusBadge.textContent = reportMessage("report_badge_full", {
+      hours: preview.existingDailyHours,
+    });
+    statusBadge.title = reportMessage("report_day_full", {
+      hours: preview.existingDailyHours,
+    });
+  } else if (preview.tasks.length === 0) {
+    statusBadge.classList.add("tb-status-badge--empty");
+    statusBadge.textContent = reportMessage("report_badge_empty");
+    statusBadge.title = reportMessage("report_no_tasks");
+  } else if (preview.tasks.some((task) => task.alreadyLogged)) {
+    statusBadge.classList.add("tb-status-badge--warning");
+    statusBadge.textContent = reportMessage("report_badge_partial_existing");
+    statusBadge.title = reportMessage("report_preview_duplicate");
+  } else {
+    statusBadge.classList.add("tb-status-badge--ready");
+    statusBadge.textContent = reportMessage("report_badge_ready");
+    statusBadge.title = reportMessage("report_preview_ready");
+  }
+  statusCell.replaceChildren(statusBadge);
 }
 
 function confirmReportSync(

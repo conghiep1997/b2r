@@ -53,6 +53,10 @@ test("literal title rules preserve defaults and support custom formats without r
 });
 test("rules validate placeholders, alias shape and bounds", () => {
   const { TB_SYNC_RULES: rules } = harness();
+  assert.equal(
+    rules.normalize({ subjectTemplate: "{translatedSummary}" }).subjectTemplate,
+    "{translatedSummary}"
+  );
   for (const invalid of [
     { subjectTemplate: "{unknown}" },
     { searchMode: "regex" },
