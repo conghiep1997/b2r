@@ -2133,6 +2133,9 @@
   "report_badge_error": {
     "message": "⚠️ Lỗi"
   },
+  "report_badge_hours_over_budget": {
+    "message": "⚠️ Vượt giới hạn ngày"
+  },
   "report_actions": {
     "message": "Thao tác"
   },

@@ -4,6 +4,11 @@ Tất cả các thay đổi đáng chú ý của dự án Backlog2Redmine (B2R) 
 Định dạng dựa trên [Keep a Changelog](https://keepachangelog.com/).
 (Bản tiếng Anh chính thức: [CHANGELOG.md](./CHANGELOG.md))
 
+## [1.8.30] - 2026-11-25
+- **✨ Thêm mới**:
+- **🔧 Sửa lỗi**: Giới hạn giờ tùy chỉnh theo ngân sách còn lại trong ngày, bảo vệ POST time entry bằng approval ở service worker và đối soát POST chưa rõ kết quả trước khi retry để tránh tạo trùng. Cải thiện quản lý focus bàn phím trong modal và giữ quét đến hết tháng đã chọn.
+- **📝 Tài liệu**:
+
 ## [1.8.29] - 2026-11-25
 - **✨ Thêm mới**: Cho phép bỏ từng ngày khỏi preview Log Time tháng, quét ngày làm việc còn thiếu và tìm task thay thế khi không có Daily Report.
 - **🔧 Sửa lỗi**: Giới hạn đồng bộ report tháng và xóa spent time vào các entry đã xác minh hoặc được chọn rõ ràng; kiểm tra lại preview trước khi ghi hoặc xóa dữ liệu.

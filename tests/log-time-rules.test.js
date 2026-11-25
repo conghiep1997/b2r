@@ -143,3 +143,16 @@ test("planReportSync honors custom task hours override instead of auto-allocatin
   assert.equal(op1.hours, 5);
   assert.equal(op2.hours, 3);
 });
+
+test("planReportSync rejects custom hours above the budget left after preserved entries", () => {
+  const { context } = setup();
+  const preview = {
+    date: "2026-10-02",
+    entries: [{ id: 9, issue: { id: 90 }, spent_on: "2026-10-02", hours: 2, comments: "Manual" }],
+    tasks: [{ id: "1", customHours: 6.01, activityId: 42 }],
+  };
+  assert.throws(
+    () => context.planReportSync(preview, [], { dailyHours: 8 }),
+    /custom task hours.*6\.00 hours/i
+  );
+});

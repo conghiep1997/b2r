@@ -226,6 +226,94 @@ test("new time entries omit the comments field when logging without a comment", 
     request = options;
     return { ok: true, json: async () => ({ time_entry: { id: 20 } }) };
   };
-  await context.logTimeEntry("https://redmine.example.test", "key", 90, 2, "", "2026-09-28", 10);
+  await context.logTimeEntry("https://redmine.example.test", "key", 90, 2, "", "2026-09-28", 10, {
+    reportId: "50",
+    date: "2026-09-28",
+    domain: "https://redmine.example.test",
+    confirmedAt: Date.now(),
+    targetIssueId: "90",
+    hours: 2,
+    activityId: 10,
+    source: "legacy-selected",
+  });
   assert.equal("comments" in JSON.parse(request.body).time_entry, false);
+});
+
+test("POST time entries require approval matching the request payload", async () => {
+  const background = fs.readFileSync(path.join(__dirname, "..", "src", "background.js"), "utf8");
+  const start = background.indexOf("async function handleRedmineAuthorizedFetch(settings, msg)");
+  const end = background.indexOf("function assertAllowedRedmineAuthorizedPath", start);
+  const calls = [];
+  const context = vm.createContext({
+    URL,
+    JSON,
+    Date,
+    assertAllowedRedmineAuthorizedPath: () => {},
+    isBackgroundAllowedTimeEntrySource: () => true,
+    logTimeEntry: async (...args) => {
+      calls.push(args);
+      return { id: 123 };
+    },
+    buildRedmineUrl: () => "https://redmine.example.test/time_entries.json",
+    timeoutFetch: async () => ({
+      ok: true,
+      status: 201,
+      json: async () => ({ time_entry: { id: 123 } }),
+    }),
+  });
+  vm.runInContext(
+    `${background.slice(start, end)}\nthis.handle = handleRedmineAuthorizedFetch;`,
+    context
+  );
+  const settings = { redmineDomain: "https://redmine.example.test", redmineApiKey: "key" };
+  const body = JSON.stringify({
+    time_entry: { issue_id: 90, hours: 2, spent_on: "2026-09-28", activity_id: 10 },
+  });
+  for (const mutationApproval of [
+    null,
+    { reportId: "50", date: "2026-09-28", targetIssueId: "91" },
+  ]) {
+    await assert.rejects(
+      context.handle(settings, {
+        path: "/time_entries.json",
+        method: "POST",
+        body,
+        mutationApproval,
+      })
+    );
+  }
+  assert.equal(calls.length, 0);
+  const approval = {
+    reportId: "auto-2026-09-28",
+    date: "2026-09-28",
+    domain: settings.redmineDomain,
+    confirmedAt: Date.now(),
+    targetIssueId: "90",
+    hours: 2,
+    activityId: 10,
+    source: "fallback-project",
+  };
+  const result = await context.handle(settings, {
+    path: "/time_entries.json",
+    method: "POST",
+    body,
+    mutationApproval: approval,
+  });
+  assert.equal(result.status, 201);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], settings.redmineDomain);
+});
+
+test("time-entry service rejects a POST without approval before sending it", async () => {
+  const { context } = setup();
+  let requestCount = 0;
+  context.redmineAuthorizedFetch = async () => {
+    requestCount += 1;
+    return { ok: true, json: async () => ({ time_entry: { id: 20 } }) };
+  };
+  await assert.rejects(
+    context.logTimeEntry("https://redmine.example.test", "key", 90, 2, "", "2026-09-28", 10),
+    /approved plan/
+  );
+  assert.equal(requestCount, 0);
 });

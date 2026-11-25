@@ -4,7 +4,7 @@
  */
 /* global getIssueDetails */
 
-/* global TB_LOGGER, TB_SYNC_ACTIVITY, TB_SYNC_STATE, TB_COMMENT_SYNC, TB_MIGRATION, TB_PROJECT_PROFILES, TB_GLOSSARY, TB_SYNC_RULES, TB_LOG_TIME_RULES, TB_CUSTOM_FIELDS, TB_RETRY_QUEUE, getUserStorageId, getBacklogIssueInfo, getBacklogUsers, testModelAvailability, deleteTimeEntry, updateTimeEntry */
+/* global TB_LOGGER, TB_SYNC_ACTIVITY, TB_SYNC_STATE, TB_COMMENT_SYNC, TB_MIGRATION, TB_PROJECT_PROFILES, TB_GLOSSARY, TB_SYNC_RULES, TB_LOG_TIME_RULES, TB_CUSTOM_FIELDS, TB_RETRY_QUEUE, getUserStorageId, getBacklogIssueInfo, getBacklogUsers, testModelAvailability, deleteTimeEntry, updateTimeEntry, logTimeEntry */
 
 importScripts(
   "modules/utils/version.js",
@@ -1119,6 +1119,64 @@ async function handleRedmineAuthorizedFetch(settings, msg) {
       msg.deletionApproval
     );
     return { status: 204, payload: null, text: "" };
+  }
+  if (method === "POST" && msg.path === "/time_entries.json") {
+    const body = JSON.parse(msg.body || "null")?.time_entry;
+    const approval = msg.mutationApproval;
+    const approvedDate = new Date(`${approval?.date || ""}T00:00:00Z`);
+    const hoursUnits = Math.round(Number(body?.hours) * 100);
+    const approvedHoursUnits = Math.round(Number(approval?.hours) * 100);
+    if (
+      !body ||
+      !approval ||
+      approval.domain !== settings.redmineDomain ||
+      (!/^\d+$/.test(String(approval.reportId)) &&
+        String(approval.reportId) !== `auto-${approval.date}`) ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(approval.date || "") ||
+      !Number.isFinite(approvedDate.getTime()) ||
+      approvedDate.toISOString().slice(0, 10) !== approval.date ||
+      !/^\d+$/.test(String(body.issue_id)) ||
+      String(body.issue_id) !== String(approval.targetIssueId) ||
+      body.spent_on !== approval.date ||
+      !isBackgroundAllowedTimeEntrySource(approval.reportId, approval.source) ||
+      (body.comments !== undefined && body.comments !== "") ||
+      !Number.isFinite(Number(body.hours)) ||
+      Number(body.hours) <= 0 ||
+      !Number.isFinite(Number(approval.hours)) ||
+      hoursUnits !== approvedHoursUnits ||
+      !/^\d+$/.test(String(body.activity_id)) ||
+      String(body.activity_id) !== String(approval.activityId) ||
+      !Number.isFinite(approval.confirmedAt) ||
+      Date.now() - approval.confirmedAt > 300000 ||
+      approval.confirmedAt > Date.now()
+    ) {
+      throw new Error("Time-entry creation does not match the approved plan.");
+    }
+    if (/^\d+$/.test(String(approval.reportId))) {
+      const report = await getIssueDetails(
+        settings.redmineDomain,
+        settings.redmineApiKey,
+        approval.reportId
+      );
+      const match = report?.subject?.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
+      const reportDate = match
+        ? `${match[1]}-${String(Number(match[2])).padStart(2, "0")}-${String(Number(match[3])).padStart(2, "0")}`
+        : "";
+      if (reportDate !== approval.date) {
+        throw new Error("Time-entry creation does not match the approved report date.");
+      }
+    }
+    const createdEntry = await logTimeEntry(
+      settings.redmineDomain,
+      settings.redmineApiKey,
+      body.issue_id,
+      body.hours,
+      body.comments || "",
+      body.spent_on,
+      body.activity_id,
+      approval
+    );
+    return { status: 201, payload: { time_entry: createdEntry }, text: "" };
   }
   if (method === "PUT" && /^\/time_entries\/\d+\.json$/.test(msg.path)) {
     const body = JSON.parse(msg.body || "null")?.time_entry;

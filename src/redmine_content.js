@@ -371,6 +371,7 @@ async function logTimeForMonth() {
 
           const blocked =
             visiblePreviews.length === 0 ||
+            visiblePreviews.some((preview) => preview.validationError) ||
             visiblePreviews.every(
               (preview) => preview.error || preview.dayAlreadyFull || !preview.tasks.length
             );
@@ -475,9 +476,19 @@ async function logTimeForMonth() {
                 const selected = new Set((preview.selectedEntryIds || []).map(String));
                 if (checkbox.checked) selected.add(String(entry.id));
                 else selected.delete(String(entry.id));
-                const updated = planReportSync(preview, [...selected], settings.logTimeRules);
-                preview.tasks.forEach((task, index) => Object.assign(task, updated.tasks[index]));
-                Object.assign(preview, { ...updated, tasks: preview.tasks });
+                try {
+                  const updated = planReportSync(preview, [...selected], settings.logTimeRules);
+                  preview.tasks.forEach((task, index) => Object.assign(task, updated.tasks[index]));
+                  Object.assign(preview, updated, {
+                    tasks: preview.tasks,
+                    error: null,
+                    validationError: false,
+                  });
+                } catch (error) {
+                  preview.error = error.message;
+                  preview.validationError = true;
+                  preview.operations = [];
+                }
                 taskCell.querySelectorAll(".tb-hours-input").forEach((input, index) => {
                   input.value = String(preview.tasks[index]?.hours ?? 0);
                 });
@@ -551,12 +562,20 @@ async function logTimeForMonth() {
                 task.activityId = Number(actSelect.value);
                 task.activityName = actSelect.options[actSelect.selectedIndex]?.text || "";
                 // Recompute operations so Start remains consistent
-                const updated = planReportSync(
-                  preview,
-                  preview.selectedEntryIds || [],
-                  settings.logTimeRules
-                );
-                preview.operations = updated.operations;
+                try {
+                  const updated = planReportSync(
+                    preview,
+                    preview.selectedEntryIds || [],
+                    settings.logTimeRules
+                  );
+                  Object.assign(preview, updated, { error: null, validationError: false });
+                } catch (error) {
+                  preview.error = error.message;
+                  preview.validationError = true;
+                  preview.operations = [];
+                }
+                renderMonthlyPreviewStatus(statusCell, preview);
+                updateMonthTotals();
               });
 
               // Editable hours input
@@ -621,18 +640,25 @@ async function logTimeForMonth() {
                 const validatedHours = Math.round(parsed * 100) / 100;
                 taskObj.customHours = validatedHours;
                 taskObj.hours = validatedHours;
-                const updated = planReportSync(
-                  preview,
-                  preview.selectedEntryIds || [],
-                  settings.logTimeRules
-                );
-                preview.operations = updated.operations;
+                try {
+                  const updated = planReportSync(
+                    preview,
+                    preview.selectedEntryIds || [],
+                    settings.logTimeRules
+                  );
+                  Object.assign(preview, updated, { error: null, validationError: false });
+                } catch (error) {
+                  preview.error = error.message;
+                  preview.validationError = true;
+                  preview.operations = [];
+                }
 
                 if (daySummaryEl) {
                   const dTotal = preview.tasks.reduce((s, t) => s + (Number(t.hours) || 0), 0);
                   const roundedDTotal = Math.round(dTotal * 100) / 100;
                   daySummaryEl.textContent = `∑ ${Number.isInteger(roundedDTotal) ? roundedDTotal : roundedDTotal.toFixed(1)}h`;
                 }
+                renderMonthlyPreviewStatus(statusCell, preview);
                 updateMonthTotals();
               };
               inputEl.addEventListener("input", onHourChange);
@@ -1533,6 +1559,7 @@ function openMonthlyLogModal({
   onStart,
   onDelete,
 }) {
+  const previousFocus = document.activeElement;
   const now = new Date();
   const initialMonthValue = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   const overlay = document.createElement("div");
@@ -2071,6 +2098,36 @@ function openMonthlyLogModal({
   };
   document.addEventListener("click", onDocumentClick);
 
+  const restoreFocus = () => {
+    if (previousFocus?.isConnected && typeof previousFocus.focus === "function") {
+      previousFocus.focus();
+    }
+  };
+  const onModalTab = (event) => {
+    if (event.key !== "Tab") return;
+    const focusable = [
+      ...overlay.querySelectorAll(
+        'button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
+      ),
+    ].filter((element) => element.getClientRects().length > 0);
+    if (!focusable.length) {
+      event.preventDefault();
+      overlay.querySelector(".tb-monthly-log-dialog")?.focus();
+      return;
+    }
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const activeInside = overlay.contains(document.activeElement);
+    if (event.shiftKey && (!activeInside || document.activeElement === first)) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && (!activeInside || document.activeElement === last)) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
+  document.addEventListener("keydown", onModalTab);
+
   function onKeyDown(event) {
     if (event.key === "Escape") {
       if (monthPopover && !monthPopover.hidden) {
@@ -2080,9 +2137,11 @@ function openMonthlyLogModal({
       }
       if (!closeButton.disabled) {
         document.removeEventListener("keydown", onKeyDown);
+        document.removeEventListener("keydown", onModalTab);
         document.removeEventListener("click", onDocumentClick);
         overlay.remove();
         document.body.classList.remove("tb-modal-open");
+        restoreFocus();
       }
     }
   }
@@ -2090,11 +2149,14 @@ function openMonthlyLogModal({
   const close = () => {
     closePopover();
     document.removeEventListener("keydown", onKeyDown);
+    document.removeEventListener("keydown", onModalTab);
     document.removeEventListener("click", onDocumentClick);
     overlay.remove();
     document.body.classList.remove("tb-modal-open");
+    restoreFocus();
   };
   document.addEventListener("keydown", onKeyDown);
+  closeButton.focus();
   closeButton.onclick = close;
   overlay.onclick = (event) => {
     if (event.target === overlay && !closeButton.disabled) close();
@@ -2252,13 +2314,17 @@ function renderMonthlyPreviewStatus(statusCell, preview) {
   statusBadge.className = "tb-status-badge";
   if (preview.error) {
     statusBadge.classList.add("tb-status-badge--error");
-    statusBadge.textContent = reportMessage("report_badge_error");
-    statusBadge.title = reportMessage("report_click_error_details");
+    statusBadge.textContent = preview.validationError
+      ? reportMessage("report_badge_hours_over_budget")
+      : reportMessage("report_badge_error");
+    statusBadge.title = preview.validationError
+      ? preview.error
+      : reportMessage("report_click_error_details");
     statusBadge.setAttribute("role", "button");
     statusBadge.tabIndex = 0;
     statusBadge.setAttribute(
       "aria-label",
-      `${reportMessage("report_badge_error")}: ${reportMessage("report_click_error_details")}`
+      `${statusBadge.textContent}: ${preview.validationError ? preview.error : reportMessage("report_click_error_details")}`
     );
     const showErrorDetails = () =>
       showToast(reportMessage("report_preview_failed", { error: preview.error }), "error");

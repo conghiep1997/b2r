@@ -1,11 +1,7 @@
 /* globals getCurrentUser, getIssueDetails, getTimeEntryActivities, findTimeEntries, findAllIssues, logTimeEntry, updateTimeEntry, deleteTimeEntry */
 
-function getMissingWorkingDates(year, month, reportDates = [], today = new Date()) {
-  const now = new Date(today);
-  const end =
-    year === now.getFullYear() && month === now.getMonth() + 1
-      ? now.getDate()
-      : new Date(year, month, 0).getDate();
+function getMissingWorkingDates(year, month, reportDates = []) {
+  const end = new Date(year, month, 0).getDate();
   const existing = new Set(reportDates);
   const dates = [];
   for (let day = 1; day <= end; day++) {
@@ -77,6 +73,7 @@ function filterMonthlyCopyRowsByExcludedDates(copyRows, excludedDates) {
 }
 
 const B2R_TIME_ENTRY_OWNERSHIP_KEY = "b2r_time_entry_ownership_v1";
+const B2R_TIME_ENTRY_PENDING_KEY = "b2r_time_entry_pending_posts_v1";
 
 function timeEntryOwnershipId(domain, entryId) {
   return `${normalizeRedmineDomain(domain)}:${String(entryId)}`;
@@ -87,9 +84,55 @@ function normalizeRedmineDomain(domain) {
 }
 
 async function readTimeEntryOwnership(domain, userId, date, reportId, entries) {
-  const { [B2R_TIME_ENTRY_OWNERSHIP_KEY]: records = {} } = await chrome.storage.local.get(
-    B2R_TIME_ENTRY_OWNERSHIP_KEY
+  const ownershipState = await chrome.storage.local.get(B2R_TIME_ENTRY_OWNERSHIP_KEY);
+  let records = ownershipState[B2R_TIME_ENTRY_OWNERSHIP_KEY] || {};
+  const { [B2R_TIME_ENTRY_PENDING_KEY]: pendingPosts = {} } = await chrome.storage.local.get(
+    B2R_TIME_ENTRY_PENDING_KEY
   );
+  const normalizedDomain = normalizeRedmineDomain(domain);
+  const updatedPendingPosts = { ...pendingPosts };
+  for (const [intentId, intent] of Object.entries(pendingPosts)) {
+    if (
+      intent.domain !== normalizedDomain ||
+      String(intent.userId) !== String(userId) ||
+      intent.date !== date ||
+      String(intent.reportId) !== String(reportId)
+    ) {
+      continue;
+    }
+    if (!Array.isArray(intent.baselineEntryIds)) {
+      throw new Error(
+        "A previous time-entry POST could not be verified. Refresh after Redmine finishes processing before retrying."
+      );
+    }
+    const candidates = entries.filter(
+      (entry) =>
+        !intent.baselineEntryIds.includes(String(entry.id)) &&
+        String(entry.user?.id ?? entry.user_id) === String(intent.userId) &&
+        entry.spent_on === intent.date &&
+        getTimeEntryIssueId(entry) === String(intent.issueId) &&
+        Math.round(Number(entry.hours) * 100) === intent.hoursUnits &&
+        Number(entry.activity?.id ?? entry.activity_id) === Number(intent.activityId)
+    );
+    if (candidates.length !== 1) {
+      throw new Error(
+        "A previous time-entry POST could not be verified. Refresh after Redmine finishes processing before retrying."
+      );
+    }
+    await saveTimeEntryOwnership(
+      domain,
+      userId,
+      date,
+      reportId,
+      intent.source,
+      candidates[0],
+      intent.issueId
+    );
+    const refreshedOwnership = await chrome.storage.local.get(B2R_TIME_ENTRY_OWNERSHIP_KEY);
+    records = refreshedOwnership[B2R_TIME_ENTRY_OWNERSHIP_KEY] || {};
+    delete updatedPendingPosts[intentId];
+    await chrome.storage.local.set({ [B2R_TIME_ENTRY_PENDING_KEY]: updatedPendingPosts });
+  }
   return entries.map((entry) => {
     const record = records[timeEntryOwnershipId(domain, entry.id)];
     const exactMatch =
@@ -102,6 +145,109 @@ async function readTimeEntryOwnership(domain, userId, date, reportId, entries) {
       ["daily-report", "fallback-project", "fallback-all"].includes(record.source);
     return exactMatch ? { ...entry, b2rOwnership: record } : entry;
   });
+}
+
+function timeEntryPendingPostId(domain, userId, date, reportId, issueId) {
+  return [normalizeRedmineDomain(domain), userId, date, reportId, issueId].join("|");
+}
+
+function isAllowedMonthlyPostSource(reportId, source) {
+  return /^\d+$/.test(String(reportId))
+    ? ["daily-report", "legacy-selected"].includes(source)
+    : ["fallback-project", "fallback-all", "legacy-selected"].includes(source);
+}
+
+async function createApprovedTimeEntry({
+  redmineDomain,
+  redmineApiKey = "",
+  issueId,
+  hours,
+  date,
+  activityId,
+  currentUser,
+  reportId,
+  source,
+  confirmedAt,
+  entries = [],
+}) {
+  const hoursUnits = Math.round(Number(hours) * 100);
+  if (
+    !currentUser?.id ||
+    !/^\d+$/.test(String(issueId)) ||
+    !Number.isFinite(hoursUnits) ||
+    hoursUnits <= 0 ||
+    Math.abs(Number(hours) * 100 - hoursUnits) > 1e-8 ||
+    !Number.isFinite(Number(activityId)) ||
+    (!/^\d+$/.test(String(reportId)) && String(reportId) !== `auto-${date}`) ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(date || "") ||
+    !Number.isFinite(new Date(`${date}T00:00:00Z`).getTime()) ||
+    new Date(`${date}T00:00:00Z`).toISOString().slice(0, 10) !== date ||
+    !isAllowedMonthlyPostSource(reportId, source) ||
+    !Number.isFinite(confirmedAt) ||
+    Date.now() - confirmedAt > 300000 ||
+    confirmedAt > Date.now()
+  ) {
+    throw new Error("Time-entry creation does not match the approved plan.");
+  }
+  const intentId = timeEntryPendingPostId(redmineDomain, currentUser.id, date, reportId, issueId);
+  const { [B2R_TIME_ENTRY_PENDING_KEY]: pendingPosts = {} } = await chrome.storage.local.get(
+    B2R_TIME_ENTRY_PENDING_KEY
+  );
+  if (pendingPosts[intentId]) {
+    throw new Error(
+      "A previous time-entry POST is unresolved. Refresh the preview before retrying."
+    );
+  }
+  const intent = {
+    domain: normalizeRedmineDomain(redmineDomain),
+    userId: String(currentUser.id),
+    date,
+    reportId: String(reportId),
+    issueId: String(issueId),
+    hoursUnits,
+    activityId: Number(activityId),
+    source,
+    baselineEntryIds: entries.map((entry) => String(entry.id)),
+  };
+  await chrome.storage.local.set({
+    [B2R_TIME_ENTRY_PENDING_KEY]: { ...pendingPosts, [intentId]: intent },
+  });
+  const approval = {
+    reportId: String(reportId),
+    date,
+    domain: redmineDomain,
+    confirmedAt,
+    targetIssueId: String(issueId),
+    hours: hoursUnits / 100,
+    activityId: Number(activityId),
+    source,
+  };
+  const createdEntry = await logTimeEntry(
+    redmineDomain,
+    redmineApiKey,
+    issueId,
+    hoursUnits / 100,
+    "",
+    date,
+    activityId,
+    approval
+  );
+  await saveTimeEntryOwnership(
+    redmineDomain,
+    currentUser.id,
+    date,
+    reportId,
+    source,
+    createdEntry,
+    issueId
+  );
+  const { [B2R_TIME_ENTRY_PENDING_KEY]: latestPendingPosts = {} } = await chrome.storage.local.get(
+    B2R_TIME_ENTRY_PENDING_KEY
+  );
+  const remainingPendingPosts = { ...latestPendingPosts };
+  delete remainingPendingPosts[intentId];
+  await chrome.storage.local.set({ [B2R_TIME_ENTRY_PENDING_KEY]: remainingPendingPosts });
+  return createdEntry;
 }
 
 async function saveTimeEntryOwnership(domain, userId, date, reportId, source, entry, issueId) {
@@ -136,7 +282,7 @@ async function deleteTimeEntryOwnership(domain, entryId) {
   await chrome.storage.local.set({ [B2R_TIME_ENTRY_OWNERSHIP_KEY]: updated });
 }
 
-function isMonthlyReportDateInScanRange(date, year, month, today = new Date()) {
+function isMonthlyReportDateInScanRange(date, year, month) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date || "")) {
     return false;
   }
@@ -147,9 +293,7 @@ function isMonthlyReportDateInScanRange(date, year, month, today = new Date()) {
   if (Number(date.slice(0, 4)) !== year || Number(date.slice(5, 7)) !== month) {
     return false;
   }
-  const now = new Date(today);
-  const todayString = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-  return date <= todayString || year !== now.getFullYear() || month !== now.getMonth() + 1;
+  return true;
 }
 
 function isIssueMatchingDateForUser(issue, date, userId, reportTrackerId) {
@@ -439,24 +583,19 @@ async function executeReportTimeSync(
               operation.taskId
             );
           } else {
-            const createdEntry = await logTimeEntry(
+            await createApprovedTimeEntry({
               redmineDomain,
               redmineApiKey,
-              operation.taskId,
-              operation.hours,
-              "",
-              effectiveSpentOn,
-              activity
-            );
-            await saveTimeEntryOwnership(
-              redmineDomain,
-              currentUser.id,
-              effectiveSpentOn,
-              String(reportIssueId),
-              "daily-report",
-              createdEntry,
-              operation.taskId
-            );
+              issueId: operation.taskId,
+              hours: operation.hours,
+              date: effectiveSpentOn,
+              activityId: activity,
+              currentUser,
+              reportId: String(reportIssueId),
+              source: "daily-report",
+              confirmedAt: expectedPreview.confirmedAt,
+              entries: existingDailyEntries,
+            });
           }
           loggedTaskIds.push(operation.taskId);
         }
@@ -830,6 +969,21 @@ function planReportSync(preview, selectedEntryIds = [], rules = {}) {
   const hasCustomHours = preview.tasks.some(
     (task) => task.customHours !== undefined && Number.isFinite(Number(task.customHours))
   );
+  if (hasCustomHours) {
+    const requestedUnits = preview.tasks.reduce((total, task) => {
+      const value = task.customHours !== undefined ? Number(task.customHours) : 0;
+      return total + (Number.isFinite(value) ? Math.max(0, Math.round(value * 100)) : 0);
+    }, 0);
+    const budgetUnits = Math.max(
+      0,
+      Math.floor((logTimeRules.dailyHours - preservedHours) * 100 + 1e-8)
+    );
+    if (requestedUnits > budgetUnits) {
+      throw new Error(
+        `Custom task hours exceed the remaining daily budget of ${(budgetUnits / 100).toFixed(2)} hours.`
+      );
+    }
+  }
   const hours = hasCustomHours
     ? preview.tasks.map((task) =>
         task.customHours !== undefined && Number.isFinite(Number(task.customHours))
@@ -968,24 +1122,19 @@ async function logTimeFromFallbackTasks(
               task.id
             );
           } else {
-            const createdEntry = await logTimeEntry(
-              settings.redmineDomain,
-              key,
-              task.id,
-              op.hours,
-              "",
+            await createApprovedTimeEntry({
+              redmineDomain: settings.redmineDomain,
+              redmineApiKey: key,
+              issueId: task.id,
+              hours: op.hours,
               date,
-              op.activityId
-            );
-            await saveTimeEntryOwnership(
-              settings.redmineDomain,
-              user.id,
-              date,
-              `auto-${date}`,
-              source === "project" ? "fallback-project" : "fallback-all",
-              createdEntry,
-              task.id
-            );
+              activityId: op.activityId,
+              currentUser: user,
+              reportId: `auto-${date}`,
+              source: source === "project" ? "fallback-project" : "fallback-all",
+              confirmedAt: expectedPreview.confirmedAt,
+              entries: fresh.entries,
+            });
           }
         }
         return createLogResult([String(task.id)], [String(task.id)], [], [], {

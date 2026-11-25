@@ -933,8 +933,28 @@ async function logTimeEntry(
   hours,
   comments = "",
   spentOn = null,
-  activityId = null
+  activityId = null,
+  approval = null
 ) {
+  const approvedHours = Math.round(Number(hours) * 100) / 100;
+  if (
+    !approval ||
+    String(issueId) !== String(approval.targetIssueId) ||
+    spentOn !== approval.date ||
+    comments !== "" ||
+    !isAllowedReportIdForDate(approval.reportId, approval.date) ||
+    !isAllowedTimeEntrySource(approval.reportId, approval.source) ||
+    approval.domain !== redmineDomain ||
+    !Number.isFinite(approval.confirmedAt) ||
+    Date.now() - approval.confirmedAt > 300000 ||
+    approval.confirmedAt > Date.now() ||
+    !Number.isFinite(Number(hours)) ||
+    Number(hours) <= 0 ||
+    approvedHours !== Number(hours) ||
+    Number(activityId) !== Number(approval.activityId)
+  ) {
+    throw new Error("Time-entry creation does not match the approved plan.");
+  }
   const payload = {
     time_entry: {
       issue_id: issueId,
@@ -947,6 +967,7 @@ async function logTimeEntry(
 
   const response = await redmineAuthorizedFetch(redmineDomain, apiKey, "/time_entries.json", {
     method: "POST",
+    mutationApproval: approval,
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });

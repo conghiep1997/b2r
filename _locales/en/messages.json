@@ -2133,6 +2133,9 @@
   "report_badge_error": {
     "message": "⚠️ Error"
   },
+  "report_badge_hours_over_budget": {
+    "message": "⚠️ Over daily limit"
+  },
   "report_actions": {
     "message": "Actions"
   },

@@ -31,13 +31,34 @@ function load(overrides = {}) {
   return context;
 }
 
-test("missing working dates exclude weekends, existing reports and future days this month", () => {
+test("missing working dates include every remaining weekday in the selected month", () => {
   const context = load();
   assert.deepEqual(
     Array.from(
       context.getMissingWorkingDates(2026, 11, ["2026-11-02"], new Date("2026-11-04T12:00:00Z"))
     ),
-    ["2026-11-03", "2026-11-04"]
+    [
+      "2026-11-03",
+      "2026-11-04",
+      "2026-11-05",
+      "2026-11-06",
+      "2026-11-09",
+      "2026-11-10",
+      "2026-11-11",
+      "2026-11-12",
+      "2026-11-13",
+      "2026-11-16",
+      "2026-11-17",
+      "2026-11-18",
+      "2026-11-19",
+      "2026-11-20",
+      "2026-11-23",
+      "2026-11-24",
+      "2026-11-25",
+      "2026-11-26",
+      "2026-11-27",
+      "2026-11-30",
+    ]
   );
 });
 
@@ -99,11 +120,11 @@ test("issue date matching handles range boundaries, missing tracker metadata, an
   );
 });
 
-test("report candidate date range excludes future dates in the selected current month", () => {
+test("report candidate date range includes future dates through the selected month end", () => {
   const context = load();
   const today = new Date("2026-11-25T12:00:00Z");
   assert.equal(context.isMonthlyReportDateInScanRange("2026-11-25", 2026, 11, today), true);
-  assert.equal(context.isMonthlyReportDateInScanRange("2026-11-26", 2026, 11, today), false);
+  assert.equal(context.isMonthlyReportDateInScanRange("2026-11-26", 2026, 11, today), true);
   assert.equal(context.isMonthlyReportDateInScanRange("2026-10-31", 2026, 11, today), false);
   assert.equal(context.isMonthlyReportDateInScanRange("2026-10-31", 2026, 10, today), true);
   assert.equal(context.isMonthlyReportDateInScanRange("2026-11-31", 2026, 11, today), false);
@@ -333,4 +354,182 @@ test("fallback writes return the same result shape used by monthly confirmation"
       source: "fallback-project",
     }
   );
+});
+
+test("monthly POST timeout is reconciled from its saved pre-POST snapshot on retry", async () => {
+  const records = {};
+  const remoteEntries = [];
+  let postCalls = 0;
+  const context = load({
+    chrome: {
+      storage: {
+        local: {
+          get: async (key) => ({ [key]: records[key] }),
+          set: async (values) => Object.assign(records, values),
+        },
+      },
+      runtime: { sendMessage: async () => ({ ok: true }) },
+    },
+    logTimeEntry: async (_domain, _key, issueId, hours, _comments, date, activityId) => {
+      postCalls += 1;
+      const created = {
+        id: 123,
+        user: { id: 7 },
+        issue: { id: issueId },
+        spent_on: date,
+        hours,
+        activity: { id: activityId },
+        comments: "",
+      };
+      remoteEntries.push(created);
+      throw new Error("Request timed out after Redmine accepted the POST.");
+    },
+  });
+  const request = {
+    redmineDomain: "https://redmine.test",
+    redmineApiKey: "",
+    issueId: "42",
+    hours: 8,
+    date: "2026-11-03",
+    activityId: 3,
+    currentUser: { id: 7 },
+    reportId: "auto-2026-11-03",
+    source: "fallback-project",
+    confirmedAt: Date.now(),
+    entries: [],
+  };
+  await assert.rejects(context.createApprovedTimeEntry(request), /timed out/);
+  const reconciled = await context.readTimeEntryOwnership(
+    request.redmineDomain,
+    "7",
+    request.date,
+    request.reportId,
+    remoteEntries
+  );
+  assert.ok(reconciled[0].b2rOwnership);
+  const retryPlan = context.planReportSync({
+    date: request.date,
+    reportIssueId: request.reportId,
+    userId: "7",
+    tasks: [{ id: "42", activityId: 3 }],
+    entries: reconciled,
+  });
+  assert.equal(retryPlan.operations.length, 0);
+  assert.equal(postCalls, 1);
+});
+
+test("monthly retry reconciles a created entry when ownership storage failed after POST", async () => {
+  const records = {};
+  const remoteEntries = [];
+  let failOwnershipOnce = true;
+  let postCalls = 0;
+  const ownershipKey = "b2r_time_entry_ownership_v1";
+  const context = load({
+    chrome: {
+      storage: {
+        local: {
+          get: async (key) => ({ [key]: records[key] }),
+          set: async (values) => {
+            if (ownershipKey in values && failOwnershipOnce) {
+              failOwnershipOnce = false;
+              throw new Error("Storage full");
+            }
+            Object.assign(records, values);
+          },
+        },
+      },
+    },
+    logTimeEntry: async (_domain, _key, issueId, hours, _comments, date, activityId) => {
+      postCalls += 1;
+      const created = {
+        id: 124,
+        user: { id: 7 },
+        issue: { id: issueId },
+        spent_on: date,
+        hours,
+        activity: { id: activityId },
+        comments: "",
+      };
+      remoteEntries.push(created);
+      return created;
+    },
+  });
+  const request = {
+    redmineDomain: "https://redmine.test",
+    issueId: "42",
+    hours: 8,
+    date: "2026-11-03",
+    activityId: 3,
+    currentUser: { id: 7 },
+    reportId: "auto-2026-11-03",
+    source: "fallback-project",
+    confirmedAt: Date.now(),
+    entries: [],
+  };
+  await assert.rejects(context.createApprovedTimeEntry(request), /Storage full/);
+  const reconciled = await context.readTimeEntryOwnership(
+    request.redmineDomain,
+    "7",
+    request.date,
+    request.reportId,
+    remoteEntries
+  );
+  assert.ok(reconciled[0].b2rOwnership);
+  const retryPlan = context.planReportSync({
+    date: request.date,
+    reportIssueId: request.reportId,
+    userId: "7",
+    tasks: [{ id: "42", activityId: 3 }],
+    entries: reconciled,
+  });
+  assert.equal(retryPlan.operations.length, 0);
+  assert.equal(postCalls, 1);
+});
+
+test("pending POST recovery never adopts a matching legacy entry from its baseline snapshot", async () => {
+  const records = {};
+  const context = load({
+    chrome: {
+      storage: {
+        local: {
+          get: async (key) => ({ [key]: records[key] }),
+          set: async (values) => Object.assign(records, values),
+        },
+      },
+    },
+    logTimeEntry: async () => {
+      throw new Error("Request timed out.");
+    },
+  });
+  const legacyEntry = {
+    id: 77,
+    user: { id: 7 },
+    issue: { id: "42" },
+    spent_on: "2026-11-03",
+    hours: 2,
+    activity: { id: 3 },
+    comments: "Manual entry",
+  };
+  await assert.rejects(
+    context.createApprovedTimeEntry({
+      redmineDomain: "https://redmine.test",
+      issueId: "42",
+      hours: 2,
+      date: "2026-11-03",
+      activityId: 3,
+      currentUser: { id: 7 },
+      reportId: "auto-2026-11-03",
+      source: "fallback-project",
+      confirmedAt: Date.now(),
+      entries: [legacyEntry],
+    }),
+    /timed out/
+  );
+  await assert.rejects(
+    context.readTimeEntryOwnership("https://redmine.test", "7", "2026-11-03", "auto-2026-11-03", [
+      legacyEntry,
+    ]),
+    /could not be verified/
+  );
+  assert.equal(records.b2r_time_entry_ownership_v1, undefined);
 });

@@ -1,5 +1,11 @@
 # Changelog - Backlog2Redmine
 
+## [1.8.30] - 2026-11-25
+- **✨ Added**:
+- **🔧 Fixed**: Enforced the remaining daily-hours budget for custom monthly allocations, protected time-entry POSTs with service-worker approval, and reconciled uncertain POSTs before retrying to prevent duplicates. Improved monthly modal keyboard focus handling and preserved scans through the selected month end.
+- **📝 Docs**:
+
+
 ## [1.8.29] - 2026-11-25
 - **✨ Added**: Added a monthly Log Time preview option to remove individual dates, scan missing workdays, and find fallback tasks when a Daily Report is unavailable.
 - **🔧 Fixed**: Limited monthly report synchronization and spent-time deletion to verified or explicitly selected entries, with fresh-preview checks before mutations.
