@@ -234,8 +234,13 @@ test("Backlog sender validation isolates the configured workspace and frame", ()
   assert.doesNotThrow(() =>
     validate({ url: "https://demo.backlog.com/view/DEMO-1" }, "https://demo.backlog.com")
   );
-  assert.throws(() =>
-    validate({ url: "https://other.backlog.com/view/DEMO-1" }, "https://demo.backlog.com")
+  assert.throws(
+    () => validate({ url: "https://other.backlog.com/view/DEMO-1" }, "https://demo.backlog.com"),
+    /does not match the configured Backlog workspace/
+  );
+  assert.throws(
+    () => validate({ url: "https://workspace.backlog.com/view/DEMO-1" }, ""),
+    /Backlog workspace is not configured.*https:\/\/workspace\.backlog\.com/
   );
   assert.throws(() =>
     validate(

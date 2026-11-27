@@ -1059,15 +1059,41 @@ function assertTrustedRedmineSender(sender, redmineDomain) {
 
 function assertTrustedBacklogSender(sender, backlogDomain = "") {
   const senderUrl = sender?.url || sender?.tab?.url || "";
+  const defaultDomain = typeof TB !== "undefined" ? TB.BACKLOG_DOMAIN : "";
+  let configured = "";
   try {
-    const configured = getTrustedBacklogApiOrigin(backlogDomain || TB.BACKLOG_DOMAIN);
-    if (new URL(senderUrl).origin === configured) {
-      return;
-    }
+    configured = getTrustedBacklogApiOrigin(backlogDomain || defaultDomain);
   } catch (_error) {
-    // fall through
+    configured = "";
   }
-  throw new Error("This operation requires the Backlog workspace configured in settings.");
+
+  let senderOrigin = "";
+  try {
+    senderOrigin = new URL(senderUrl).origin;
+  } catch (_error) {
+    senderOrigin = "";
+  }
+
+  if (configured && senderOrigin && senderOrigin === configured) {
+    return;
+  }
+
+  if (!configured || configured === defaultDomain) {
+    const hint = senderOrigin ? ` (e.g. ${senderOrigin})` : "";
+    throw new Error(
+      `Backlog workspace is not configured. Open Extension Settings and set Backlog Domain${hint}.`
+    );
+  }
+
+  if (senderOrigin) {
+    throw new Error(
+      `This page (${senderOrigin}) does not match the configured Backlog workspace (${configured}). Update Backlog Domain in Extension Settings.`
+    );
+  }
+
+  throw new Error(
+    `This operation must be run from the configured Backlog workspace (${configured}) in Extension Settings.`
+  );
 }
 
 function assertTrustedBacklogOrRedmineSender(sender, settings) {

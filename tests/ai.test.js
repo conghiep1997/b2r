@@ -351,3 +351,132 @@ test("Gemini daily quota exhaustion triggers long daily cooldown", () => {
   // RPM cooldown must be 60 seconds (60,000 ms)
   assert.equal(rpmCooldownMs, 60 * 1000);
 });
+
+test("providers send 8192 max output tokens by default and 4096 for 4K models", async () => {
+  const capturedBodies = [];
+  const context = vm.createContext({
+    console,
+    TB: {
+      PROVIDERS: {
+        GEMINI: "gemini",
+        CEREBRAS: "cerebras",
+        GROQ: "groq",
+        OPENROUTER: "openrouter",
+      },
+      PROMPTS: { SYSTEM: "Translate", USER: (text) => text },
+    },
+    timeoutFetch: async (_url, options) => {
+      capturedBodies.push(JSON.parse(options.body));
+      return { ok: true };
+    },
+    safeReadJson: async () => ({
+      candidates: [{ finishReason: "STOP", content: { parts: [{ text: "ok" }] } }],
+      choices: [{ finish_reason: "stop", message: { content: "ok" } }],
+    }),
+  });
+  vm.runInContext(source, context);
+
+  await context.callGeminiAPI("key", "hello", "gemini-3.5-flash-lite");
+  await context.callCerebrasAPI("key", "hello", "gpt-oss-120b");
+  await context.callGroqAPI("key", "hello", "llama-3.3-70b-versatile");
+  await context.callOpenRouterAPI("key", "hello", "openai/gpt-4o-mini");
+  await context.callOpenRouterAPI("key", "hello", "anthropic/claude-3-haiku");
+
+  assert.equal(capturedBodies[0].generationConfig.maxOutputTokens, 8192);
+  assert.equal(capturedBodies[1].max_tokens, 8192);
+  assert.equal(capturedBodies[2].max_tokens, 8192);
+  assert.equal(capturedBodies[3].max_tokens, 8192);
+  assert.equal(capturedBodies[4].max_tokens, 4096);
+});
+
+test("translateText reactively splits text on OUTPUT_LIMIT_EXCEEDED and wraps once", async () => {
+  const context = vm.createContext({ console: { log() {}, warn() {}, error() {} } });
+  vm.runInContext(promptsSource, context);
+  context.TB = {
+    PROMPTS: context.TB_PROMPTS,
+    DEFAULT_PRIMARY_PROVIDER: "gemini",
+    DEFAULT_PRIMARY_MODEL: "demo-model",
+    DEFAULT_FALLBACK_PROVIDER: "none",
+    DEFAULT_FALLBACK_MODEL: "",
+    PROVIDERS: { GEMINI: "gemini", NONE: "none" },
+  };
+  vm.runInContext(source, context);
+
+  const calls = [];
+  context.callAIsByProvider = async (_provider, _model, _settings, input, _url, promptFn) => {
+    calls.push({ input, includeOriginal: promptFn.includeOriginal });
+    if (calls.length === 1) {
+      context.assertCompleteTranslation("MAX_TOKENS");
+    }
+    return `TRANSLATED:${input.slice(0, 10)}`;
+  };
+
+  const partA = "A".repeat(300);
+  const partB = "B".repeat(300);
+  const longText = `${partA}\n\n${partB}`;
+
+  const result = await context.translateText(longText, {
+    primaryProvider: "gemini",
+    primaryModel: "demo-model",
+    fallbackProvider: "none",
+    translationSourceLanguage: "ja",
+    translationTargetLanguage: "vi",
+  });
+
+  assert.equal(calls.length, 3);
+  assert.equal(calls[0].includeOriginal, true);
+  assert.equal(calls[1].includeOriginal, false);
+  assert.equal(calls[2].includeOriginal, false);
+  assert.equal((result.match(/\{\{collapse\(VI\)/g) || []).length, 1);
+  assert.match(result, /TRANSLATED:AAAAAAAAAA/);
+  assert.match(result, /TRANSLATED:BBBBBBBBBB/);
+});
+
+test("splitTextForTranslation proactively splits long text without breaking fenced code blocks", () => {
+  const context = vm.createContext({ console });
+  vm.runInContext(source, context);
+
+  const codeBlock = "```js\n" + "const x = 1;\n".repeat(120) + "```";
+  const para1 = "Paragraph one. ".repeat(220).trim();
+  const para2 = "Paragraph two. ".repeat(220).trim();
+  const fullText = `${para1}\n\n[[TB_IMG:12345]]\n\n${codeBlock}\n\n${para2}`;
+
+  const chunks = context.splitTextForTranslation(fullText, 6000);
+  assert.ok(chunks.length >= 2);
+  assert.ok(chunks.some((chunk) => chunk.includes(codeBlock)));
+  assert.ok(chunks.some((chunk) => chunk.includes("[[TB_IMG:12345]]")));
+});
+
+test("translateText stops splitting after max depth and throws output limit error", async () => {
+  const context = vm.createContext({ console: { log() {}, warn() {}, error() {} } });
+  vm.runInContext(promptsSource, context);
+  context.TB = {
+    PROMPTS: context.TB_PROMPTS,
+    DEFAULT_PRIMARY_PROVIDER: "gemini",
+    DEFAULT_PRIMARY_MODEL: "demo-model",
+    DEFAULT_FALLBACK_PROVIDER: "none",
+    DEFAULT_FALLBACK_MODEL: "",
+    PROVIDERS: { GEMINI: "gemini", NONE: "none" },
+  };
+  vm.runInContext(source, context);
+
+  let callCount = 0;
+  context.callAIsByProvider = async () => {
+    callCount++;
+    context.assertCompleteTranslation("MAX_TOKENS");
+  };
+
+  const hugeText = Array.from({ length: 20 }, (_, i) => `Block ${i} ${"x".repeat(200)}`).join(
+    "\n\n"
+  );
+
+  await assert.rejects(
+    context.translateText(hugeText, {
+      primaryProvider: "gemini",
+      primaryModel: "demo-model",
+      fallbackProvider: "none",
+    }),
+    (err) => err.code === "OUTPUT_LIMIT_EXCEEDED" && /cut off/.test(err.message)
+  );
+  assert.ok(callCount <= 15);
+});

@@ -23,7 +23,21 @@ const RETIRED_GEMINI_MODELS = new Set([
   "gemma-4-31b-it",
   "gemma-4-26b-a4b-it",
 ]);
-const AI_TRANSLATION_TIMEOUT_MS = 15 * 1000;
+const AI_TRANSLATION_TIMEOUT_MS = 30 * 1000;
+const AI_DEFAULT_MAX_OUTPUT_TOKENS = 8192;
+const AI_CONSERVATIVE_MAX_OUTPUT_TOKENS = 4096;
+const AI_PROACTIVE_CHUNK_CHAR_LIMIT = 6000;
+const AI_MIN_CHUNK_CHAR_LIMIT = 400;
+const AI_MAX_SPLIT_DEPTH = 3;
+const AI_4K_OUTPUT_MODEL_PATTERNS = [/claude-3-haiku/i, /mistral-7b/i];
+
+function getMaxOutputTokens(_provider, model) {
+  const modelName = String(model || "");
+  if (AI_4K_OUTPUT_MODEL_PATTERNS.some((pattern) => pattern.test(modelName))) {
+    return AI_CONSERVATIVE_MAX_OUTPUT_TOKENS;
+  }
+  return AI_DEFAULT_MAX_OUTPUT_TOKENS;
+}
 
 function getProviderSystemPrompt(promptFn) {
   return promptFn.system ? `${TB.PROMPTS.SYSTEM}\n\n${promptFn.system}` : TB.PROMPTS.SYSTEM;
@@ -257,17 +271,117 @@ async function translateText(
 
   emitAIStatus({ phase: "start", provider: primaryProvider, model: primaryModel }, onStatus);
 
+  let resolvedProvider = primaryProvider;
+  let resolvedModel = primaryModel;
+
+  const translateWithProviderFallback = async (textChunk, promptForChunk) => {
+    try {
+      return await callAIsByProvider(
+        primaryProvider,
+        primaryModel,
+        settings,
+        textChunk,
+        commentUrl,
+        promptForChunk,
+        onStatus,
+        false
+      );
+    } catch (error) {
+      // Fallback on rate limit and temporary provider overloads such as Gemini 503 high demand.
+      const isRetryableProviderFailure = isRetryableProviderError(error);
+      const hasFallback = fallbackProvider && fallbackProvider !== TB.PROVIDERS.NONE;
+
+      if (isRetryableProviderFailure && hasFallback) {
+        emitAIStatus(
+          { phase: "fallback", provider: primaryProvider, fallback: fallbackProvider },
+          onStatus
+        );
+        console.warn(
+          `[TB-AI] Primary (${primaryProvider}) temporarily unavailable. Falling back to ${fallbackProvider}...`
+        );
+        try {
+          const fallbackResult = await callAIsByProvider(
+            fallbackProvider,
+            fallbackModel,
+            settings,
+            textChunk,
+            commentUrl,
+            promptForChunk,
+            onStatus,
+            true
+          );
+          resolvedProvider = fallbackProvider;
+          resolvedModel = fallbackModel;
+          return fallbackResult;
+        } catch (fallbackError) {
+          throw new Error(
+            `${TB.MESSAGES.TOAST.RATE_LIMIT_FAILED} Primary: ${error.message} | Fallback: ${fallbackError.message}`
+          );
+        }
+      }
+      throw error;
+    }
+  };
+
+  const translateChunkAdaptive = async (textChunk, promptForChunk, depth = 0) => {
+    try {
+      return await translateWithProviderFallback(textChunk, promptForChunk);
+    } catch (error) {
+      if (error?.code === "OUTPUT_LIMIT_EXCEEDED" && depth < AI_MAX_SPLIT_DEPTH) {
+        const halves = splitTextInHalf(textChunk);
+        if (halves) {
+          const left = await translateChunkAdaptive(halves[0], promptForChunk, depth + 1);
+          const right = await translateChunkAdaptive(halves[1], promptForChunk, depth + 1);
+          return `${left.trimEnd()}\n\n${right.trimStart()}`;
+        }
+      }
+      throw error;
+    }
+  };
+
   try {
-    const translated = await callAIsByProvider(
-      primaryProvider,
-      primaryModel,
-      settings,
-      sourceText,
-      commentUrl,
-      configuredPrompt,
-      onStatus,
-      false
-    );
+    let translated;
+    const chunkPrompt = createChunkPromptConfig(configuredPrompt);
+
+    if (sourceText.length > AI_PROACTIVE_CHUNK_CHAR_LIMIT) {
+      const chunks = splitTextForTranslation(sourceText, AI_PROACTIVE_CHUNK_CHAR_LIMIT);
+      const translatedChunks = [];
+      for (const chunk of chunks) {
+        translatedChunks.push(await translateChunkAdaptive(chunk, chunkPrompt, 0));
+      }
+      const merged = translatedChunks.join("\n\n");
+      const recovered = recoverMissingImageMarkers(sourceText, merged);
+      translated = configuredPrompt.includeOriginal
+        ? formatTranslation(sourceText, recovered, commentUrl, configuredPrompt.targetLanguage)
+        : recovered;
+    } else {
+      try {
+        translated = await translateWithProviderFallback(sourceText, configuredPrompt);
+      } catch (error) {
+        if (error?.code === "OUTPUT_LIMIT_EXCEEDED") {
+          const halves = splitTextInHalf(sourceText);
+          if (halves) {
+            const left = await translateChunkAdaptive(halves[0], chunkPrompt, 1);
+            const right = await translateChunkAdaptive(halves[1], chunkPrompt, 1);
+            const merged = `${left.trimEnd()}\n\n${right.trimStart()}`;
+            const recovered = recoverMissingImageMarkers(sourceText, merged);
+            translated = configuredPrompt.includeOriginal
+              ? formatTranslation(
+                  sourceText,
+                  recovered,
+                  commentUrl,
+                  configuredPrompt.targetLanguage
+                )
+              : recovered;
+          } else {
+            throw error;
+          }
+        } else {
+          throw error;
+        }
+      }
+    }
+
     if (enableCache && globalThis.TB_TRANSLATION_CACHE) {
       globalThis.TB_TRANSLATION_CACHE.set(
         sourceText,
@@ -278,54 +392,9 @@ async function translateText(
         translated
       );
     }
-    emitAIStatus({ phase: "success", provider: primaryProvider, model: primaryModel }, onStatus);
+    emitAIStatus({ phase: "success", provider: resolvedProvider, model: resolvedModel }, onStatus);
     return restoreGlossary(translated);
   } catch (error) {
-    // Fallback on rate limit and temporary provider overloads such as Gemini 503 high demand.
-    const isRetryableProviderFailure = isRetryableProviderError(error);
-    const hasFallback = fallbackProvider && fallbackProvider !== TB.PROVIDERS.NONE;
-
-    if (isRetryableProviderFailure && hasFallback) {
-      emitAIStatus(
-        { phase: "fallback", provider: primaryProvider, fallback: fallbackProvider },
-        onStatus
-      );
-      console.warn(
-        `[TB-AI] Primary (${primaryProvider}) temporarily unavailable. Falling back to ${fallbackProvider}...`
-      );
-      try {
-        const translated = await callAIsByProvider(
-          fallbackProvider,
-          fallbackModel,
-          settings,
-          sourceText,
-          commentUrl,
-          configuredPrompt,
-          onStatus,
-          true
-        );
-        if (enableCache && globalThis.TB_TRANSLATION_CACHE) {
-          globalThis.TB_TRANSLATION_CACHE.set(
-            sourceText,
-            languagePair.source,
-            languagePair.target,
-            settings.currentProjectKey,
-            reverse,
-            translated
-          );
-        }
-        emitAIStatus(
-          { phase: "success", provider: fallbackProvider, model: fallbackModel },
-          onStatus
-        );
-        return restoreGlossary(translated);
-      } catch (fallbackError) {
-        emitAIStatus({ phase: "error", error: fallbackError.message }, onStatus);
-        throw new Error(
-          `${TB.MESSAGES.TOAST.RATE_LIMIT_FAILED} Primary: ${error.message} | Fallback: ${fallbackError.message}`
-        );
-      }
-    }
     emitAIStatus({ phase: "error", error: error.message }, onStatus);
     throw error;
   }
@@ -788,7 +857,7 @@ async function callGeminiAPI(
     generationConfig: {
       temperature: 0.2,
       topP: 0.9,
-      maxOutputTokens: 2048,
+      maxOutputTokens: getMaxOutputTokens(TB.PROVIDERS?.GEMINI || "gemini", model),
     },
   };
 
@@ -870,7 +939,7 @@ async function callCerebrasAPI(
           { role: "user", content: promptFn(commentText) },
         ],
         temperature: 0.2,
-        max_tokens: 2048,
+        max_tokens: getMaxOutputTokens(TB.PROVIDERS?.CEREBRAS || "cerebras", model),
       }),
     },
     AI_TRANSLATION_TIMEOUT_MS
@@ -920,7 +989,7 @@ async function callGroqAPI(
           { role: "user", content: promptFn(commentText) },
         ],
         temperature: 0.2,
-        max_tokens: 2048,
+        max_tokens: getMaxOutputTokens(TB.PROVIDERS?.GROQ || "groq", model),
       }),
     },
     AI_TRANSLATION_TIMEOUT_MS
@@ -967,7 +1036,7 @@ async function callOpenRouterAPI(
           { role: "user", content: promptFn(commentText) },
         ],
         temperature: 0.2,
-        max_tokens: 2048,
+        max_tokens: getMaxOutputTokens(TB.PROVIDERS?.OPENROUTER || "openrouter", model),
       }),
     },
     AI_TRANSLATION_TIMEOUT_MS
@@ -996,10 +1065,198 @@ async function callOpenRouterAPI(
 
 function assertCompleteTranslation(finishReason) {
   if (finishReason === "MAX_TOKENS" || finishReason === "length") {
-    throw new Error(
+    const error = new Error(
       "AI translation was cut off by the output limit. Split the text into smaller parts before retrying."
     );
+    error.code = "OUTPUT_LIMIT_EXCEEDED";
+    throw error;
   }
+}
+
+function createChunkPromptConfig(configuredPrompt) {
+  if (!configuredPrompt?.includeOriginal) {
+    return configuredPrompt;
+  }
+  const chunkPrompt = (text) => configuredPrompt(text);
+  Object.assign(chunkPrompt, configuredPrompt, { includeOriginal: false });
+  return chunkPrompt;
+}
+
+function splitIntoLogicalBlocks(text) {
+  const lines = String(text || "").split("\n");
+  const blocks = [];
+  let currentLines = [];
+  let inFence = false;
+  let fenceChar = "";
+
+  for (const line of lines) {
+    const fenceMatch = line.match(/^\s*(```+|~~~+)/);
+    if (fenceMatch) {
+      const marker = fenceMatch[1];
+      if (!inFence) {
+        inFence = true;
+        fenceChar = marker[0];
+      } else if (marker[0] === fenceChar) {
+        inFence = false;
+        fenceChar = "";
+      }
+    }
+
+    if (!inFence && line.trim() === "") {
+      if (currentLines.length > 0) {
+        blocks.push(currentLines.join("\n"));
+        currentLines = [];
+      }
+    } else {
+      currentLines.push(line);
+    }
+  }
+
+  if (currentLines.length > 0) {
+    blocks.push(currentLines.join("\n"));
+  }
+
+  return blocks;
+}
+
+function splitOversizedBlock(block, maxChars) {
+  if (block.length <= maxChars) return [block];
+  const lines = block.split("\n");
+  const chunks = [];
+  let current = "";
+
+  const pushSegment = (segment) => {
+    let remaining = segment.trim();
+    while (remaining.length > maxChars) {
+      let cutAt = remaining.lastIndexOf(" ", maxChars);
+      if (cutAt < Math.floor(maxChars * 0.4)) {
+        cutAt = maxChars;
+      }
+      const head = remaining.slice(0, cutAt).trimEnd();
+      if (head) chunks.push(head);
+      remaining = remaining.slice(cutAt).trimStart();
+    }
+    if (remaining) {
+      chunks.push(remaining);
+    }
+  };
+
+  for (const line of lines) {
+    if (line.length > maxChars) {
+      if (current) {
+        chunks.push(current);
+        current = "";
+      }
+      pushSegment(line);
+      continue;
+    }
+    const candidate = current ? `${current}\n${line}` : line;
+    if (candidate.length > maxChars) {
+      if (current) chunks.push(current);
+      current = line;
+    } else {
+      current = candidate;
+    }
+  }
+
+  if (current) {
+    chunks.push(current);
+  }
+  return chunks;
+}
+
+function splitTextForTranslation(text, maxChars = AI_PROACTIVE_CHUNK_CHAR_LIMIT) {
+  const normalized = String(text || "").trim();
+  if (!normalized || normalized.length <= maxChars) {
+    return normalized ? [normalized] : [];
+  }
+
+  const blocks = splitIntoLogicalBlocks(normalized);
+  const chunks = [];
+  let current = "";
+
+  for (const block of blocks) {
+    if (block.length > maxChars) {
+      if (current) {
+        chunks.push(current);
+        current = "";
+      }
+      chunks.push(...splitOversizedBlock(block, maxChars));
+      continue;
+    }
+
+    const candidate = current ? `${current}\n\n${block}` : block;
+    if (candidate.length > maxChars) {
+      if (current) chunks.push(current);
+      current = block;
+    } else {
+      current = candidate;
+    }
+  }
+
+  if (current) {
+    chunks.push(current);
+  }
+  return chunks.filter(Boolean);
+}
+
+function splitTextInHalf(text) {
+  const normalized = String(text || "").trim();
+  if (!normalized || normalized.length < AI_MIN_CHUNK_CHAR_LIMIT) {
+    return null;
+  }
+
+  const blocks = splitIntoLogicalBlocks(normalized);
+  if (blocks.length >= 2) {
+    const target = normalized.length / 2;
+    let bestIdx = 1;
+    let bestDiff = Infinity;
+    let runningLen = 0;
+
+    for (let i = 0; i < blocks.length - 1; i++) {
+      runningLen += (i > 0 ? 2 : 0) + blocks[i].length;
+      const diff = Math.abs(runningLen - target);
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        bestIdx = i + 1;
+      }
+    }
+
+    const left = blocks.slice(0, bestIdx).join("\n\n").trim();
+    const right = blocks.slice(bestIdx).join("\n\n").trim();
+    if (left && right) return [left, right];
+  }
+
+  const mid = Math.floor(normalized.length / 2);
+  const minPos = Math.floor(normalized.length * 0.2);
+  const maxPos = Math.floor(normalized.length * 0.8);
+
+  const findNearestSplit = (pattern) => {
+    let bestIndex = -1;
+    let bestDist = Infinity;
+    const regex = new RegExp(pattern.source, "g");
+    let match;
+    while ((match = regex.exec(normalized)) !== null) {
+      const idx = match.index + match[0].length;
+      if (idx >= minPos && idx <= maxPos) {
+        const dist = Math.abs(idx - mid);
+        if (dist < bestDist) {
+          bestDist = dist;
+          bestIndex = idx;
+        }
+      }
+    }
+    return bestIndex;
+  };
+
+  let splitAt = findNearestSplit(/\n/);
+  if (splitAt === -1) splitAt = findNearestSplit(/[。！？.!?]\s+/);
+  if (splitAt === -1) splitAt = findNearestSplit(/\s+/);
+  if (splitAt === -1) splitAt = mid;
+
+  const left = normalized.slice(0, splitAt).trim();
+  const right = normalized.slice(splitAt).trim();
+  return left && right ? [left, right] : null;
 }
 
 function extractCleanedTranslation(rawText) {

@@ -1089,8 +1089,14 @@ function injectStyles() {
       float: right; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 4px;
       background: transparent; color: #dc2626; cursor: pointer; font-size: 18px; line-height: 20px;
     }
+    .tb-monthly-log-table .tb-monthly-preview-remove-date {
+      border: 0 !important;
+      box-shadow: none !important;
+      text-decoration: none !important;
+    }
     .tb-monthly-preview-remove-date:hover { background: #fee2e2; color: #991b1b; }
-    .tb-monthly-preview-remove-date:focus-visible { outline: 2px solid #dc2626; outline-offset: 2px; }
+    .tb-monthly-log-table .tb-monthly-preview-remove-date:focus { outline: none !important; box-shadow: none !important; }
+    .tb-monthly-log-table .tb-monthly-preview-remove-date:focus-visible { outline: 2px solid #dc2626 !important; outline-offset: 2px; }
     .tb-monthly-preview-remove-date:disabled { opacity: .45; cursor: not-allowed; }
     .tb-monthly-legacy-entry-picker { margin-top: 6px; font-size: 10px; color: #475569; }
     .tb-monthly-legacy-entry-picker summary { cursor: pointer; font-weight: 600; }
